@@ -5,7 +5,6 @@ import { CircleAlert } from "lucide-react"
 import { createUser } from "@/app/(app)/users/actions"
 import { IDLE, type ActionState } from "@/lib/actionState"
 import { Section } from "@/components/users/formSection"
-import { GeneratedPassword } from "@/components/users/generatedPassword"
 import { PermissionPicker } from "@/components/users/permissionPicker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +13,8 @@ import { useAccess } from "@/components/access/accessProvider"
 import { cn } from "@/lib/utils"
 
 /**
- * Creating an account: who they are, what they may do, and how they first get in.
+ * Inviting somebody: who they are and what they may do. They choose their own
+ * password from the invitation email — nobody else ever knows it.
  *
  * <p>Submits to `POST /api/users`, which is not the registration endpoint:
  * that one always hands out MEMBER, because letting a caller choose their own
@@ -53,7 +53,6 @@ function AddUserForm() {
   const [permissions, setPermissions] = useState<Set<string>>(
     () => new Set(permissionsForRole(DEFAULT_ROLE))
   )
-  const [password, setPassword] = useState("")
 
   function chooseRole(next: string) {
     setRole(next)
@@ -130,7 +129,7 @@ function AddUserForm() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Section
           title="Details"
-          description="Who they are, and how they first get in."
+          description="Who they are. The invitation goes to their email."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
@@ -204,17 +203,14 @@ function AddUserForm() {
             </div>
           </div>
 
-          {/* The password belongs here rather than in a section of its own: it
-              is not a decision, it is the last field of who this person is —
-              generated, copied, handed over. */}
-          <div className="flex flex-col gap-1.5 border-t pt-4">
-            <Label>Temporary password</Label>
-            <GeneratedPassword
-              name="password"
-              value={password}
-              onChange={setPassword}
-            />
-          </div>
+          {/* Where the temporary password used to be. Saying what happens next
+              here, at the end of who-they-are, answers "how do they get in?"
+              before anybody has to ask it. */}
+          <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            They&apos;ll get an email to choose their own password (the link works
+            for 7 days), then set up two-factor authentication on their first
+            sign-in.
+          </p>
         </Section>
 
         <Section

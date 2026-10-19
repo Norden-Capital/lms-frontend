@@ -6,6 +6,7 @@ import { Ban, KeyRound, KeySquare, ShieldX, SquarePen, UserCog } from "lucide-re
 
 import {
   UserActionDialogs,
+  isInvited,
   type ActionTarget,
   type UserAction,
 } from "@/components/users/userActionDialogs"
@@ -80,7 +81,7 @@ function UserQuickActions({ user }: { user: ActionTarget }) {
         onClick={() => setAction("password")}
       >
         <KeyRound data-icon="inline-start" />
-        Reset password
+        {isInvited(user) ? "Resend invitation" : "Send reset link"}
       </Button>
 
       <Button
@@ -103,13 +104,17 @@ function UserQuickActions({ user }: { user: ActionTarget }) {
           size="sm"
           className={cn(
             ACTION,
-            user.status === "ACTIVE" &&
+            (user.status === "ACTIVE" || isInvited(user)) &&
               "text-destructive hover:bg-destructive/10 hover:text-destructive"
           )}
           onClick={() => setAction("deactivate")}
         >
           <Ban data-icon="inline-start" />
-          {user.status === "ACTIVE" ? "Deactivate account" : "Turn back on"}
+          {user.status === "ACTIVE"
+            ? "Deactivate account"
+            : isInvited(user)
+              ? "Cancel invitation"
+              : "Turn back on"}
         </Button>
       </div>
 

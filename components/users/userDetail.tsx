@@ -98,7 +98,7 @@ const ACTIVITY_ICON = {
 const STATUS_TEXT: Record<string, { label: string; tone: string }> = {
   ACTIVE: { label: "Active", tone: "text-success" },
   PENDING_VERIFICATION: {
-    label: "Pending verification",
+    label: "Invited — not joined yet",
     tone: "text-warning",
   },
   SUSPENDED: { label: "Suspended", tone: "text-destructive" },

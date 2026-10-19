@@ -36,15 +36,15 @@ export default async function AddUserPage() {
           the same thing twice, and one of them had to be the one people reach
           for. */}
       <PageHeader
-        title="Add user"
-        description="Create an account and choose what it can do."
+        title="Invite user"
+        description="Send an invitation and choose what they can do."
         backHref="/users"
         backLabel="Back to users"
         actions={
           // Outside the <form> it submits — `form` is what connects them, so
           // this stays a Server Component with no state of its own.
           <Button type="submit" form={ADD_USER_FORM_ID} className="rounded-md">
-            Create account
+            Send invitation
           </Button>
         }
       />

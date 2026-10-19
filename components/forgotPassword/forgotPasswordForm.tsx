@@ -1,11 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useActionState, useState } from "react"
 // FingerprintPattern, not Fingerprint: this lucide version renamed the icon and
 // keeps the old name only as a back-compat alias.
 import { ArrowLeft, FingerprintPattern, MailCheck } from "lucide-react"
 
+import {
+  requestPasswordReset,
+  type ForgotPasswordState,
+} from "@/app/(auth)/forgot-password/actions"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -19,16 +23,25 @@ import { Input } from "@/components/ui/input"
  * Both steps of "request a reset" live in this one component: the email form,
  * and the confirmation that replaces it. The heading and icon change between
  * them, which is why the header sits here rather than on the page.
- *
- * Presentation only, like the OTP screen — there is no reset endpoint in the
- * backend contract this app was built against, so submitting just advances the
- * local state. Wiring it later means adding an action and swapping the onSubmit.
  */
 function ForgotPasswordForm() {
-  const [email, setEmail] = useState("")
-  const [sent, setSent] = useState(false)
+  const [state, formAction, pending] = useActionState<ForgotPasswordState, FormData>(
+    requestPasswordReset,
+    {}
+  )
+  // Back to the form without losing the address, for a typo.
+  const [editing, setEditing] = useState(false)
 
-  if (sent) {
+  // A new answer from the server ends editing. Adjusted during render rather
+  // than by wrapping the action: a wrapper is a client function, and the form
+  // would stop working before JavaScript loads.
+  const [answered, setAnswered] = useState(state)
+  if (state !== answered) {
+    setAnswered(state)
+    setEditing(false)
+  }
+
+  if (state.sent && !editing) {
     return (
       <div className="mx-auto flex w-full max-w-xs flex-col gap-4">
         <div className="flex flex-col items-center gap-2 text-center">
@@ -44,20 +57,32 @@ function ForgotPasswordForm() {
               account that does not exist. */}
           <p className="text-xs text-muted-foreground">
             If an account exists for{" "}
-            <span className="font-medium text-foreground">{email}</span>, a
-            reset link is on its way. It expires in 30 minutes.
+            <span className="font-medium text-foreground">{state.email}</span>, a
+            reset link is on its way. It works once, for 30 minutes.
           </p>
         </div>
 
         <div className="flex flex-col gap-2">
-          <FieldDescription className="text-center">
-            Didn&apos;t get the email? Resend in{" "}
-            <span className="tabular-nums text-foreground">0:28</span>
-          </FieldDescription>
+          {/* Sending again within a minute quietly does nothing on the
+              backend, so a double click cannot flood an inbox. */}
+          <form action={formAction}>
+            <input type="hidden" name="email" value={state.email ?? ""} />
+            <FieldDescription className="text-center">
+              Didn&apos;t get it? Check your spam folder, or{" "}
+              <button
+                type="submit"
+                disabled={pending}
+                className="text-foreground underline underline-offset-4 hover:text-primary disabled:opacity-50"
+              >
+                {pending ? "sending…" : "send it again"}
+              </button>
+              .
+            </FieldDescription>
+          </form>
           <FieldDescription className="text-center">
             <button
               type="button"
-              onClick={() => setSent(false)}
+              onClick={() => setEditing(true)}
               className="text-foreground underline underline-offset-4 hover:text-primary"
             >
               Use a different email
@@ -84,17 +109,18 @@ function ForgotPasswordForm() {
         </p>
       </div>
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          // Read off the form rather than controlling the input: no re-render
-          // per keystroke, and it is the same shape a server action would get.
-          const data = new FormData(event.currentTarget)
-          setEmail(String(data.get("email") ?? ""))
-          setSent(true)
-        }}
-      >
+      <form action={formAction}>
         <FieldGroup className="gap-3">
+          {state.message ? (
+            <p
+              role="alert"
+              aria-live="polite"
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              {state.message}
+            </p>
+          ) : null}
+
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
@@ -103,15 +129,15 @@ function ForgotPasswordForm() {
               type="email"
               autoComplete="email"
               placeholder="m@example.com"
-              // Carries the address back if they return via "Use a different
-              // email", so a typo is an edit rather than a retype.
-              defaultValue={email}
+              // Carries the address back after "Use a different email", so a
+              // typo is an edit rather than a retype.
+              defaultValue={state.email ?? ""}
               required
             />
           </Field>
 
-          <Button type="submit" className="w-full">
-            Send reset link
+          <Button type="submit" className="w-full" disabled={pending}>
+            {pending ? "Sending…" : "Send reset link"}
           </Button>
         </FieldGroup>
       </form>

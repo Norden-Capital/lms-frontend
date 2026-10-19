@@ -1,16 +1,17 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { CircleAlert, KeyRound, ShieldAlert, UserCog, UserX } from "lucide-react"
+import { CircleAlert, KeyRound, Send, ShieldAlert, UserCog, UserX } from "lucide-react"
+import { toast } from "sonner"
 
 import {
   changeUserRole,
   changeUserStatus,
+  resendInvitation,
   resetUserTwoFactor,
-  setUserPassword,
+  sendPasswordResetLink,
 } from "@/app/(app)/users/actions"
 import type { ActionState } from "@/lib/actionState"
-import { GeneratedPassword } from "@/components/users/generatedPassword"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -352,19 +353,14 @@ function ResetTwoFactorDialog({
 }
 
 /**
- * Issuing a new password for somebody who cannot get in.
+ * Getting somebody back in by email: a password reset link for an active
+ * account, or the invitation again for somebody who has not joined yet.
  *
- * <p>A generated password handed over, not a reset link emailed. There is no
- * mail being sent by this system at all — no verification, no invitations,
- * nothing — so a link would be a button that silently does nothing. This is also
- * how the add-user form already works, which makes the two consistent: an
- * administrator generates a password and passes it on.
- *
- * <p>⚠️ The obvious missing half is forcing a change at next sign-in. There is
- * no `must_change_password` column, so the temporary password is simply the
- * password until the person is told to change it — which nothing makes them do.
+ * <p>One dialog for both, because they answer the same question — "this person
+ * can't get in" — and which one applies is decided by the account, not by the
+ * administrator. Either way the administrator never sees a password.
  */
-function ResetPasswordDialog({
+function EmailLinkDialog({
   user,
   open,
   onOpenChange,
@@ -373,61 +369,57 @@ function ResetPasswordDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const [password, setPassword] = useState("")
+  const invited = isInvited(user)
   const { pending, error, setError, run } = useAction(() => onOpenChange(false))
 
-  // A fresh one per opening. Reopening and seeing the password from last time
-  // suggests it is the account's current password, which it is not — nothing
-  // was saved. Cleared rather than regenerated here, because GeneratedPassword
-  // makes one the moment it is handed an empty value.
   const [wasOpen, setWasOpen] = useState(open)
   if (open !== wasOpen) {
     setWasOpen(open)
-    if (open) {
-      setPassword("")
-      setError(undefined)
-    }
+    if (open) setError(undefined)
   }
+
+  const send = () =>
+    run(async () => {
+      const result = invited
+        ? await resendInvitation(user.id)
+        : await sendPasswordResetLink(user.id)
+      // The dialog closes on success, so the confirmation goes to a toast —
+      // otherwise "sent to sarah@…" would vanish with it.
+      if (result.ok && result.message) toast.success(result.message)
+      return result
+    })
 
   return (
     <AlertDialog open={open} onOpenChange={pending ? undefined : onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent size="sm">
         <DialogHead
-          icon={KeyRound}
+          icon={invited ? Send : KeyRound}
           tone="bg-muted text-foreground"
-          title="Reset password"
+          title={invited ? "Resend invitation" : "Send password reset link"}
         >
-          Their current password stops working. Copy this one and give it to
-          them yourself.
+          {invited
+            ? "They haven't set up their account yet. A new invitation email goes out, and the old link stops working."
+            : "They get an email with a link to choose a new password. The link works once, for 30 minutes. Their two-factor stays the same."}
         </DialogHead>
 
         <TargetCard user={user} />
-
-        <div className="flex flex-col gap-1.5">
-          <GeneratedPassword value={password} onChange={setPassword} />
-        </div>
-
-        <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-          Nothing is emailed — this system sends no mail. Send it by a route you
-          trust and ask them to change it once they are in. This also signs them
-          out everywhere; their two-factor is untouched, so they still need their
-          authenticator.
-        </p>
 
         <Refusal message={error} />
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={!password || pending}
-            onClick={() => run(() => setUserPassword(user.id, password))}
-          >
-            {pending ? "Saving…" : "Set this password"}
+          <AlertDialogAction disabled={pending} onClick={send}>
+            {pending ? "Sending…" : invited ? "Resend invitation" : "Send reset link"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   )
+}
+
+/** Invited and not yet joined — they have no password to reset. */
+function isInvited(user: { status: string }) {
+  return user.status === "PENDING_VERIFICATION"
 }
 
 /**
@@ -455,7 +447,10 @@ function DeactivateUserDialog({
   const { pending, error, run } = useAction(() => onOpenChange(false))
 
   const name = `${user.firstName} ${user.lastName}`
-  const reactivating = user.status !== "ACTIVE"
+  // An invited person is not active, but switching them "back on" is not a
+  // thing — they become active by accepting. For them this cancels the invite.
+  const invited = isInvited(user)
+  const reactivating = user.status !== "ACTIVE" && !invited
   const next = reactivating ? "ACTIVE" : "DEACTIVATED"
 
   return (
@@ -468,11 +463,19 @@ function DeactivateUserDialog({
               ? "bg-success/10 text-success"
               : "bg-destructive/10 text-destructive"
           }
-          title={reactivating ? "Turn this account back on?" : "Deactivate this account?"}
+          title={
+            invited
+              ? "Cancel this invitation?"
+              : reactivating
+                ? "Turn this account back on?"
+                : "Deactivate this account?"
+          }
         >
-          {reactivating
-            ? `${name} will be able to sign in again, with the same password and the same two-factor as before.`
-            : `${name} will not be able to sign in, and any session they have open ends now. Nothing is deleted — their history stays, and the account can be switched back on later.`}
+          {invited
+            ? `The link in ${name}'s invitation email stops working, and they won't be able to join.`
+            : reactivating
+              ? `${name} will be able to sign in again, with the same password and the same two-factor as before.`
+              : `${name} will not be able to sign in, and any session they have open ends now. Nothing is deleted — their history stays, and the account can be switched back on later.`}
         </DialogHead>
 
         <TargetCard user={user} />
@@ -489,10 +492,14 @@ function DeactivateUserDialog({
             {pending
               ? reactivating
                 ? "Turning on…"
-                : "Deactivating…"
+                : invited
+                  ? "Cancelling…"
+                  : "Deactivating…"
               : reactivating
                 ? "Turn back on"
-                : "Deactivate"}
+                : invited
+                  ? "Cancel invitation"
+                  : "Deactivate"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -528,7 +535,7 @@ function UserActionDialogs({
         open={action === "twoFactor"}
         onOpenChange={close}
       />
-      <ResetPasswordDialog
+      <EmailLinkDialog
         user={user}
         open={action === "password"}
         onOpenChange={close}
@@ -542,4 +549,4 @@ function UserActionDialogs({
   )
 }
 
-export { UserActionDialogs, type UserAction, type ActionTarget }
+export { UserActionDialogs, isInvited, type UserAction, type ActionTarget }

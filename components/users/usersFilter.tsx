@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils"
  */
 const STATUSES = [
   { value: "ACTIVE", label: "Active", icon: CircleCheck },
-  { value: "PENDING_VERIFICATION", label: "Pending", icon: CircleDot },
+  { value: "PENDING_VERIFICATION", label: "Invited", icon: CircleDot },
   { value: "SUSPENDED", label: "Suspended", icon: CircleX },
 ]
 

@@ -41,7 +41,7 @@ const TONE = {
 /** Mirrors the backend's UserStatus enum. */
 const STATUS = {
   ACTIVE: { label: "Active", icon: CircleCheck, tone: TONE.good },
-  PENDING_VERIFICATION: { label: "Pending", icon: CircleDot, tone: TONE.waiting },
+  PENDING_VERIFICATION: { label: "Invited", icon: CircleDot, tone: TONE.waiting },
   SUSPENDED: { label: "Suspended", icon: CircleX, tone: TONE.bad },
   // Not one of the three the UI is designed around, but the backend can still
   // send it — accounts are soft-deleted rather than removed. Kept so a real

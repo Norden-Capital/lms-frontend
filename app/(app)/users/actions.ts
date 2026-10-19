@@ -61,7 +61,12 @@ function failure(error: { status: number; message: string; fieldErrors?: Record<
   }
 }
 
-/** Creating an account with a chosen role. Needs USER:CREATE. */
+/**
+ * Inviting somebody with a chosen role. Needs USER:CREATE.
+ *
+ * <p>The backend creates the account as pending and emails the invitation; the
+ * person chooses their own password from it.
+ */
 export async function createUser(formData: FormData): Promise<ActionState> {
   const result = await apiFetch<{ id: number }>("/api/users", {
     method: "POST",
@@ -71,7 +76,6 @@ export async function createUser(formData: FormData): Promise<ActionState> {
       lastName: String(formData.get("lastName") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       phone: String(formData.get("phone") ?? "").trim(),
-      password: String(formData.get("password") ?? ""),
       role: String(formData.get("role") ?? "MEMBER"),
     }),
   })
@@ -140,17 +144,30 @@ export async function changeUserStatus(id: number, status: string): Promise<Acti
   }
 }
 
-/** An administrator setting somebody else's password, and ending their sessions. */
-export async function setUserPassword(id: number, password: string): Promise<ActionState> {
-  const result = await apiFetch<{ message: string }>(`/api/users/${id}/password`, {
+/**
+ * Emailing somebody a password reset link. The administrator never sees or
+ * chooses the password — the person picks it from their own inbox.
+ */
+export async function sendPasswordResetLink(id: number): Promise<ActionState> {
+  const result = await apiFetch<{ message: string }>(`/api/users/${id}/password-reset`, {
     method: "POST",
     authenticated: true,
-    body: JSON.stringify({ password }),
   })
 
   if (!result.ok) return failure(result.error)
 
-  refreshUserScreens(id)
+  return { ok: true, message: result.data.message }
+}
+
+/** Sending an invited person their invitation again. The old link stops working. */
+export async function resendInvitation(id: number): Promise<ActionState> {
+  const result = await apiFetch<{ message: string }>(`/api/users/${id}/invitation`, {
+    method: "POST",
+    authenticated: true,
+  })
+
+  if (!result.ok) return failure(result.error)
+
   return { ok: true, message: result.data.message }
 }
 

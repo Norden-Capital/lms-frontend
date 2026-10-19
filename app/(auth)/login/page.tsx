@@ -23,6 +23,9 @@ const REASONS: Record<string, string> = {
     "That sign-in took too long and has expired. Please enter your details again.",
   cancelled: "Sign-in cancelled. You can sign in with a different account below.",
   "session-expired": "You have been signed out. Please sign in again to continue.",
+  "account-ready":
+    "Your account is ready. Sign in, then set up two-factor authentication.",
+  "password-changed": "Password changed. Sign in with your new password.",
 }
 
 /**

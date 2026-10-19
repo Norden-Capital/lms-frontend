@@ -25,6 +25,7 @@ import {
 
 import {
   UserActionDialogs,
+  isInvited,
   type UserAction,
 } from "@/components/users/userActionDialogs"
 import { StatusBadge, TwoFactorBadge } from "@/components/users/statusBadge"
@@ -203,22 +204,26 @@ function UserRowActions({ user }: { user: UserRow }) {
           <DropdownMenuGroup>
             <DropdownMenuLabel>Security</DropdownMenuLabel>
             {/* Both of these get somebody back in when they are locked out —
-                one for a forgotten password, one for a lost phone. Only the
-                second has an endpoint: POST /api/users/{id}/2fa/reset. */}
+                one for a forgotten password (by email), one for a lost phone.
+                Someone invited but not joined gets their invitation again. */}
             <DropdownMenuItem onClick={() => setAction("password")}>
               <KeyRound data-icon="inline-start" />
-              Reset password
+              {isInvited(user) ? "Resend invitation" : "Send reset link"}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setAction("twoFactor")}>
               <ShieldCheck data-icon="inline-start" />
               Reset two-factor
             </DropdownMenuItem>
             <DropdownMenuItem
-              variant={user.status === "ACTIVE" ? "destructive" : undefined}
+              variant={user.status === "ACTIVE" || isInvited(user) ? "destructive" : undefined}
               onClick={() => setAction("deactivate")}
             >
               <UserX data-icon="inline-start" />
-              {user.status === "ACTIVE" ? "Deactivate" : "Turn back on"}
+              {user.status === "ACTIVE"
+                ? "Deactivate"
+                : isInvited(user)
+                  ? "Cancel invitation"
+                  : "Turn back on"}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -432,7 +437,7 @@ function UsersTable({
 
         <Button className="rounded-md" render={<Link href="/users/new" />}>
           <Plus data-icon="inline-start" />
-          Add user
+          Invite user
         </Button>
 
         {/* How many rows fit on a page. Sits with the other controls rather than

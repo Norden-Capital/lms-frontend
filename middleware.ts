@@ -36,7 +36,17 @@ import { MFA_COOKIE, SESSION_COOKIE } from "@/lib/cookieNames"
  * with nothing failing to say so. This way a new route is private because nobody
  * did anything, and making it public is a deliberate line here.
  */
-const PUBLIC = ["/help-center", "/privacy-policy", "/terms-of-use"]
+const PUBLIC = [
+  "/help-center",
+  "/privacy-policy",
+  "/terms-of-use",
+  // Emailed links. Public rather than signed-out only, so opening one in a
+  // browser where somebody else is signed in still reaches the page.
+  "/accept-invite",
+  "/reset-password",
+  // Sample renders of the emails, for approval. Nothing on it is real.
+  "/preview",
+]
 
 /** Signed-out only. Somebody already in has no use for these. */
 const GUEST_ONLY = ["/login", "/forgot-password"]
