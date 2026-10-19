@@ -1,58 +1,111 @@
 import type { Metadata } from "next"
 
-import { PermissionRefused } from "@/components/access/permissionRefused"
-import { requireUser } from "@/lib/auth"
+import { StatCard } from "@/components/stats/statCard"
+import { TrendChart } from "@/components/seo/trendChart"
+import { Panel } from "@/components/system/panel"
+import { THIN_SCROLLBAR } from "@/lib/scrollbar"
+import { getSeoOverview } from "@/lib/seo"
+import type { SeoMetrics } from "@/lib/seoTypes"
+import { count, percent } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "SEO overview",
 }
 
-/** What it takes to open this screen at all. */
-const READ = "SEO_OVERVIEW:READ"
-
 /**
- * How the site is doing in search. Nothing in it yet — the room, before the
- * furniture.
+ * The four headline figures and the trend behind them.
  *
- * <p>It had four invented metric cards, built when this and `/customers` were a
- * matched pair proving the permission model worked: the development member holds
- * `CUSTOMER:READ` and not `SEO_OVERVIEW:READ`, so one screen rendered and the
- * other refused with nothing about the token differing between them. That test
- * has served its purpose, and the numbers were made up.
+ * <p>Clicks, impressions, click-through rate and average position — the only
+ * four numbers Search Console reports, so the only four there can be. Each shows
+ * how it moved against the window immediately before, which is what turns a
+ * figure into a direction.
  *
- * <p><b>Both guards were already in place before this was emptied</b>, and
- * neither was touched:
- *
- * <ul>
- *   <li><b>Backend.</b> `GET /api/overview/seo` carries
- *       `@PreAuthorize("hasAuthority('SEO_OVERVIEW:READ')")`, checked against the
- *       database on every request rather than read from the token.</li>
- *   <li><b>Permissions.</b> `SEO_OVERVIEW` is a module in the database with READ
- *       and EXPORT, in the Overview group, grantable to anybody — so it already
- *       appears in the permission screens without a line of TypeScript
- *       describing it.</li>
- * </ul>
- *
- * <p>⚠️ <b>The check below is now the only one running, and it is the weaker
- * one.</b> With nothing being fetched there is no request for the backend to
- * refuse, so this reads the permission off the session instead. That is fine for
- * deciding what to draw and is not a boundary: the moment this page loads real
- * data, the endpoint serving it has to demand the permission for itself. A page
- * that guards data an API hands out freely is a curtain, not a lock.
+ * <p>⚠️ Every number is invented — see `lib/seoSample.ts`, and the banner is on
+ * its way when there is a real connection to be absent. Nothing here has ever
+ * spoken to Google.
  */
 export default async function SeoOverviewPage() {
-  const user = await requireUser()
+  // Decided once, on the server, and passed down. Anything that reads the clock
+  // itself renders one answer here and a different one after hydration.
+  const now = new Date()
+  const overview = await getSeoOverview(now)
 
-  if (!user.permissions.includes(READ)) {
-    return <PermissionRefused module="the SEO overview" permission={READ} />
-  }
+  const unfinished = overview.days.filter((day) => !day.complete).length
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6">
-      <h1 className="font-heading text-2xl font-semibold tracking-tight">
-        SEO overview
-      </h1>
-      <p className="text-sm text-muted-foreground">Nothing here yet.</p>
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-1",
+        THIN_SCROLLBAR
+      )}
+    >
+      <div className="grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Clicks"
+          value={count(overview.totals.clicks)}
+          change={movement(overview.totals, overview.previous, "clicks")}
+        />
+        <StatCard
+          label="Impressions"
+          value={count(overview.totals.impressions)}
+          change={movement(overview.totals, overview.previous, "impressions")}
+        />
+        <StatCard
+          label="Click-through rate"
+          value={percent(overview.totals.ctr * 100, 1)}
+          change={movement(overview.totals, overview.previous, "ctr")}
+        />
+        <StatCard
+          label="Average position"
+          value={overview.totals.position.toFixed(1)}
+          change={movement(overview.totals, overview.previous, "position")}
+        />
+      </div>
+
+      <Panel
+        title="Clicks"
+        hint={
+          <>
+            One point a day. The dashed tail is the part Google has not finished
+            counting — those figures rise for a day or two after they appear.
+          </>
+        }
+        action={
+          unfinished > 0 ? (
+            <span className="font-mono text-[0.7rem] text-muted-foreground">
+              last {unfinished} days still counting
+            </span>
+          ) : null
+        }
+        className="shrink-0"
+        bodyClassName="p-3"
+      >
+        <TrendChart days={overview.days} />
+      </Panel>
     </div>
   )
+}
+
+/**
+ * How a figure moved against the previous window.
+ *
+ * <p>⚠️ <b>Position is inverted and it is the only one.</b> Going from 18th to
+ * 14th is an improvement, and the arithmetic makes it -22% — so the sign is
+ * flipped for that metric alone. Without this the one metric people most want to
+ * see improve is the one drawn in red when it does.
+ */
+function movement(
+  now: SeoMetrics,
+  before: SeoMetrics,
+  key: keyof SeoMetrics
+): { percent: number; period: string } {
+  const previous = before[key]
+  const change = previous === 0 ? 0 : ((now[key] - previous) / previous) * 100
+  const lowerIsBetter = key === "position"
+
+  return {
+    percent: Number(((lowerIsBetter ? -change : change)).toFixed(1)),
+    period: "vs previous 28 days",
+  }
 }
