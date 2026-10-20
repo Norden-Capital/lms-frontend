@@ -24,7 +24,8 @@ import { getSessionToken } from "@/lib/session"
 
 /** Mirrors the backend's UserResponse. */
 export type SessionUser = {
-  id: number
+  /** The public ID, like NC-7K4F-92QX. */
+  id: string
   firstName: string
   lastName: string
   email: string

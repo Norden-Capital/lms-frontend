@@ -22,6 +22,7 @@ function AppShell({
   identity,
   avatar,
   isAdmin = false,
+  isOwner = false,
   canOpenInbox = false,
 }: {
   children: React.ReactNode
@@ -36,6 +37,8 @@ function AppShell({
    * signed in, which is what lets it stay a Client Component.
    */
   isAdmin?: boolean
+  /** Whether to draw the Owner's Platform section. Same source as isAdmin. */
+  isOwner?: boolean
   /**
    * Whether to draw the inbox button in the navbar.
    *
@@ -62,6 +65,7 @@ function AppShell({
         onToggle={() => setOpen(false)}
         identity={identity}
         isAdmin={isAdmin}
+        isOwner={isOwner}
       />
 
       {/* No background of its own — the page shows through, which is one less

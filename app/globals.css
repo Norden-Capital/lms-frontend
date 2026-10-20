@@ -217,4 +217,54 @@
   html {
     @apply font-sans;
   }
+
+  /* Every scrollbar in the app, one style — copied from oneBase, decided
+     2026-10-19: square, 8px, a faint thumb, a hairline beside the vertical
+     track, no arrow buttons. Global so a new scroll area looks right without
+     anybody remembering a class. Chromium and Safari read these rules;
+     Firefox gets the fallback below. */
+  *::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-track:vertical {
+    border-left: 1px solid var(--border);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    border: 0;
+    border-radius: 0 !important;
+    background-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-button,
+  *::-webkit-scrollbar-button:single-button,
+  *::-webkit-scrollbar-button:horizontal:decrement,
+  *::-webkit-scrollbar-button:horizontal:increment,
+  *::-webkit-scrollbar-button:vertical:decrement,
+  *::-webkit-scrollbar-button:vertical:increment {
+    -webkit-appearance: none;
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+}
+
+/* Firefox has no ::-webkit-scrollbar. Inside @supports so Chromium never sees
+   scrollbar-width — setting it makes Chrome ignore the rules above entirely. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+  }
 }

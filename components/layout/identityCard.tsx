@@ -3,6 +3,7 @@ import { GalleryVerticalEnd } from "lucide-react"
 import { LiquidGlassLayers } from "@/components/ui/liquidGlass"
 import { Skeleton } from "@/components/ui/skeleton"
 import { currentUser } from "@/lib/auth"
+import { roleLabel } from "@/lib/roles"
 
 /**
  * Identity card at the top of the sidebar. The Liquid Glass treatment and its
@@ -71,13 +72,6 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   )
-}
-
-/** ADMIN -> Administrator. Anything unrecognised is shown as it came. */
-function roleLabel(role: string) {
-  return role === "ADMIN"
-    ? "Administrator"
-    : role.charAt(0) + role.slice(1).toLowerCase()
 }
 
 export { IdentityCard, IdentityCardSkeleton }

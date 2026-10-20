@@ -74,10 +74,13 @@ export default function AuthLayout({
           Norden Capital
         </div>
 
-        <blockquote className="relative mt-auto max-w-md text-sm leading-relaxed text-muted-foreground">
-          &ldquo;I finished my certification while working full time. The pacing
-          made it possible.&rdquo; — Imane Belkacem, Data Analytics &rsquo;25
-        </blockquote>
+        {/* What the platform is for, said plainly. It used to be a placeholder
+            testimonial from an invented student — a quote from somebody who
+            does not exist is not something to put in front of real people. */}
+        <p className="relative mt-auto max-w-md text-sm leading-relaxed text-muted-foreground">
+          Every form, every submission, gathered in one secure place — so your
+          team spends its time on the data, not on chasing it.
+        </p>
       </aside>
     </div>
   )

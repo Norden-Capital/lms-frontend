@@ -1,5 +1,7 @@
 import "server-only"
 
+import { headers as incomingHeaders } from "next/headers"
+
 import { getSessionToken } from "@/lib/session"
 
 /**
@@ -42,6 +44,20 @@ export async function apiFetch<T>(
   const { authenticated, headers, ...rest } = init
   const requestHeaders = new Headers(headers)
   requestHeaders.set("Content-Type", "application/json")
+
+  // The visitor's own address, for the backend's rate limits and action log —
+  // decided 2026-10-19. Every call arrives from this server, so without it the
+  // backend would see the same few Vercel addresses for everybody. The shared
+  // secret is what makes the backend believe the header; without it the header
+  // is ignored, as it should be from anybody else.
+  const proxySecret = process.env.PROXY_SECRET
+  if (proxySecret) {
+    const visitor = await visitorAddress()
+    if (visitor) {
+      requestHeaders.set("X-Client-IP", visitor)
+      requestHeaders.set("X-Proxy-Secret", proxySecret)
+    }
+  }
 
   if (authenticated) {
     const token = await getSessionToken()
@@ -95,6 +111,22 @@ export async function apiFetch<T>(
 function safeJson(text: string) {
   try {
     return JSON.parse(text)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Where the request this server is handling came from. Vercel puts the real
+ * visitor first in x-forwarded-for. Null outside a request — at build time —
+ * where there is no visitor to speak of.
+ */
+async function visitorAddress(): Promise<string | null> {
+  try {
+    const incoming = await incomingHeaders()
+    const chain = incoming.get("x-forwarded-for")
+    if (chain) return chain.split(",")[0].trim()
+    return incoming.get("x-real-ip")
   } catch {
     return null
   }

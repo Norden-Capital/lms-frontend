@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { TopBanner } from "@/components/ui/topBanner"
 import { useAccess } from "@/components/access/accessProvider"
 import { cn } from "@/lib/utils"
+import { ADMIN, isAssignable, roleLabel } from "@/lib/roles"
 
 /**
  * Inviting somebody: who they are and what they may do. They choose their own
@@ -42,7 +43,7 @@ const DEFAULT_ROLE = "MEMBER"
 const ADD_USER_FORM_ID = "add-user-form"
 
 function AddUserForm() {
-  const { roles, permissionsForRole, roleGrantsEverything } = useAccess()
+  const { roles, permissionsForRole, roleGrantsEverything, viewerIsOwner } = useAccess()
 
   const [state, submit, pending] = useActionState<ActionState, FormData>(
     async (_previous, formData) => createUser(formData),
@@ -173,8 +174,8 @@ function AddUserForm() {
                 className="h-8 rounded-md"
               />
               <p className="text-xs text-muted-foreground">
-                Used to sign in, and it cannot be changed later by the account
-                itself.
+                Used to sign in. It can&apos;t be changed later — check it
+                before sending.
               </p>
             </div>
 
@@ -225,9 +226,16 @@ function AddUserForm() {
               Details column sets rather than sitting at the top with a pool of
               empty card underneath them. */}
           <div className="flex flex-1 flex-col gap-2">
-            {roles.map((option) => {
+            {roles
+              .filter((option) => isAssignable(option.name))
+              .map((option) => {
               const selected = option.name === role
               const count = permissionsForRole(option.name).length
+              // Shown but switched off for an administrator: only the Owner
+              // invites administrators, and the backend refuses it from anybody
+              // else. Visible rather than hidden, so the choice is understood
+              // to exist — just not for them.
+              const locked = option.name === ADMIN && !viewerIsOwner
 
               return (
                 <label
@@ -240,8 +248,10 @@ function AddUserForm() {
                     "flex flex-1 cursor-pointer flex-col gap-1 rounded-md border p-3 transition-colors",
                     selected
                       ? "border-foreground/40 bg-muted/60"
-                      : "bg-card hover:bg-muted/40"
+                      : "bg-card hover:bg-muted/40",
+                    locked && "cursor-not-allowed opacity-50 hover:bg-card"
                   )}
+                  aria-disabled={locked || undefined}
                 >
                   <input
                     type="radio"
@@ -252,11 +262,12 @@ function AddUserForm() {
                     name="role-choice"
                     value={option.name}
                     checked={selected}
+                    disabled={locked}
                     onChange={() => chooseRole(option.name)}
                     className="sr-only"
                   />
                   <span className="flex items-center justify-between text-sm font-medium">
-                    {option.name === "ADMIN" ? "Administrator" : "Member"}
+                    {roleLabel(option.name)}
                     <span
                       aria-hidden
                       className={cn(
@@ -266,7 +277,7 @@ function AddUserForm() {
                     />
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {option.description}
+                    {locked ? "Only the Owner can invite administrators." : option.description}
                   </span>
                   {/* mt-auto pins this to the foot of the card. Now the cards
                       are taller than their text, the extra room has to go

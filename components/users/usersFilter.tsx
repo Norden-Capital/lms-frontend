@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAccess } from "@/components/access/accessProvider"
 import { cn } from "@/lib/utils"
+import { OWNER, roleLabel } from "@/lib/roles"
 
 /**
  * Filters for the user list, sitting up in the title row.
@@ -78,7 +79,9 @@ function RadioDot({ selected }: { selected: boolean }) {
 const KEYS = ["role", "status", "mfa"] as const
 
 function UsersFilter() {
-  const { roles } = useAccess()
+  const { roles, viewerIsOwner } = useAccess()
+  // Nobody sees a role above their own: only the Owner is offered "Owner".
+  const filterRoles = roles.filter((role) => viewerIsOwner || role.name !== OWNER)
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
@@ -160,7 +163,7 @@ function UsersFilter() {
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            {roles.map((role) => {
+            {filterRoles.map((role) => {
               const selected = selectedRole === role.name
 
               return (
@@ -191,12 +194,14 @@ function UsersFilter() {
 
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-xs font-medium">
-                      {role.name === "ADMIN" ? "Administrator" : "Member"}
+                      {roleLabel(role.name)}
                     </span>
                     <span className="text-[0.7rem] leading-tight text-muted-foreground">
-                      {role.name === "ADMIN"
-                        ? "Full access"
-                        : "Only what they are given"}
+                      {role.name === OWNER
+                        ? "Full access, and can deactivate administrators"
+                        : role.name === "ADMIN"
+                          ? "Full access"
+                          : "Only what they are given"}
                     </span>
                   </span>
 

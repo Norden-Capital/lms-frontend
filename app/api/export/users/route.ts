@@ -40,7 +40,7 @@ type Format = "csv" | "json" | "xlsx"
 
 /** The columns, in the order the table shows them. */
 const COLUMNS: { key: keyof UserRow | "name"; header: string; width: number }[] = [
-  { key: "id", header: "ID", width: 8 },
+  { key: "id", header: "ID", width: 16 },
   { key: "firstName", header: "First name", width: 18 },
   { key: "lastName", header: "Last name", width: 18 },
   { key: "email", header: "Email", width: 34 },
@@ -188,7 +188,8 @@ export async function GET(request: NextRequest) {
   // rows are already here.
   const ids = params.get("ids")
   if (ids) {
-    const wanted = new Set(ids.split(",").map(Number).filter(Number.isFinite))
+    // Public IDs, like NC-7K4F-92QX.
+    const wanted = new Set(ids.split(",").map((id) => id.trim()).filter(Boolean))
     rows = rows.filter((user) => wanted.has(user.id))
   }
 

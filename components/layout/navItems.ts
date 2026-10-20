@@ -3,6 +3,7 @@ import {
   DatabaseBackup,
   LayoutDashboard,
   LifeBuoy,
+  ScrollText,
   Settings,
   Share2,
   UserCog,
@@ -37,6 +38,8 @@ export type NavSection = {
    * backend refuses the request; this only decides what to draw.
    */
   adminOnly?: boolean
+  /** Drawn for the Owner and nobody else — see the Platform section. */
+  ownerOnly?: boolean
 }
 
 /**
@@ -75,13 +78,22 @@ export const navSections: NavSection[] = [
     adminOnly: true,
     items: [
       { title: "Users", href: "/users", icon: UserCog },
-      { title: "System Health", href: "/system-health", icon: Activity },
-      { title: "Backups", href: "/backups", icon: DatabaseBackup },
       // Roles & Permissions used to sit here and no longer does. The screen
       // still exists at /roles-permissions, but changing somebody's permissions
       // only makes sense once you have said whose — so it is reached by
       // "Change permissions" on an account, which carries the person in the URL,
       // rather than by a link that arrives with nobody selected.
+    ],
+  },
+  {
+    // The Owner's alone — decided 2026-10-19. What happened on the platform
+    // and the machine it runs on are not things administrators see.
+    title: "Platform",
+    ownerOnly: true,
+    items: [
+      { title: "Action Log", href: "/action-log", icon: ScrollText },
+      { title: "System Health", href: "/system-health", icon: Activity },
+      { title: "Backups", href: "/backups", icon: DatabaseBackup },
     ],
   },
 ]

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 
 import { apiFetch } from "@/lib/api"
 import type { ActionState } from "@/lib/actionState"
+import { roleLabel } from "@/lib/roles"
 
 /**
  * Everything that changes a user account.
@@ -34,7 +35,7 @@ import type { ActionState } from "@/lib/actionState"
  * taken from one has to be true on the other. Revalidating the layout rather
  * than the page catches the nested routes under `/users` in one call.
  */
-function refreshUserScreens(id?: number | string) {
+function refreshUserScreens(id?: string) {
   revalidatePath("/users")
   if (id !== undefined) revalidatePath(`/users/${id}`)
 }
@@ -68,7 +69,7 @@ function failure(error: { status: number; message: string; fieldErrors?: Record<
  * person chooses their own password from it.
  */
 export async function createUser(formData: FormData): Promise<ActionState> {
-  const result = await apiFetch<{ id: number }>("/api/users", {
+  const result = await apiFetch<{ id: string }>("/api/users", {
     method: "POST",
     authenticated: true,
     body: JSON.stringify({
@@ -88,15 +89,15 @@ export async function createUser(formData: FormData): Promise<ActionState> {
   redirect(`/users/${result.data.id}`)
 }
 
-/** Editing name, email and phone. Nothing here changes what they may do. */
-export async function updateUser(id: number, formData: FormData): Promise<ActionState> {
+/** Editing name and phone. The email never changes; nothing here changes what they may do. */
+export async function updateUser(id: string, formData: FormData): Promise<ActionState> {
   const result = await apiFetch(`/api/users/${id}`, {
     method: "PATCH",
     authenticated: true,
     body: JSON.stringify({
       firstName: String(formData.get("firstName") ?? "").trim(),
       lastName: String(formData.get("lastName") ?? "").trim(),
-      email: String(formData.get("email") ?? "").trim(),
+      // No email: an account's address cannot be changed.
       phone: String(formData.get("phone") ?? "").trim(),
     }),
   })
@@ -114,7 +115,7 @@ export async function updateUser(id: number, formData: FormData): Promise<Action
  * dialog says so before you confirm; if that copy is ever softened, the
  * behaviour is still this.
  */
-export async function changeUserRole(id: number, role: string): Promise<ActionState> {
+export async function changeUserRole(id: string, role: string): Promise<ActionState> {
   const result = await apiFetch(`/api/users/${id}/role`, {
     method: "PATCH",
     authenticated: true,
@@ -124,11 +125,11 @@ export async function changeUserRole(id: number, role: string): Promise<ActionSt
   if (!result.ok) return failure(result.error)
 
   refreshUserScreens(id)
-  return { ok: true, message: `Role changed to ${role === "ADMIN" ? "Administrator" : "Member"}.` }
+  return { ok: true, message: `Role changed to ${roleLabel(role)}.` }
 }
 
 /** Switching an account off, or back on. */
-export async function changeUserStatus(id: number, status: string): Promise<ActionState> {
+export async function changeUserStatus(id: string, status: string): Promise<ActionState> {
   const result = await apiFetch(`/api/users/${id}/status`, {
     method: "PATCH",
     authenticated: true,
@@ -148,7 +149,7 @@ export async function changeUserStatus(id: number, status: string): Promise<Acti
  * Emailing somebody a password reset link. The administrator never sees or
  * chooses the password — the person picks it from their own inbox.
  */
-export async function sendPasswordResetLink(id: number): Promise<ActionState> {
+export async function sendPasswordResetLink(id: string): Promise<ActionState> {
   const result = await apiFetch<{ message: string }>(`/api/users/${id}/password-reset`, {
     method: "POST",
     authenticated: true,
@@ -160,7 +161,7 @@ export async function sendPasswordResetLink(id: number): Promise<ActionState> {
 }
 
 /** Sending an invited person their invitation again. The old link stops working. */
-export async function resendInvitation(id: number): Promise<ActionState> {
+export async function resendInvitation(id: string): Promise<ActionState> {
   const result = await apiFetch<{ message: string }>(`/api/users/${id}/invitation`, {
     method: "POST",
     authenticated: true,
@@ -172,7 +173,7 @@ export async function resendInvitation(id: number): Promise<ActionState> {
 }
 
 /** Clearing somebody's two-factor so they can enrol again on a new phone. */
-export async function resetUserTwoFactor(id: number): Promise<ActionState> {
+export async function resetUserTwoFactor(id: string): Promise<ActionState> {
   const result = await apiFetch<{ message: string }>(`/api/users/${id}/2fa/reset`, {
     method: "POST",
     authenticated: true,
@@ -192,7 +193,7 @@ export async function resetUserTwoFactor(id: number): Promise<ActionState> {
  * means "no exceptions at all", which is the only way one can be removed.
  */
 export async function setUserPermissions(
-  id: number,
+  id: string,
   granted: string[],
   denied: string[],
   reason?: string

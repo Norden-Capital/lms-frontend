@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Check, Copy, Download, TriangleAlert } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 /**
  * Recovery codes, in the only moment they exist as plaintext.
@@ -19,9 +20,15 @@ import { Button } from "@/components/ui/button"
 function RecoveryCodesPanel({
   codes,
   email,
+  onDownload,
+  actionsAtEnd = false,
 }: {
   codes: string[]
   email: string
+  /** Copy and Download against the right edge instead of the left. */
+  actionsAtEnd?: boolean
+  /** Told once the file has been handed to the browser — enrolment waits for it. */
+  onDownload?: () => void
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -57,6 +64,7 @@ function RecoveryCodesPanel({
     anchor.download = "norden-capital-recovery-codes.txt"
     anchor.click()
     URL.revokeObjectURL(url)
+    onDownload?.()
   }
 
   return (
@@ -81,7 +89,7 @@ function RecoveryCodesPanel({
         ))}
       </ul>
 
-      <div className="flex items-center gap-2">
+      <div className={cn("flex items-center gap-2", actionsAtEnd && "justify-end")}>
         <Button type="button" variant="outline" onClick={copyAll}>
           {copied ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
           {copied ? "Copied" : "Copy all"}

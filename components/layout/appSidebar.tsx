@@ -47,40 +47,18 @@ import { SidebarTrigger } from "@/components/layout/sidebarTrigger"
 /** Shared by plain links and collapsible triggers so the two stay identical. */
 const ROW =
   "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors"
-// fill-current overrides lucide's own fill="none" — a CSS rule outranks an SVG
-// presentation attribute, so there is no need to pass fill through as a prop.
-//
-// Scoped to the direct first child, not `[&_svg]`: a descendant selector also
-// catches the ChevronDown ending a collapsible trigger, and that icon is a
-// stroked "v" — filling it renders a solid wedge instead of an arrow. The
-// leading icon is the first element in both a plain link and a trigger.
-const ROW_ACTIVE =
-  "bg-white font-medium text-foreground shadow-sm [&>svg:first-child]:fill-current"
+// The icon stays an outline when active — decided 2026-10-19. The white pill,
+// the weight and the colour already mark the current page; a filled icon on
+// top of that was one signal too many.
+const ROW_ACTIVE = "bg-white font-medium text-foreground shadow-sm"
 const ROW_IDLE = "text-muted-foreground hover:text-foreground"
-
-/**
- * Thin, square, chrome-less scrollbar.
- *
- * Deliberately the ::-webkit-* pseudo-elements rather than the standard
- * `scrollbar-width` / `scrollbar-color`: those cannot square off the thumb or
- * drop the buttons, and worse, setting either one makes Chrome ignore the
- * webkit rules entirely. So it is one approach or the other, not both — this
- * one buys exact control in Chromium and Safari, and Firefox keeps its default
- * scrollbar.
- */
-const SCROLLBAR = [
-  "[&::-webkit-scrollbar]:w-1",
-  "[&::-webkit-scrollbar-track]:bg-transparent",
-  "[&::-webkit-scrollbar-thumb]:rounded-none",
-  "[&::-webkit-scrollbar-thumb]:bg-[#D6D5D2]",
-  "[&::-webkit-scrollbar-button]:hidden",
-].join(" ")
 
 function AppSidebar({
   open,
   onToggle,
   identity,
   isAdmin = false,
+  isOwner = false,
 }: {
   open: boolean
   onToggle: () => void
@@ -88,13 +66,17 @@ function AppSidebar({
   identity?: React.ReactNode
   /** Decides whether the admin-only sections are drawn at all. */
   isAdmin?: boolean
+  /** Decides whether the Owner's Platform section is drawn. */
+  isOwner?: boolean
 }) {
   const pathname = usePathname()
 
   // Filtered rather than dimmed or disabled. A greyed-out menu item invites
   // somebody to work out how to earn it, and here there is nothing to earn:
   // Management comes with being an administrator or not at all.
-  const sections = navSections.filter((section) => isAdmin || !section.adminOnly)
+  const sections = navSections.filter(
+    (section) => (isAdmin || !section.adminOnly) && (isOwner || !section.ownerOnly)
+  )
 
   return (
     <aside
@@ -128,10 +110,8 @@ function AppSidebar({
         {/* Scrolls on its own once the nav outgrows the viewport, so the
             identity card above it stays put. */}
         <nav
-          className={cn(
-            "flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4",
-            SCROLLBAR
-          )}
+          // The scrollbar itself is the global one in globals.css.
+          className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4"
         >
           {sections.map((section, index) => (
             <div
@@ -294,7 +274,7 @@ function AppSidebar({
                     centred row, description sits under both. */}
                 <AlertDialogHeader className="flex flex-col items-center gap-1.5 text-center">
                   <div className="flex items-center gap-2">
-                    <AlertDialogMedia className="relative size-8 overflow-hidden bg-destructive/10 text-destructive">
+                    <AlertDialogMedia className="relative mb-0 size-8 overflow-hidden bg-destructive/10 text-destructive">
                       <LiquidGlassLayers />
                       {/* Sized explicitly, which also opts out of the media
                           slot's own size-6 default for bare svgs. relative so

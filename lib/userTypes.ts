@@ -14,7 +14,8 @@
 
 /** A row in the list. Mirrors the backend's UserSummaryResponse. */
 export type UserRow = {
-  id: number
+  /** The public ID, like NC-7K4F-92QX — never the database's number. */
+  id: string
   firstName: string
   lastName: string
   email: string

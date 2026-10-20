@@ -1,4 +1,5 @@
 import { AccessProvider } from "@/components/access/accessProvider"
+import { currentUser } from "@/lib/auth"
 import { getPermissionCatalogue, getRoles } from "@/lib/users"
 
 /**
@@ -24,9 +25,10 @@ export default async function UsersLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [catalogue, roles] = await Promise.all([
+  const [catalogue, roles, viewer] = await Promise.all([
     getPermissionCatalogue(),
     getRoles(),
+    currentUser(),
   ])
 
   return (
@@ -36,6 +38,7 @@ export default async function UsersLayout({
       // backend outage should see the page's own error, not this one's.
       groups={catalogue.ok ? catalogue.data.groups : []}
       roles={roles.ok ? roles.data : []}
+      viewerRole={viewer?.role}
     >
       {children}
     </AccessProvider>

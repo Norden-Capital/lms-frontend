@@ -25,6 +25,9 @@ import {
 
 import {
   UserActionDialogs,
+  canChangePermissions,
+  canChangeRole,
+  canManage,
   isInvited,
   type UserAction,
 } from "@/components/users/userActionDialogs"
@@ -62,12 +65,15 @@ import {
 import { TablePagination } from "@/components/ui/tablePagination"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
+import { roleLabel } from "@/lib/roles"
+import { useAccess } from "@/components/access/accessProvider"
 
 type SortKey =
   | "id"
   | "firstName"
   | "lastName"
   | "email"
+  | "role"
   | "mfaEnabled"
   | "status"
   | "createdAt"
@@ -92,17 +98,20 @@ const JOINED = new Intl.DateTimeFormat("en-GB", {
  * ragged gap down the column, while names and emails vary in length and have to
  * start from a common edge to be scannable.
  */
-const COLUMNS: { key: SortKey; label: string; centred?: boolean }[] = [
-  { key: "id", label: "ID", centred: true },
+// Every column left-aligned — decided 2026-10-19. One edge for the eye to
+// follow down the table, instead of some columns centred and some not.
+const COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "id", label: "ID" },
   { key: "firstName", label: "First name" },
   { key: "lastName", label: "Last name" },
   { key: "email", label: "Email" },
-  { key: "mfaEnabled", label: "2FA", centred: true },
-  { key: "status", label: "Status", centred: true },
+  { key: "role", label: "Role" },
+  { key: "mfaEnabled", label: "2FA" },
+  { key: "status", label: "Status" },
   // Last of the data columns, beside Actions. It is the one the list is sorted
   // by out of the box, and a table ordered by something it does not show looks
   // arbitrarily shuffled.
-  { key: "createdAt", label: "Joined", centred: true },
+  { key: "createdAt", label: "Joined" },
 ]
 
 /**
@@ -140,6 +149,12 @@ const STICKY_HEAD =
  */
 function UserRowActions({ user }: { user: UserRow }) {
   const [action, setAction] = useState<UserAction>(null)
+  const { viewerIsOwner } = useAccess()
+  // Administrators manage members; only the Owner manages administrators.
+  // An administrator looking at another administrator's row can only view it.
+  const manage = canManage(user, viewerIsOwner)
+  const role = canChangeRole(user, viewerIsOwner)
+  const permissions = manage && canChangePermissions(user)
 
   return (
     <>
@@ -163,7 +178,9 @@ function UserRowActions({ user }: { user: UserRow }) {
 
             Grouped by what the action touches: reading the account, changing
             what it may do, changing how it gets in. The destructive item is last
-            and alone, well away from where the pointer rests after opening. */}
+            and alone, well away from where the pointer rests after opening.
+
+            Items the backend would refuse are left out, not greyed out. */}
         <DropdownMenuContent align="end" className="min-w-52">
           <DropdownMenuGroup>
             <DropdownMenuLabel>Account</DropdownMenuLabel>
@@ -174,58 +191,72 @@ function UserRowActions({ user }: { user: UserRow }) {
               <Eye data-icon="inline-start" />
               View details
             </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href={`/users/${user.id}/edit`} />}>
-              <SquarePen data-icon="inline-start" />
-              Edit details
-            </DropdownMenuItem>
+            {manage && (
+              <DropdownMenuItem render={<Link href={`/users/${user.id}?edit=1`} />}>
+                <SquarePen data-icon="inline-start" />
+                Edit details
+              </DropdownMenuItem>
+            )}
           </DropdownMenuGroup>
 
-          <DropdownMenuSeparator />
+          {(role || permissions) && (
+            <>
+              <DropdownMenuSeparator />
 
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Access</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => setAction("role")}>
-              <UserCog data-icon="inline-start" />
-              Change role
-            </DropdownMenuItem>
-            {/* A link, not a dialog. Choosing among twelve permissions needs
-                the whole picker, which is a screen — and `?user=` is what tells
-                that screen whose permissions it is showing. */}
-            <DropdownMenuItem
-              render={<Link href={`/users/${user.id}/permissions`} />}
-            >
-              <KeySquare data-icon="inline-start" />
-              Change permissions
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Access</DropdownMenuLabel>
+                {role && (
+                  <DropdownMenuItem onClick={() => setAction("role")}>
+                    <UserCog data-icon="inline-start" />
+                    Change role
+                  </DropdownMenuItem>
+                )}
+                {/* A link, not a dialog. Choosing among twelve permissions needs
+                    the whole picker, which is a screen — and `?user=` is what tells
+                    that screen whose permissions it is showing. */}
+                {permissions && (
+                  <DropdownMenuItem
+                    render={<Link href={`/users/${user.id}/permissions`} />}
+                  >
+                    <KeySquare data-icon="inline-start" />
+                    Change permissions
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
+            </>
+          )}
 
-          <DropdownMenuSeparator />
+          {manage && (
+            <>
+              <DropdownMenuSeparator />
 
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Security</DropdownMenuLabel>
-            {/* Both of these get somebody back in when they are locked out —
-                one for a forgotten password (by email), one for a lost phone.
-                Someone invited but not joined gets their invitation again. */}
-            <DropdownMenuItem onClick={() => setAction("password")}>
-              <KeyRound data-icon="inline-start" />
-              {isInvited(user) ? "Resend invitation" : "Send reset link"}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setAction("twoFactor")}>
-              <ShieldCheck data-icon="inline-start" />
-              Reset two-factor
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              variant={user.status === "ACTIVE" || isInvited(user) ? "destructive" : undefined}
-              onClick={() => setAction("deactivate")}
-            >
-              <UserX data-icon="inline-start" />
-              {user.status === "ACTIVE"
-                ? "Deactivate"
-                : isInvited(user)
-                  ? "Cancel invitation"
-                  : "Turn back on"}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Security</DropdownMenuLabel>
+                {/* Both of these get somebody back in when they are locked out —
+                    one for a forgotten password (by email), one for a lost phone.
+                    Someone invited but not joined gets their invitation again. */}
+                <DropdownMenuItem onClick={() => setAction("password")}>
+                  <KeyRound data-icon="inline-start" />
+                  {isInvited(user) ? "Resend invitation" : "Send reset link"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setAction("twoFactor")}>
+                  <ShieldCheck data-icon="inline-start" />
+                  Reset two-factor
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant={user.status === "ACTIVE" || isInvited(user) ? "destructive" : undefined}
+                  onClick={() => setAction("deactivate")}
+                >
+                  <UserX data-icon="inline-start" />
+                  {user.status === "ACTIVE"
+                    ? "Deactivate"
+                    : isInvited(user)
+                      ? "Cancel invitation"
+                      : "Turn back on"}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -235,6 +266,18 @@ function UserRowActions({ user }: { user: UserRow }) {
         onClose={() => setAction(null)}
       />
     </>
+  )
+}
+
+/**
+ * Whether a click landed on something with its own job inside a row — the
+ * checkbox, the actions menu, a link — rather than on the row itself. Those
+ * must not also open the person's page.
+ */
+function isInsideControl(target: EventTarget) {
+  return (
+    target instanceof Element &&
+    target.closest("button, a, input, label, [role='checkbox'], [role='menuitem'], [role='menu']") !== null
   )
 }
 
@@ -270,7 +313,7 @@ function UsersTable({
   // decision about rows on screen, not a place you would want to link somebody
   // to. Changing page clears it, which is the honest behaviour — "select all"
   // never silently held onto people you had scrolled past.
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const [sortKey, sortDir] = (query.sort ?? "").split(",")
   const pageSize = Number(query.size) || DEFAULT_PAGE_SIZE
@@ -366,7 +409,7 @@ function UsersTable({
     setSelected(next)
   }
 
-  function toggleOne(id: number, checked: boolean) {
+  function toggleOne(id: string, checked: boolean) {
     const next = new Set(selected)
     if (checked) next.add(id)
     else next.delete(id)
@@ -549,7 +592,7 @@ function UsersTable({
                   />
                 </TableHead>
 
-                {COLUMNS.map(({ key, label, centred }) => {
+                {COLUMNS.map(({ key, label }) => {
                   const active = sortKey === key
                   const Icon = !active
                     ? ChevronsUpDown
@@ -560,7 +603,7 @@ function UsersTable({
                   return (
                     <TableHead
                       key={key}
-                      className={cn(HEAD, STICKY_HEAD, centred && "text-center")}
+                      className={cn(HEAD, STICKY_HEAD)}
                       // On the header cell, not the button: aria-sort describes
                       // the column, and a button has no such state to report.
                       aria-sort={
@@ -623,10 +666,25 @@ function UsersTable({
                   <TableRow
                     key={user.id}
                     data-state={selected.has(user.id) ? "selected" : undefined}
+                    // The whole row opens the person's page — decided 2026-10-19.
+                    // Clicks on the checkbox, the actions menu or anything else
+                    // interactive inside the row keep doing their own thing.
+                    onClick={(event) => {
+                      // A dialog opened from this row's menu is drawn elsewhere
+                      // on the page, but React still passes its clicks up to
+                      // the row. Only clicks physically inside the row count.
+                      if (!(event.target instanceof Node) || !event.currentTarget.contains(event.target)) return
+                      if (isInsideControl(event.target)) return
+                      router.push(`/users/${user.id}`)
+                    }}
+                    onMouseEnter={() => router.prefetch(`/users/${user.id}`)}
                     // Deactivated accounts dim rather than disappear: they still
                     // hold the email address, so hiding them means the same
                     // person cannot be found when they come back.
-                    className={cn(user.status === "DEACTIVATED" && "opacity-55")}
+                    className={cn(
+                      "cursor-pointer",
+                      user.status === "DEACTIVATED" && "opacity-55"
+                    )}
                   >
                     <TableCell className="pl-4">
                       <Checkbox
@@ -636,8 +694,8 @@ function UsersTable({
                       />
                     </TableCell>
 
-                    <TableCell className="text-center font-mono text-xs text-muted-foreground">
-                      #{String(user.id).padStart(4, "0")}
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {user.id}
                     </TableCell>
 
                     <TableCell className="font-medium">{user.firstName}</TableCell>
@@ -647,15 +705,19 @@ function UsersTable({
                       {user.email}
                     </TableCell>
 
-                    <TableCell className="text-center">
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {roleLabel(user.role)}
+                    </TableCell>
+
+                    <TableCell>
                       <TwoFactorBadge enabled={user.mfaEnabled} />
                     </TableCell>
 
-                    <TableCell className="text-center">
+                    <TableCell>
                       <StatusBadge status={user.status} />
                     </TableCell>
 
-                    <TableCell className="text-center text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
                       {user.createdAt ? JOINED.format(new Date(user.createdAt)) : "—"}
                     </TableCell>
 

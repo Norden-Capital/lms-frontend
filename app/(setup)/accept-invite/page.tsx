@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { MailX, UserRoundPlus } from "lucide-react"
 
-import { acceptInvitation } from "@/app/(auth)/accept-invite/actions"
+import { acceptInvitation } from "@/app/(setup)/accept-invite/actions"
 import { BackToSignIn, LinkHeader } from "@/components/setPassword/linkHeader"
 import { SetPasswordForm } from "@/components/setPassword/setPasswordForm"
 import { apiFetch } from "@/lib/api"

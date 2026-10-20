@@ -25,7 +25,15 @@ import {
 } from "@/components/ui/alert-dialog"
 import { LiquidGlassLayers } from "@/components/ui/liquidGlass"
 import { useAccess } from "@/components/access/accessProvider"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { ADMIN, OWNER, isAssignable, isPrivileged, roleLabel } from "@/lib/roles"
 
 /**
  * Every dialog a single account can open, behind one switch.
@@ -53,7 +61,7 @@ type UserAction = "role" | "twoFactor" | "password" | "deactivate" | null
 /** What every dialog here needs to know about the person. */
 type ActionTarget = {
   /** Needed by the callers, which link to per-person screens by id. */
-  id: number
+  id: string
   firstName: string
   lastName: string
   email: string
@@ -63,26 +71,15 @@ type ActionTarget = {
 }
 
 /**
- * The account named inside the dialog, not only in the sentence above it.
+ * The icon-beside-title header the deactivate dialog established, with the
+ * account named in the title and its email in the sentence under it — decided
+ * 2026-10-19 (see {@link Email}).
  *
- * <p>These open from a row menu, and by the time the dialog covers the table the
- * row it came from is behind it. Without this you are confirming something
- * irreversible against a name you last read a second ago.
+ * <p>The person is part of the title, not a card further down: these open from
+ * a row menu, and by the time the dialog covers the table the row is behind it.
+ * The first thing read should be who this is about, before anything is
+ * confirmed against them.
  */
-function TargetCard({ user }: { user: ActionTarget }) {
-  return (
-    <div className="flex flex-col gap-0.5 rounded-md border bg-muted/40 px-3 py-2 text-center">
-      <span className="text-sm font-medium">
-        {user.firstName} {user.lastName}
-      </span>
-      <span className="text-xs break-all text-muted-foreground">
-        {user.email}
-      </span>
-    </div>
-  )
-}
-
-/** The icon-beside-title header the deactivate dialog established. */
 function DialogHead({
   icon: Icon,
   tone,
@@ -90,17 +87,22 @@ function DialogHead({
   children,
 }: {
   icon: React.ComponentType<{ className?: string }>
-  /** Background and text for the media chip, e.g. `bg-warning/10 text-warning`. */
+  /** The chip's background and the icon's colour, e.g. `bg-warning/10 text-warning`. */
   tone: string
+  /** The action, short, like "Log out?" — the email in the sentence says who. */
   title: string
   children: React.ReactNode
 }) {
   return (
+    // The sign-out dialog's header, exactly — decided 2026-10-19: centred,
+    // the icon in its glass chip beside the title, the sentence under both.
+    // flex overrides the header's own grid, which would put the chip on its
+    // own row.
     <AlertDialogHeader className="flex flex-col items-center gap-1.5 text-center">
       <div className="flex items-center gap-2">
-        <AlertDialogMedia
-          className={cn("relative size-8 overflow-hidden", tone)}
-        >
+        {/* mb-0: the media slot brings its own bottom margin, which would sit the
+            chip 4px above the centre of the title beside it. */}
+        <AlertDialogMedia className={cn("relative mb-0 size-8 shrink-0 overflow-hidden", tone)}>
           <LiquidGlassLayers />
           {/* relative so it paints above the glass layers, and sized explicitly
               to opt out of the media slot's size-6 default. */}
@@ -175,7 +177,7 @@ function ChangeRoleDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { roles, permissionsForRole } = useAccess()
+  const { roles } = useAccess()
   const [role, setRole] = useState(user.role)
   const { pending, error, setError, run } = useAction(() => onOpenChange(false))
 
@@ -196,79 +198,51 @@ function ChangeRoleDialog({
   }
 
   const changed = role !== user.role
-  const leavingAdmin = user.role === "ADMIN" && changed
 
   return (
     <AlertDialog open={open} onOpenChange={pending ? undefined : onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent size="sm">
         <DialogHead
           icon={UserCog}
           tone="bg-muted text-foreground"
           title="Change role"
         >
-          A role sets what this account can do before any per-person exception.
+          <Email address={user.email} />{" "}will be signed out, and any permission
+          set just for them is cleared.
         </DialogHead>
 
-        <TargetCard user={user} />
-
-        <div className="flex flex-col gap-2">
-          {roles.map((option) => {
-            const selected = option.name === role
-            const count = permissionsForRole(option.name).length
-
-            return (
-              <label
-                key={option.name}
-                className={cn(
-                  "flex cursor-pointer flex-col gap-1 rounded-md border p-3 transition-colors",
-                  "bg-card hover:bg-muted/40",
-                  selected && "border-foreground/40",
-                  pending && "pointer-events-none opacity-60"
-                )}
-              >
-                <input
-                  type="radio"
-                  name="role-change"
-                  value={option.name}
-                  checked={selected}
-                  disabled={pending}
-                  onChange={() => setRole(option.name)}
-                  className="sr-only"
-                />
-
-                <span className="flex items-center justify-between gap-2 text-sm font-medium">
-                  {option.name === "ADMIN" ? "Administrator" : "Member"}
-                  {/* Says which one they are on now, so "no change" is visible
-                      rather than something you work out by remembering. */}
-                  {option.name === user.role && (
-                    <span className="font-mono text-[0.6rem] tracking-wide text-muted-foreground uppercase">
-                      Current
-                    </span>
-                  )}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {option.description}
-                </span>
-                <span className="font-mono text-[0.65rem] tracking-wide text-muted-foreground uppercase">
-                  {count === 0
-                    ? "Nothing by default"
-                    : `All ${count} permissions`}
-                </span>
-              </label>
-            )
-          })}
-        </div>
-
-        {/* Both consequences, said before the button rather than after. The
-            second one is the surprise: changing a role signs the person out, so
-            they will be asked for their password again. */}
-        {changed && (
-          <p className="rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
-            {leavingAdmin
-              ? "They lose every permission that came with being an administrator, and any exception set for them personally is cleared. They will be signed out."
-              : "Any permission set for this person individually is cleared, since it was a difference from the role they are leaving. They will be signed out."}
-          </p>
-        )}
+        {/* A dropdown — decided 2026-10-19 — instead of a card per role. */}
+        <Select
+          value={role}
+          onValueChange={(value) => {
+            if (value) setRole(value)
+          }}
+          disabled={pending}
+        >
+          <SelectTrigger className="w-full" aria-label="Role">
+            {/* Without a formatter this renders the raw value, ADMIN. */}
+            <SelectValue>
+              {(value: string | null) => (value ? roleLabel(value) : "Choose a role")}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent alignItemWithTrigger={false}>
+            {roles
+              .filter((option) => isAssignable(option.name))
+              .map((option) => (
+                <SelectItem key={option.name} value={option.name}>
+                  {/* One baseline for both: "Current" is smaller, and centred
+                      on its own it sits higher than the role beside it. */}
+                  <span className="flex items-baseline gap-2">
+                    {roleLabel(option.name)}
+                    {/* Which one they are on now, so "no change" is visible. */}
+                    {option.name === user.role && (
+                      <span className="text-xs text-muted-foreground">Current</span>
+                    )}
+                  </span>
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
 
         <Refusal message={error} />
 
@@ -317,30 +291,26 @@ function ResetTwoFactorDialog({
           tone="bg-warning/10 text-warning"
           title="Reset two-factor?"
         >
-          {user.mfaEnabled
-            ? "Their authenticator app stops working immediately, and they set up a new one the next time they sign in."
-            : "This account has not set up two-factor yet, so there is nothing to reset."}
+          {user.mfaEnabled ? (
+            <>
+              The authenticator app and recovery codes for{" "}
+              <Email address={user.email} />{" "}stop working now. They set up a new
+              one the next time they sign in.
+            </>
+          ) : (
+            <>
+              <Email address={user.email} />{" "}hasn&apos;t set up two-factor yet,
+              so there is nothing to reset.
+            </>
+          )}
         </DialogHead>
-
-        <TargetCard user={user} />
-
-        {/* The consequence, separated from the description so it is not read as
-            more reassurance.
-
-            An account that never enrolled is already sitting in the enrolment
-            screen — resetting it would change nothing, so the dialog says so
-            rather than letting somebody press a button and wonder what it did. */}
-        <p className="rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-muted-foreground">
-          {user.mfaEnabled
-            ? "Two-factor is required for everyone here, so until they finish setting it up again they cannot do anything at all — not even sign in and wait. Their old recovery codes stop working too."
-            : "They are already being asked to enrol every time they sign in, and cannot do anything until they finish. If they are stuck, the problem is not their two-factor."}
-        </p>
 
         <Refusal message={error} />
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
+            variant="destructive"
             disabled={!user.mfaEnabled || pending}
             onClick={() => run(() => resetUserTwoFactor(user.id))}
           >
@@ -395,14 +365,20 @@ function EmailLinkDialog({
         <DialogHead
           icon={invited ? Send : KeyRound}
           tone="bg-muted text-foreground"
-          title={invited ? "Resend invitation" : "Send password reset link"}
+          title={invited ? "Resend invitation?" : "Send reset link?"}
         >
-          {invited
-            ? "They haven't set up their account yet. A new invitation email goes out, and the old link stops working."
-            : "They get an email with a link to choose a new password. The link works once, for 30 minutes. Their two-factor stays the same."}
+          {invited ? (
+            <>
+              A new invitation goes to <Email address={user.email} />, and the
+              old link stops working.
+            </>
+          ) : (
+            <>
+              We&apos;ll send a link to <Email address={user.email} />{" "}to choose
+              a new password. It works for 30 minutes.
+            </>
+          )}
         </DialogHead>
-
-        <TargetCard user={user} />
 
         <Refusal message={error} />
 
@@ -415,6 +391,51 @@ function EmailLinkDialog({
       </AlertDialogContent>
     </AlertDialog>
   )
+}
+
+/**
+ * Who may act on whose account — decided 2026-10-19, and enforced by the
+ * backend: administrators manage members, only the Owner manages
+ * administrators, and nobody but the Owner touches the Owner's account.
+ *
+ * <p>Covers editing details, reset links, two-factor resets and switching an
+ * account off or on. Buttons are left out rather than disabled, so nothing
+ * invites a click the backend would refuse.
+ */
+function canManage(user: { role: string }, viewerIsOwner: boolean) {
+  if (user.role === OWNER) return false
+  if (user.role === ADMIN) return viewerIsOwner
+  return true
+}
+
+/**
+ * Changing a role always involves the administrator role — promoting to it or
+ * demoting from it — so it is the Owner's alone. The Owner's own role never
+ * changes.
+ */
+function canChangeRole(user: { role: string }, viewerIsOwner: boolean) {
+  return viewerIsOwner && user.role !== OWNER
+}
+
+/**
+ * Per-person permission exceptions exist for members only: an administrator or
+ * the Owner already holds everything.
+ */
+function canChangePermissions(user: { role: string }) {
+  return !isPrivileged(user.role)
+}
+
+/**
+ * The address, inside the sentence that says what happens to it. Two people
+ * can share a name but never an address, so every dialog says which one —
+ * slightly darker than the sentence around it, so it can be found at a glance.
+ *
+ * <p>break-words, not break-all: the address moves to the next line whole, and
+ * is only split if it is longer than a line on its own. Callers put an explicit
+ * {" "} after it, so the space survives however the sentence is wrapped.
+ */
+function Email({ address }: { address: string }) {
+  return <span className="font-medium break-words text-foreground">{address}</span>
 }
 
 /** Invited and not yet joined — they have no password to reset. */
@@ -446,7 +467,6 @@ function DeactivateUserDialog({
 }) {
   const { pending, error, run } = useAction(() => onOpenChange(false))
 
-  const name = `${user.firstName} ${user.lastName}`
   // An invited person is not active, but switching them "back on" is not a
   // thing — they become active by accepting. For them this cancels the invite.
   const invited = isInvited(user)
@@ -458,27 +478,33 @@ function DeactivateUserDialog({
       <AlertDialogContent size="sm">
         <DialogHead
           icon={UserX}
-          tone={
-            reactivating
-              ? "bg-success/10 text-success"
-              : "bg-destructive/10 text-destructive"
-          }
+          tone={reactivating ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}
           title={
             invited
-              ? "Cancel this invitation?"
+              ? "Cancel invitation?"
               : reactivating
-                ? "Turn this account back on?"
-                : "Deactivate this account?"
+                ? "Turn account back on?"
+                : "Deactivate account?"
           }
         >
-          {invited
-            ? `The link in ${name}'s invitation email stops working, and they won't be able to join.`
-            : reactivating
-              ? `${name} will be able to sign in again, with the same password and the same two-factor as before.`
-              : `${name} will not be able to sign in, and any session they have open ends now. Nothing is deleted — their history stays, and the account can be switched back on later.`}
+          {invited ? (
+            <>
+              The invitation sent to <Email address={user.email} />{" "}stops
+              working.
+            </>
+          ) : reactivating ? (
+            <>
+              <Email address={user.email} />{" "}can sign in again, with the same
+              password and two-factor.
+            </>
+          ) : (
+            <>
+              <Email address={user.email} />{" "}can&apos;t sign in, and is signed
+              out now. Nothing is deleted — you can turn the account back on
+              later.
+            </>
+          )}
         </DialogHead>
-
-        <TargetCard user={user} />
 
         <Refusal message={error} />
 
@@ -549,4 +575,12 @@ function UserActionDialogs({
   )
 }
 
-export { UserActionDialogs, isInvited, type UserAction, type ActionTarget }
+export {
+  UserActionDialogs,
+  canChangePermissions,
+  canChangeRole,
+  canManage,
+  isInvited,
+  type UserAction,
+  type ActionTarget,
+}

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 
 import { MFA_COOKIE, SESSION_COOKIE } from "@/lib/cookieNames"
+import { OWNER, isPrivileged } from "@/lib/roles"
 
 /**
  * Decides where someone belongs before a single byte of HTML is written.
@@ -72,7 +73,14 @@ const ENROL = "/two-factor"
  * a forged claim gets past this — and then gets 403 from the backend on every
  * request the screen makes. This decides which screen to build, nothing more.
  */
-const ADMIN_ONLY = ["/users", "/system-health", "/backups"]
+const ADMIN_ONLY = ["/users"]
+
+/**
+ * The Owner's alone — decided 2026-10-19: the action log, System Health and
+ * Backups. The backend refuses the same people; this only sends them to the
+ * no-access screen before a page they cannot use starts loading.
+ */
+const OWNER_ONLY = ["/action-log", "/system-health", "/backups"]
 
 type Claims = { typ?: string; exp?: number; role?: string }
 
@@ -103,7 +111,9 @@ export function middleware(request: NextRequest) {
   const live = Boolean(claims?.exp && claims.exp * 1000 > Date.now())
   const signedIn = live && claims?.typ === "access"
   const owesEnrolment = live && claims?.typ === "enrolment_pending"
-  const isAdmin = claims?.role === "ADMIN"
+  // The Owner opens Management too — it holds everything an administrator does.
+  const isAdmin = isPrivileged(claims?.role)
+  const isOwner = claims?.role === OWNER
 
   /**
    * A session the backend has thrown out, which still looks alive from here.
@@ -155,6 +165,15 @@ export function middleware(request: NextRequest) {
     signedIn &&
     !isAdmin &&
     ADMIN_ONLY.some((p) => pathname === p || pathname.startsWith(`${p}/`))
+  ) {
+    return NextResponse.rewrite(new URL("/no-access", request.url), {
+      status: 403,
+    })
+  }
+  if (
+    signedIn &&
+    !isOwner &&
+    OWNER_ONLY.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   ) {
     return NextResponse.rewrite(new URL("/no-access", request.url), {
       status: 403,

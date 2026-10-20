@@ -10,6 +10,7 @@ import {
   roleGrantsEverything,
 } from "@/lib/access"
 import type { PermissionGroup, Role } from "@/lib/userTypes"
+import { OWNER } from "@/lib/roles"
 
 /**
  * The permission model, fetched once and shared by every screen that draws it.
@@ -40,6 +41,8 @@ type Access = {
 
   permissionsForRole: (roleKey: string) => string[]
   roleGrantsEverything: (roleKey: string) => boolean
+  /** The person looking is the Owner — the one who may switch administrators off. */
+  viewerIsOwner: boolean
   diffFromRole: (
     roleKey: string,
     chosen: Set<string>
@@ -51,10 +54,13 @@ const AccessContext = createContext<Access | null>(null)
 function AccessProvider({
   groups,
   roles,
+  viewerRole,
   children,
 }: {
   groups: PermissionGroup[]
   roles: Role[]
+  /** The signed-in person's role. Decides which actions are offered, never what is allowed. */
+  viewerRole: string | undefined
   children: React.ReactNode
 }) {
   // Bound once so callers pass a role name and nothing else. Without this every
@@ -69,9 +75,10 @@ function AccessProvider({
       permissionsForRole: (roleKey) => permissionsForRole(roles, roleKey),
       roleGrantsEverything: (roleKey) =>
         roleGrantsEverything(roles, roleKey, groups),
+      viewerIsOwner: viewerRole === OWNER,
       diffFromRole: (roleKey, chosen) => diffFromRole(roles, roleKey, chosen),
     }),
-    [groups, roles]
+    [groups, roles, viewerRole]
   )
 
   return <AccessContext value={value}>{children}</AccessContext>

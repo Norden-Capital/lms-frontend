@@ -1,16 +1,19 @@
 "use client"
 
-import Link from "next/link"
 import { useState } from "react"
-import { Ban, KeyRound, KeySquare, ShieldX, SquarePen, UserCog } from "lucide-react"
+import { Ban, KeyRound, ShieldX, UserCog } from "lucide-react"
 
 import {
   UserActionDialogs,
+  canChangeRole,
+  canManage,
   isInvited,
   type ActionTarget,
   type UserAction,
 } from "@/components/users/userActionDialogs"
+import { useAccess } from "@/components/access/accessProvider"
 import { Button } from "@/components/ui/button"
+import { OWNER } from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
 /**
@@ -26,53 +29,51 @@ import { cn } from "@/lib/utils"
  * away, and a destructive action sitting flush against four routine ones gets
  * clicked by muscle memory.
  *
- * <p>⚠️ <b>The dialogs open; nothing is saved.</b> Only two-factor reset has an
- * endpoint behind it. Roles, passwords and statuses cannot be changed by the
- * backend at all — blocker #2 on the bug list.
+ * <p>Role, permissions and deactivate are left out where the backend would
+ * refuse them: on your own account, and on another administrator — decided
+ * 2026-10-19. Absent rather than disabled, so nothing invites a refused click.
  */
 
 /** Full width, text at the left edge, so the list reads as a column of verbs. */
 const ACTION = "w-full justify-start rounded-md bg-card"
 
-function UserQuickActions({ user }: { user: ActionTarget }) {
+function UserQuickActions({ user, isSelf }: { user: ActionTarget; isSelf: boolean }) {
   const [action, setAction] = useState<UserAction>(null)
+  const { viewerIsOwner } = useAccess()
+  // Administrators manage members; only the Owner manages administrators; and
+  // on your own account the role, permission and status actions do not apply.
+  const manage = isSelf || canManage(user, viewerIsOwner)
+  const showRole = !isSelf && canChangeRole(user, viewerIsOwner)
+  const showStatus = !isSelf && manage
+
+  // Somebody this person may only look at. Saying why beats an empty box —
+  // the backend refuses every one of these actions anyway.
+  if (!manage) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        {user.role === OWNER
+          ? "This is the Owner's account. Only the Owner can change it."
+          : "Only the Owner can manage administrators."}
+      </p>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-1.5">
       {/* First, because it is the least consequential thing here and the one
           people reach for most: a misspelt surname. */}
-      <Button
-        variant="outline"
-        size="sm"
-        className={ACTION}
-        render={<Link href={`/users/${user.id}/edit`} />}
-      >
-        <SquarePen data-icon="inline-start" />
-        Edit details
-      </Button>
+      {showRole && (
+        <Button
+          variant="outline"
+          size="sm"
+          className={ACTION}
+          onClick={() => setAction("role")}
+        >
+          <UserCog data-icon="inline-start" />
+          Change role
+        </Button>
+      )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        className={ACTION}
-        onClick={() => setAction("role")}
-      >
-        <UserCog data-icon="inline-start" />
-        Change role
-      </Button>
-
-      {/* The one action that navigates rather than opening a dialog: twelve
-          permissions and a diff against the role is a screen, not a
-          confirmation. `?user=` is what tells that screen who it is about. */}
-      <Button
-        variant="outline"
-        size="sm"
-        className={ACTION}
-        render={<Link href={`/users/${user.id}/permissions`} />}
-      >
-        <KeySquare data-icon="inline-start" />
-        Change permissions
-      </Button>
 
       <Button
         variant="outline"
@@ -84,17 +85,23 @@ function UserQuickActions({ user }: { user: ActionTarget }) {
         {isInvited(user) ? "Resend invitation" : "Send reset link"}
       </Button>
 
-      <Button
-        variant="outline"
-        size="sm"
-        className={ACTION}
-        onClick={() => setAction("twoFactor")}
-      >
-        <ShieldX data-icon="inline-start" />
-        Reset two-factor
-      </Button>
+      {/* Not on your own account: the backend refuses it, because clearing
+          your own second factor without proving who you are is exactly what an
+          intruder with your session would do. */}
+      {!isSelf && (
+        <Button
+          variant="outline"
+          size="sm"
+          className={ACTION}
+          onClick={() => setAction("twoFactor")}
+        >
+          <ShieldX data-icon="inline-start" />
+          Reset two-factor
+        </Button>
+      )}
 
       {/* Divided off, not just placed last. */}
+      {showStatus && (
       <div className="mt-0.5 border-t pt-2">
         {/* One button, both directions. An account that is already off needs a
             way back on, and a second button that is only ever live half the time
@@ -117,6 +124,7 @@ function UserQuickActions({ user }: { user: ActionTarget }) {
               : "Turn back on"}
         </Button>
       </div>
+      )}
 
       <UserActionDialogs
         user={user}

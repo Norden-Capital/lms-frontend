@@ -1,6 +1,8 @@
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, useEffect, useRef, useState, useTransition } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 import {
   CalendarDays,
   Check,
@@ -19,10 +21,18 @@ import {
 } from "lucide-react"
 
 import { initialsOf } from "@/lib/initials"
+import { updateUser } from "@/app/(app)/users/actions"
+import Link from "next/link"
+import { KeySquare, SquarePen } from "lucide-react"
+import { canChangePermissions, canManage } from "@/components/users/userActionDialogs"
+import { PageHeader } from "@/components/layout/pageHeader"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { UserQuickActions } from "@/components/users/userQuickActions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TruncatedText } from "@/components/ui/truncatedText"
 import { useAccess } from "@/components/access/accessProvider"
+import { roleLabel } from "@/lib/roles"
 import type { UserDetail as UserAccount } from "@/lib/userTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
@@ -155,21 +165,110 @@ function Fact({
     <div className="flex items-center gap-2 text-sm">
       <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
       <span className="shrink-0 text-muted-foreground">{label}:</span>
-      <span className="min-w-0 truncate font-medium">{children}</span>
+      <span className="min-w-0 flex-1 truncate font-medium">{children}</span>
     </div>
+  )
+}
+
+/** The edit card's form — the header's Save button submits it by `form=`. */
+const DETAILS_FORM = "user-details-form"
+
+/**
+ * Editing who somebody is — decided 2026-10-19. "Edit details" turns only the
+ * top of the left column (name, ID, contact) into this card; the border is what
+ * says "this part, and only this part, is editable".
+ *
+ * <p>It takes exactly the height of the section it replaces — measured when
+ * editing starts — so nothing under it moves. Labels sit inside the boxes as
+ * hints. The email is a disabled box: shown, never editable. Save and Cancel
+ * stay at the top right, where Edit details was.
+ */
+function EditDetailsForm({
+  user,
+  height,
+  saving,
+  onSubmit,
+}: {
+  user: UserAccount
+  /** The replaced section's height in px; absent when the page opened editing. */
+  height?: number
+  saving: boolean
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+}) {
+  return (
+    <form
+      id={DETAILS_FORM}
+      onSubmit={onSubmit}
+      style={height ? { height } : undefined}
+      className="flex flex-col justify-center gap-2 rounded-lg border bg-card p-2"
+    >
+      <div className="grid grid-cols-2 gap-1.5">
+        <Input
+          name="firstName"
+          aria-label="First name"
+          placeholder="First name"
+          defaultValue={user.firstName}
+          required
+          maxLength={100}
+          disabled={saving}
+          autoFocus
+          className="h-7 rounded-md text-sm"
+        />
+        <Input
+          name="lastName"
+          aria-label="Last name"
+          placeholder="Last name"
+          defaultValue={user.lastName}
+          required
+          maxLength={100}
+          disabled={saving}
+          className="h-7 rounded-md text-sm"
+        />
+      </div>
+
+      {/* Shown, never editable: an account's email cannot be changed. */}
+      <Input
+        aria-label="Email (can't be changed)"
+        title="The email can't be changed."
+        value={user.email}
+        readOnly
+        disabled
+        className="h-7 rounded-md text-sm"
+      />
+
+      <Input
+        name="phone"
+        type="tel"
+        aria-label="Phone"
+        placeholder="Phone — optional"
+        defaultValue={user.phone ?? ""}
+        maxLength={20}
+        disabled={saving}
+        className="h-7 rounded-md text-sm"
+      />
+
+    </form>
   )
 }
 
 /** A titled group of facts, divided from the one above it. */
 function FactGroup({
   title,
+  divided = false,
   children,
 }: {
   title: string
+  /** Keep the line above even as the first group — see the edit card. */
+  divided?: boolean
   children: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-2 border-t pt-3 first:border-t-0 first:pt-0">
+    <div
+      className={cn(
+        "flex flex-col gap-2 border-t pt-3",
+        !divided && "first:border-t-0 first:pt-0"
+      )}
+    >
       <h2 className="text-sm font-semibold">{title}</h2>
       <div className="flex flex-col gap-1.5">{children}</div>
     </div>
@@ -209,9 +308,12 @@ function Panel({
 
 function UserDetail({
   user,
+  isSelf,
   activity,
 }: {
   user: UserAccount
+  /** Your own account, reached by its address — some actions do not apply. */
+  isSelf: boolean
   /**
    * ⚠️ Always absent today. Nothing records what an account did — see
    * {@link ActivityEntry} — so the panel says so rather than showing an empty
@@ -222,16 +324,118 @@ function UserDetail({
   const access = useAccess()
   const { actionColumns: ACTION_COLUMNS, groups: RESOURCE_GROUPS } = access
 
+  // Editing in place — decided 2026-10-19, replacing the separate edit page.
+  // `?edit=1` (from the table's "Edit details") opens the page already
+  // editing, when this person may edit; the address is then tidied so a
+  // refresh does not reopen it.
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const canEdit = isSelf || canManage(user, access.viewerIsOwner)
+  const [editing, setEditing] = useState(
+    () => canEdit && searchParams.get("edit") === "1"
+  )
+  const [saving, startSaving] = useTransition()
+
+  // The edit card takes the height of the section it replaces, read at the
+  // moment editing starts — so nothing below it moves.
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const [sectionHeight, setSectionHeight] = useState<number>()
+
+  function startEditing() {
+    setSectionHeight(sectionRef.current?.offsetHeight)
+    setEditing(true)
+  }
+
+  useEffect(() => {
+    if (searchParams.get("edit")) router.replace(pathname, { scroll: false })
+  }, [searchParams, router, pathname])
+
+  function save(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    startSaving(async () => {
+      const result = await updateUser(user.id, form)
+      if (result.ok) {
+        toast.success(result.message ?? "Details saved.")
+        setEditing(false)
+        return
+      }
+      const fields = Object.values(result.fieldErrors ?? {})
+      toast.error(result.message ?? "Could not save.", {
+        description: fields.length > 0 ? fields.join(" ") : undefined,
+      })
+    })
+  }
+
   const held = new Set(user.permissions)
   const status = STATUS_TEXT[user.status] ?? {
     label: user.status,
     tone: "text-muted-foreground",
   }
 
+  const canChangeTheirPermissions = !isSelf && canEdit && canChangePermissions(user)
+
+  // Up in the header row, beside the title — decided 2026-10-19. While
+  // editing, Cancel and Save take Edit details' place.
+  const headerActions = (
+    <div className="flex items-center gap-2">
+      {canChangeTheirPermissions && !editing && (
+        <Button
+          variant="outline"
+          className="rounded-md bg-card"
+          render={<Link href={`/users/${user.id}/permissions`} />}
+        >
+          <KeySquare data-icon="inline-start" />
+          Change permissions
+        </Button>
+      )}
+      {canEdit &&
+        (editing ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-md bg-card"
+              onClick={() => setEditing(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" form={DETAILS_FORM} className="rounded-md" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            className="rounded-md bg-card"
+            onClick={startEditing}
+          >
+            <SquarePen data-icon="inline-start" />
+            Edit details
+          </Button>
+        ))}
+    </div>
+  )
+
   return (
-    // One column until lg, where the divider and the side-by-side split start to
-    // make sense. Below that a 280px column beside a table is two cramped
-    // columns instead of one readable one.
+    <>
+    {/* The navbar builds a breadcrumb from the path, so it already reads
+        "users › …" up there. The chevron is the deliberate way back to the
+        list — a breadcrumb is a location, not a control. No description: the
+        name and ID sit at the top of the left column. */}
+    <PageHeader
+      title="User details"
+      backHref="/users"
+      backLabel="Back to users"
+      actions={headerActions}
+    />
+
+    {/* One column until lg, where the divider and the side-by-side split start
+        to make sense. Below that a 280px column beside a table is two cramped
+        columns instead of one readable one. */}
     <div className="flex min-h-0 flex-1 flex-col gap-8 lg:flex-row lg:gap-0">
       <aside
         className={cn(
@@ -242,41 +446,56 @@ function UserDetail({
           THIN_SCROLLBAR,
         )}
       >
-        <div className="flex items-center gap-3">
-          <Avatar className="size-12 rounded-xl after:rounded-xl">
-            <AvatarFallback className="rounded-xl text-sm font-medium">
-              {initialsOf(user.firstName, user.lastName)}
-            </AvatarFallback>
-          </Avatar>
+        {/* Identity and contact are one section: the part "Edit details"
+            turns into the edit card, at exactly this section's height. */}
+        {editing ? (
+          <EditDetailsForm
+            user={user}
+            height={sectionHeight}
+            saving={saving}
+            onSubmit={save}
+          />
+        ) : (
+          <div ref={sectionRef} className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <Avatar className="size-12 rounded-xl after:rounded-xl">
+                <AvatarFallback className="rounded-xl text-sm font-medium">
+                  {initialsOf(user.firstName, user.lastName)}
+                </AvatarFallback>
+              </Avatar>
 
-          <div className="flex min-w-0 flex-col">
-            <p className="truncate font-heading text-base font-semibold tracking-tight">
-              {user.firstName} {user.lastName}
-            </p>
-            {/* The id, in the same padded form the table uses, so the row you
-                clicked and the page you land on say the same thing. */}
-            <p className="font-mono text-xs text-muted-foreground">
-              #{String(user.id).padStart(4, "0")}
-            </p>
+              <div className="flex min-w-0 flex-col">
+                <p className="truncate font-heading text-base font-semibold tracking-tight">
+                  {user.firstName} {user.lastName}
+                </p>
+                {/* The ID, as the table shows it, so the row you clicked and
+                    the page you land on say the same thing. */}
+                <p className="font-mono text-xs text-muted-foreground">
+                  {user.id}
+                </p>
+              </div>
+            </div>
+
+            <FactGroup title="Contact">
+              {/* The one value here long enough to lose its end in a 280px
+                  column, and the one where the missing part is what tells two
+                  people apart. */}
+              <Fact icon={Mail} label="Email">
+                <TruncatedText>{user.email}</TruncatedText>
+              </Fact>
+              <Fact icon={Phone} label="Phone">
+                {user.phone ?? <Unknown>Not given</Unknown>}
+              </Fact>
+            </FactGroup>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-col gap-3">
-          <FactGroup title="Contact">
-            {/* The one value here long enough to lose its end in a 280px
-                column, and the one where the missing part is what tells two
-                people apart. */}
-            <Fact icon={Mail} label="Email">
-              <TruncatedText>{user.email}</TruncatedText>
-            </Fact>
-            <Fact icon={Phone} label="Phone">
-              {user.phone ?? <Unknown>Not given</Unknown>}
-            </Fact>
-          </FactGroup>
-
-          <FactGroup title="Access">
+          {/* divided: its line stays whether or not the section above is the
+              edit card, so it does not jump while editing. */}
+          <FactGroup title="Access" divided>
             <Fact icon={UserRound} label="Role">
-              {user.role}
+              {roleLabel(user.role)}
             </Fact>
             {/* Words, not the table's badges. A badge earns its shape in a
                 column of twelve rows, where it is picked out at a glance from
@@ -316,7 +535,7 @@ function UserDetail({
               decide to do something about it, and an action offered before the
               status it depends on is one taken without looking. */}
           <FactGroup title="Quick actions">
-            <UserQuickActions user={user} />
+            <UserQuickActions user={user} isSelf={isSelf} />
           </FactGroup>
         </div>
       </aside>
@@ -480,6 +699,7 @@ function UserDetail({
         </Panel>
       </div>
     </div>
+    </>
   )
 }
 

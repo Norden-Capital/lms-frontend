@@ -240,7 +240,7 @@ function ContainersPanel({
     )
   }
 
-  const shown = containers.items.filter(isLive)
+  const shown = containers.items.filter(isLive).sort(byStackOrder)
   const stopped = containers.items.length - shown.length
 
   return (
@@ -314,6 +314,27 @@ function ContainersPanel({
  */
 function isLive(container: SystemHealth["containers"]["items"][number]): boolean {
   return ["running", "restarting", "paused", "dead"].includes(container.state)
+}
+
+/**
+ * Proxy, then backend, then database — always, decided 2026-10-19.
+ *
+ * <p>Docker lists containers in whatever order it likes, which moved the cards
+ * around between refreshes. This is the order a request travels in, so reading
+ * left to right follows it. Anything else comes after, by name.
+ */
+const STACK_ORDER = ["proxy", "backend", "postgres"]
+
+function stackRank(name: string): number {
+  const rank = STACK_ORDER.findIndex((part) => name.toLowerCase().includes(part))
+  return rank === -1 ? STACK_ORDER.length : rank
+}
+
+function byStackOrder(
+  a: SystemHealth["containers"]["items"][number],
+  b: SystemHealth["containers"]["items"][number]
+): number {
+  return stackRank(a.name) - stackRank(b.name) || a.name.localeCompare(b.name)
 }
 
 export { ContainersPanel }
