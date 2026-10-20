@@ -3,7 +3,7 @@
 import { Fragment } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, Inbox } from "lucide-react"
+import { Bell } from "lucide-react"
 
 import {
   Breadcrumb,
@@ -13,7 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { NewMark } from "@/components/layout/newMark"
+import { InboxButton } from "@/components/layout/inboxButton"
 import { Button } from "@/components/ui/button"
 import { LiquidGlassLayers } from "@/components/ui/liquidGlass"
 
@@ -103,32 +103,10 @@ function AppNavbar({
             that always refuses reads as something you are supposed to have and
             cannot. The page refuses the route regardless — this only decides
             what to draw. */}
-        {canOpenInbox && (
-          <>
-            {/* ⚠️ The dot is hardcoded — there is no unread count yet. When one
-                exists it should drive both the dot and the label, so the button
-                announces "Inbox, unread messages" rather than leaving a screen
-                reader with no idea the marker is there. */}
-            {/* The dot lives outside the button, not in it. The button clips its
-                children to draw the glass, so anything sitting on the corner was
-                being cut in half — this wrapper gives it something to hang off
-                instead. */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="relative overflow-hidden bg-card"
-                aria-label="Inbox"
-                render={<Link href="/inbox" />}
-              >
-                <LiquidGlassLayers />
-                <Inbox className="relative" />
-              </Button>
-
-              <NewMark className="-top-0.5 -right-0.5" />
-            </div>
-          </>
-        )}
+        {/* Drawn only for an account that holds INBOX:READ. Hidden rather than
+            disabled: a button that always refuses reads as something you are
+            supposed to have and cannot. The dot is real — see InboxButton. */}
+        {canOpenInbox && <InboxButton />}
 
         {avatar}
       </div>

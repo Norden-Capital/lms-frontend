@@ -173,18 +173,18 @@ function IndexCell({
           {inspection.googleCanonical &&
             inspection.googleCanonical !== inspection.userCanonical && (
               <p className="mt-1 text-background/70">
-                ⚠️ Google chose a different canonical:{" "}
+                Google picked a different main page:{" "}
                 {inspection.googleCanonical}
               </p>
             )}
           <p className="mt-1 text-background/70">
             {inspection.sitemaps.length > 0
               ? `In ${inspection.sitemaps.length} sitemap${inspection.sitemaps.length === 1 ? "" : "s"}.`
-              : "In no submitted sitemap."}
+              : "Not in any sitemap."}
           </p>
           {stale && (
             <p className="mt-1 text-background/70">
-              This answer is over {STALE_DAYS} days old and may no longer be true.
+              Over {STALE_DAYS} days old. It may be out of date.
             </p>
           )}
         </TooltipContent>
@@ -230,8 +230,8 @@ function CheckButton({
         <p className="font-medium">{label}</p>
         <p className="mt-0.5 text-background/70">
           {exhausted
-            ? "Today's 2,000 checks are used up. The budget resets tomorrow."
-            : "Costs one of today's 2,000 checks."}
+            ? "No checks left today. Try again tomorrow."
+            : "Uses 1 of today's 2,000 checks."}
         </p>
       </TooltipContent>
     </Tooltip>

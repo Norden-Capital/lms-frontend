@@ -37,8 +37,8 @@ export default async function ResetPasswordPage({
       <div className="mx-auto flex w-full max-w-xs flex-col gap-4">
         <LinkHeader icon={MailX} title="This reset link can't be used">
           {result && !result.ok && result.error.status !== 400
-            ? "We couldn't check your link right now. Please try again in a moment."
-            : "It has expired, was already used, or a newer one was sent. Links work once, for 30 minutes."}
+            ? "We couldn't check your link. Please try again soon."
+            : "It is old or already used. Please ask for a new one."}
         </LinkHeader>
         <Link
           href="/forgot-password"
@@ -54,8 +54,7 @@ export default async function ResetPasswordPage({
   return (
     <div className="mx-auto flex w-full max-w-xs flex-col gap-4">
       <LinkHeader icon={KeyRound} title="Choose a new password">
-        Your two-factor authentication stays the same. You&apos;ll still need your authenticator
-        app to sign in.
+        You will still need your authenticator app to sign in.
       </LinkHeader>
 
       <SetPasswordForm

@@ -56,9 +56,9 @@ function ForgotPasswordForm() {
               reason login answers identically for a wrong password and an
               account that does not exist. */}
           <p className="text-xs text-muted-foreground">
-            If an account exists for{" "}
-            <span className="font-medium text-foreground">{state.email}</span>, a
-            reset link is on its way. It works once, for 30 minutes.
+            If{" "}
+            <span className="font-medium text-foreground">{state.email}</span> has
+            an account, we sent a reset link. It works once, for 30 minutes.
           </p>
         </div>
 

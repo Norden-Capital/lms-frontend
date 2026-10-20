@@ -28,8 +28,8 @@ export default function Error({
     <ErrorState
       code="500"
       icon={TriangleAlert}
-      title="Something went wrong on our end"
-      description="This isn't your fault. Trying again usually works — if it doesn't, send IT the reference below."
+      title="Something went wrong"
+      description="Not your fault. Try again. If it still fails, send IT the code below."
     >
       <Button variant="outline" size="sm" render={<Link href="/dashboard" />}>
         Go to dashboard

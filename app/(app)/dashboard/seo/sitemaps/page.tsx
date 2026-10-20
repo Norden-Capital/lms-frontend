@@ -32,9 +32,8 @@ export default async function SeoSitemapsPage() {
         title="Submitted sitemaps"
         hint={
           <>
-            Every sitemap Google knows about, and the last time it read one.
-            &quot;Discovered&quot; is how many URLs it found inside — not how many
-            it indexed.
+            Your sitemaps in Google. &quot;Discovered&quot; means links found,
+            not pages shown in Google.
           </>
         }
         action={

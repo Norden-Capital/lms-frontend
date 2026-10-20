@@ -30,8 +30,8 @@ export default function GlobalError({
         <ErrorState
           code="500"
           icon={ServerCrash}
-          title="The application failed to load"
-          description="Something broke before the page could render. Reloading may fix it — if not, IT will need the reference below."
+          title="The app did not load"
+          description="Try again. If it still fails, send IT the code below."
         >
           <Button size="sm" onClick={() => unstable_retry()}>
             <RotateCw data-icon="inline-start" />

@@ -36,13 +36,12 @@ export default async function EmailPreviewPage() {
     <>
       <h1 className="font-heading text-2xl font-semibold tracking-tight">Email previews</h1>
       <p className="text-sm text-muted-foreground">
-        Every email the platform sends, with sample names. The buttons in them point at links that
-        do not work.
+        Every email the app sends, with sample names. The buttons do not work here.
       </p>
 
       {!result.ok ? (
         <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Couldn&apos;t load the previews from the backend: {result.error.message}
+          Couldn&apos;t load the previews: {result.error.message}
         </p>
       ) : (
         <div className="mt-4 flex flex-col gap-10">
@@ -72,7 +71,7 @@ export default async function EmailPreviewPage() {
 
               <details className="rounded-md border px-3 py-2 text-xs">
                 <summary className="cursor-pointer font-medium">
-                  Plain-text version (for mail apps that don&apos;t show designs)
+                  Plain-text version
                 </summary>
                 <pre className="mt-2 font-mono text-xs whitespace-pre-wrap text-muted-foreground">
                   {email.text}

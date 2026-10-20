@@ -52,7 +52,7 @@ function UserQuickActions({ user, isSelf }: { user: ActionTarget; isSelf: boolea
     return (
       <p className="text-xs text-muted-foreground">
         {user.role === OWNER
-          ? "This is the Owner's account. Only the Owner can change it."
+          ? "Only the Owner can change this account."
           : "Only the Owner can manage administrators."}
       </p>
     )

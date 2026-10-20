@@ -64,7 +64,7 @@ function UserPermissionEditor({ user }: { user: UserDetail }) {
   // finds again.
   if (access.roleGrantsEverything(user.role)) {
     return (
-      <TopBanner message="This account is an administrator, so it already holds every permission. Change their role to Member first if they should have less." />
+      <TopBanner message="Admins have every permission. Change the role to Member to give less." />
     )
   }
 
@@ -104,7 +104,7 @@ function UserPermissionEditor({ user }: { user: UserDetail }) {
           {granted.length > 0 && `${granted.length} to add`}
           {granted.length > 0 && denied.length > 0 && ", "}
           {denied.length > 0 && `${denied.length} to remove`}
-          {" — not saved yet."}
+          {". Not saved yet."}
         </p>
       )}
 

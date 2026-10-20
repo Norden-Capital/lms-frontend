@@ -53,7 +53,7 @@ export default async function SystemHealthPage() {
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-y-auto p-4 pb-3 sm:p-6 lg:overflow-hidden">
       <PageHeader
         title="System health"
-        description="How the platform and the server under it are doing."
+        description="How the app and the server are doing."
       />
 
       <SystemOverview initial={result.ok ? result.data : null} />

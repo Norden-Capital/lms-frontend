@@ -103,8 +103,7 @@ function BackupSummary({
         label="Next backup"
         hint={
           <>
-            Counts down live. Worth knowing it is scheduled; nothing follows from
-            the number.
+            Time until the next backup starts.
           </>
         }
         value={
@@ -129,8 +128,7 @@ function BackupSummary({
         label="Data at risk"
         hint={
           <>
-            Time since the last backup that worked. If the server died now, this
-            is how much work would be gone.
+            Time since the last good backup.
           </>
         }
         value={
@@ -151,7 +149,7 @@ function BackupSummary({
         detail={
           lastSuccess
             ? `Last good backup ${utcStamp(lastSuccess.toISOString())} UTC`
-            : "No backup has ever succeeded."
+            : "No good backup yet."
         }
         footerIcon={Hourglass}
         footer={`Overdue after ${OVERDUE_SECONDS / 3600} hours`}
@@ -162,8 +160,7 @@ function BackupSummary({
         label="Backups"
         hint={
           <>
-            Every backup is kept — nothing is deleted automatically. The two
-            numbers only differ when you delete one by hand.
+            We keep every backup. Only you can delete one.
           </>
         }
         value={`${count(status.storedCount)} kept`}

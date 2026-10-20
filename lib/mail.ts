@@ -1,98 +1,65 @@
 import "server-only"
 
-import {
-  sampleAccounts,
-  sampleFolders,
-  sampleMails,
-} from "@/lib/mailSample"
-import type {
-  Mail,
-  MailAccount,
-  MailFolder,
-  MailQuery,
-} from "@/lib/mailTypes"
+import { apiFetch, type ApiError } from "@/lib/api"
+import type { InboxOverview, MailMessage, MailPage, MailQuery } from "@/lib/mailTypes"
 
 /**
- * Where the Inbox gets its messages.
+ * Reading the inbox from the backend, which reads it live from Gmail — one
+ * mailbox, set on the server, that every brand forwards into.
  *
- * <p>The same job `lib/backups.ts` does for the Backups screen and `lib/users.ts`
- * for the user list: one place the page asks, so the page never knows whether
- * the answer came from a backend, a file or — as today — an invented sample.
- * When the API arrives, the body of {@link getInbox} becomes an `apiFetch` call
- * and nothing on the screen changes.
- *
- * <p>Async already, for that reason. A synchronous function here would mean the
- * page's `await` appears on the day the backend does, and a change that touches
- * the page as well as this file is a change that can break the page.
- *
- * <p><b>Filtering and searching happen here, not in the list.</b> Narrowing in
- * the browser means every message has to be sent before any of them can be
- * hidden — fine at five, wrong at five thousand, and the wrong shape to hand a
- * backend later. The same split the user list already uses.
+ * <p>Server-side because the access token lives in an httpOnly cookie the
+ * browser cannot read.
  */
 
-/** Sender, subject and body. The three places a half-remembered message hides. */
-function matches(mail: Mail, needle: string): boolean {
-  const haystack = [mail.name, mail.email, mail.subject, mail.body]
-    .join(" ")
-    .toLowerCase()
-
-  return haystack.includes(needle)
+export type Inbox = {
+  /** Null when the mailbox could not be read — see `error`. */
+  overview: InboxOverview | null
+  folderId: string
+  page: MailPage
+  selected: MailMessage | null
+  /** The server has no mailbox set up yet (503). */
+  notSetUp: boolean
+  error: ApiError | null
 }
 
-/**
- * The list, and whichever message is open.
- *
- * @param query what the address bar says — the filter, the search, the selection.
- *
- * ⚠️ Every message is invented. See `lib/mailSample.ts`.
- */
-export async function getInbox(query: MailQuery): Promise<{
-  mails: Mail[]
-  selected: Mail | null
-  accounts: MailAccount[]
-  account: MailAccount
-  folders: MailFolder[]
-  folderId: string
-  /** Every brand with a mailbox, for the filter beside the search. */
-  brands: string[]
-}> {
-  const accounts = sampleAccounts()
-  const folders = sampleFolders()
+const EMPTY_PAGE: MailPage = { mails: [], total: 0, page: 1, size: 25, totalPages: 1 }
 
-  // An unknown id in the URL falls back to the first mailbox rather than
-  // drawing an empty screen. Somebody editing the address bar is the least of
-  // it — a bookmark to a mailbox that has since been disconnected does the same.
-  const account =
-    accounts.find((entry) => entry.id === query.account) ?? accounts[0]
+export async function getInbox(query: MailQuery): Promise<Inbox> {
+  const folderId = query.folder || "inbox"
+  const list = new URLSearchParams({ folder: folderId, page: query.page || "1" })
+  if (query.q) list.set("q", query.q)
+  if (query.brand) list.set("brand", query.brand)
+  if (query.filter === "unread") list.set("unread", "true")
 
-  const folderId = folders.some((folder) => folder.id === query.folder)
-    ? query.folder!
-    : "inbox"
+  // The open message first, so the list and the counts already see it as read.
+  const selectedResult = query.mail
+    ? await apiFetch<MailMessage>(`/api/inbox/messages/${encodeURIComponent(query.mail)}`, {
+        authenticated: true,
+      })
+    : null
 
-  const brands = [...new Set(accounts.map((entry) => entry.brand))].sort()
+  const [overviewResult, pageResult] = await Promise.all([
+    apiFetch<InboxOverview>("/api/inbox", { authenticated: true }),
+    apiFetch<MailPage>(`/api/inbox/messages?${list.toString()}`, { authenticated: true }),
+  ])
 
-  const needle = query.q?.trim().toLowerCase() ?? ""
+  if (!overviewResult.ok) {
+    return {
+      overview: null,
+      folderId,
+      page: EMPTY_PAGE,
+      selected: null,
+      notSetUp: overviewResult.error.status === 503,
+      error: overviewResult.error,
+    }
+  }
 
-  // ⚠️ The brand and the folder narrow nothing yet. Every sample message belongs
-  // to no mailbox in particular, because a `Mail` has no account on it — and
-  // inventing one would be inventing the relationship the backend has not
-  // described. The controls are wired to the address bar and the list will
-  // narrow the day a message knows where it arrived.
-  const mails = sampleMails()
-    .filter((mail) => (query.filter === "unread" ? !mail.read : true))
-    .filter((mail) => (needle ? matches(mail, needle) : true))
-
-  /**
-   * The open message, and it has to come from the filtered list.
-   *
-   * <p>Reading a message and then switching to Unread should not leave that
-   * message open beside a list it is no longer in — the reading pane would be
-   * showing something the list says is not there. Falling back to the first of
-   * whatever survived is the honest answer, and an empty result opens nothing.
-   */
-  const selected =
-    mails.find((mail) => mail.id === query.mail) ?? mails[0] ?? null
-
-  return { mails, selected, accounts, account, folders, folderId, brands }
+  return {
+    overview: overviewResult.data,
+    folderId,
+    page: pageResult.ok ? pageResult.data : EMPTY_PAGE,
+    selected: selectedResult?.ok ? selectedResult.data : null,
+    notSetUp: false,
+    error: pageResult.ok ? null : pageResult.error,
+  }
 }

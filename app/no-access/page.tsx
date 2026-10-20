@@ -25,8 +25,8 @@ export default function NoAccess() {
     <ErrorState
       code="403"
       icon={ShieldX}
-      title="This is for administrators"
-      description="Managing accounts comes with being an administrator — it is not something that can be granted to you one permission at a time. If you need it, somebody has to change your role."
+      title="Only admins can see this"
+      description="Ask an admin to change your role if you need it."
     >
       <Button size="sm" render={<Link href="/dashboard" />}>
         Go to dashboard

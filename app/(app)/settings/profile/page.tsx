@@ -16,7 +16,7 @@ export default async function ProfilePage() {
     <ComingSoon
       icon={UserRound}
       title="Profile"
-      description="Changing your name, contact details and password is on its way."
+      description="Coming soon: change your name, contact details and password."
     />
   )
 }

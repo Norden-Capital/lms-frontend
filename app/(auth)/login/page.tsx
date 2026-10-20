@@ -20,11 +20,11 @@ export const metadata: Metadata = {
  */
 const REASONS: Record<string, string> = {
   expired:
-    "That sign-in took too long and has expired. Please enter your details again.",
-  cancelled: "Sign-in cancelled. You can sign in with a different account below.",
-  "session-expired": "You have been signed out. Please sign in again to continue.",
+    "Sign-in took too long. Please try again.",
+  cancelled: "Sign-in cancelled. You can use another account.",
+  "session-expired": "You were signed out. Please sign in again.",
   "account-ready":
-    "Your account is ready. Sign in, then set up two-factor authentication.",
+    "Your account is ready. Sign in, then set up two-factor.",
   "password-changed": "Password changed. Sign in with your new password.",
 }
 

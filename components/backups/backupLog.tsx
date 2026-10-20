@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, useTransition } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
   ChevronDown,
@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 
 import { RowActions } from "@/components/backups/backupActions"
+import { BackupRowsSkeleton } from "@/components/backups/backupLoading"
 import { Panel } from "@/components/system/panel"
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +23,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { LoadingCover } from "@/components/ui/loadingCover"
 import { TablePagination } from "@/components/ui/tablePagination"
 import {
   LOG_PAGE_SIZES,
@@ -158,6 +160,9 @@ function BackupLog({
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
+  // A sort, page or page size waits on the server. This says so, over the rows
+  // only — decided 2026-10-20.
+  const [loading, startLoading] = useTransition()
 
   const [sortKey, sortDir] = (query.sort ?? "").split(",")
 
@@ -196,7 +201,7 @@ function BackupLog({
     next.set(key, value)
     if (key !== "page") next.delete("page")
 
-    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+    startLoading(() => router.push(`${pathname}?${next.toString()}`, { scroll: false }))
   }
 
   return (
@@ -204,8 +209,7 @@ function BackupLog({
       title="Log"
       hint={
         <>
-          Every run that happened. Days where nothing ran leave no row — see the
-          year above.
+          Every backup run. Days with no run are not listed here.
         </>
       }
       action={
@@ -271,8 +275,12 @@ function BackupLog({
         </div>
       }
       className="lg:min-h-48 lg:flex-1"
-      bodyClassName="p-0"
+      // relative: the loader covers the rows only, under the headings.
+      bodyClassName="relative p-0"
     >
+      <LoadingCover show={loading} className="top-8 border-t bg-card">
+        <BackupRowsSkeleton />
+      </LoadingCover>
       {/* The same scroll chain as the tables card on System Health: the region
           scrolls inside the card rather than growing it, so the summary and the
           heatmap above stay put. */}

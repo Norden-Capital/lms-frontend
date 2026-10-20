@@ -120,7 +120,7 @@ function AddUserForm() {
           Closing it is fine and nothing remembers that you did: switching role
           unmounts this, so picking Administrator again shows it again. */}
       {roleGrantsEverything(role) && (
-        <TopBanner message="Administrators hold every permission, and none of them can be held back — choose Member if this person needs less." />
+        <TopBanner message="Admins have every permission. Choose Member to give less." />
       )}
 
       {/* Details and Role side by side. They are the two halves of one decision —
@@ -130,7 +130,7 @@ function AddUserForm() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <Section
           title="Details"
-          description="Who they are. The invitation goes to their email."
+          description="We send the invitation to their email."
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
@@ -174,8 +174,7 @@ function AddUserForm() {
                 className="h-8 rounded-md"
               />
               <p className="text-xs text-muted-foreground">
-                Used to sign in. It can&apos;t be changed later — check it
-                before sending.
+                Used to sign in. It can&apos;t be changed later.
               </p>
             </div>
 
@@ -188,7 +187,7 @@ function AddUserForm() {
                 Phone
                 <span className="font-normal text-muted-foreground">
                   {" "}
-                  — optional
+                  (optional)
                 </span>
               </Label>
               <Input
@@ -208,15 +207,14 @@ function AddUserForm() {
               here, at the end of who-they-are, answers "how do they get in?"
               before anybody has to ask it. */}
           <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            They&apos;ll get an email to choose their own password (the link works
-            for 7 days), then set up two-factor authentication on their first
-            sign-in.
+            They get an email to set a password (link works 7 days). Then they
+            set up two-factor at first sign-in.
           </p>
         </Section>
 
         <Section
           title="Role"
-          description="What they are before anything is granted."
+          description="Their basic access level."
         >
           {/* Stacked, not side by side. Each option carries a sentence that
               decides the choice, and two of those in a narrow column would wrap
@@ -305,7 +303,7 @@ function AddUserForm() {
       {!roleGrantsEverything(role) && (
         <Section
           title="Permissions"
-          description="What the role gives, and anything you change for this person alone."
+          description="What the role gives. You can change it for this person."
         >
           <PermissionPicker
             role={role}

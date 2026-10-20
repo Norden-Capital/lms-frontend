@@ -29,10 +29,9 @@ function PermissionRefused({
         <ShieldX className="size-5 text-warning" aria-hidden />
         <p className="text-sm font-medium">You cannot open {module}</p>
         <p className="text-sm text-muted-foreground">
-          This needs the{" "}
-          <span className="font-mono text-xs">{permission}</span> permission,
-          which your account does not have. An administrator can grant it from
-          your account page.
+          You need the{" "}
+          <span className="font-mono text-xs">{permission}</span> permission.
+          Ask an admin to give it to you.
         </p>
       </div>
     </div>

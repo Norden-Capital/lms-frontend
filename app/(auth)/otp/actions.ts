@@ -124,7 +124,7 @@ export async function verifyOtp(
   const data = result.data
 
   if (!data.accessToken) {
-    return { message: "The server returned an unexpected response." }
+    return { message: "Something went wrong. Please try again." }
   }
 
   // Writes the session cookie and drops the now-spent MFA challenge cookie.

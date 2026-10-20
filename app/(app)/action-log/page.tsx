@@ -35,7 +35,7 @@ export default async function ActionLogPage({
     <div className="flex h-full flex-col gap-6 overflow-hidden p-6 pb-3">
       <PageHeader
         title="Action Log"
-        description="Who did what, to whom, and when. Only you can see this."
+        description="Who did what, and when. Only you can see this."
       />
 
       {result.ok ? (
@@ -44,7 +44,7 @@ export default async function ActionLogPage({
         <div className="flex flex-1 items-start justify-center">
           <div className="flex max-w-md flex-col items-center gap-2 rounded-md border bg-card p-8 text-center">
             <ShieldAlert className="size-5 text-warning" aria-hidden />
-            <p className="text-sm font-medium">The action log couldn&apos;t be loaded</p>
+            <p className="text-sm font-medium">Could not load the action log</p>
             <p className="text-xs text-muted-foreground">{result.error.message}</p>
           </div>
         </div>

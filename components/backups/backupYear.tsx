@@ -373,9 +373,8 @@ function BackupYear({
       title="The year"
       hint={
         <>
-          One square a night: a column is a week, a row is a weekday. Filled means
-          it ran, red means it broke, faint means nothing ran. A pale square is a
-          night the year before managed and this one did not. Hover any of them.
+          One square per night. Dark is good, red failed, faint means no run. Hover
+          a square to see more.
         </>
       }
       action={

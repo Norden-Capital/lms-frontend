@@ -64,6 +64,11 @@ export const ACTION_TYPES: Record<string, { label: string; tone: "neutral" | "go
   BACKUP_STARTED: { label: "Backup started", tone: "neutral" },
   BACKUP_DOWNLOADED: { label: "Backup downloaded", tone: "warn" },
   BACKUP_DELETED: { label: "Backup deleted", tone: "bad" },
+  BRAND_ADDED: { label: "Brand added", tone: "neutral" },
+  BRAND_UPDATED: { label: "Brand changed", tone: "neutral" },
+  BRAND_REMOVED: { label: "Brand removed", tone: "warn" },
+  MAILBOX_CONNECTED: { label: "Mailbox connected", tone: "neutral" },
+  MAILBOX_DISCONNECTED: { label: "Mailbox disconnected", tone: "warn" },
 }
 
 export function actionLabel(action: string) {

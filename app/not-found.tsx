@@ -14,7 +14,7 @@ export default function NotFound() {
       code="404"
       icon={FileQuestion}
       title="We can't find that page"
-      description="The link may be broken, or the course or lesson it pointed to has since been removed."
+      description="The link may be wrong, or the page was removed."
     >
       <Button variant="outline" size="sm" render={<Link href="/help-center" />}>
         <Headset data-icon="inline-start" />

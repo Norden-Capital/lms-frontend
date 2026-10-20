@@ -38,10 +38,10 @@ function BackUpNowButton({ running }: { running: boolean }) {
         start(async () => {
           const result = await startBackup()
           if (result.ok) {
-            toast.success("Backup started. It usually takes a few seconds.")
+            toast.success("Backup started.")
             router.refresh()
           } else {
-            toast.error(result.message ?? "The backup could not be started.")
+            toast.error(result.message ?? "Could not start the backup.")
           }
         })
       }
@@ -113,7 +113,7 @@ function RowActions({ run }: { run: BackupRun }) {
     startDownload(async () => {
       const result = await backupDownloadLink(run.id)
       if (result.ok && result.url) window.location.assign(result.url)
-      else toast.error(result.message ?? "The download could not be started.")
+      else toast.error(result.message ?? "Could not start the download.")
     })
   }
 
@@ -192,8 +192,8 @@ function DeleteBackupDialog({
     <AlertDialog open={open} onOpenChange={pending ? undefined : onOpenChange}>
       <AlertDialogContent size="sm">
         <DialogHead icon={Trash2} tone="bg-destructive/10 text-destructive" title="Delete backup?">
-          The copy from {utcStamp(run.startedAt)} UTC ({bytes(run.sizeBytes)}) is removed from{" "}
-          {PLACES[run.destination ?? ""] ?? "the server"}. This can&apos;t be undone.
+          The backup from {utcStamp(run.startedAt)} UTC ({bytes(run.sizeBytes)}) is removed from{" "}
+          {PLACES[run.destination ?? ""] ?? "the server"}. You can&apos;t undo this.
         </DialogHead>
 
         <Refusal message={error} />

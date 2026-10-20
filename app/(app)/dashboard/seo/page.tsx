@@ -67,8 +67,7 @@ export default async function SeoOverviewPage() {
         title="Clicks"
         hint={
           <>
-            One point a day. The dashed tail is the part Google has not finished
-            counting — those figures rise for a day or two after they appear.
+            Clicks per day. The dashed part is still being counted by Google.
           </>
         }
         action={

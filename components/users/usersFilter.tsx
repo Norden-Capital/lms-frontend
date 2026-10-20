@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { CircleCheck, CircleDot, CircleX, ListFilter, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAccess } from "@/components/access/accessProvider"
+import { useUsersLoading } from "@/components/users/usersLoading"
 import { cn } from "@/lib/utils"
 import { OWNER, roleLabel } from "@/lib/roles"
 
@@ -82,7 +83,9 @@ function UsersFilter() {
   const { roles, viewerIsOwner } = useAccess()
   // Nobody sees a role above their own: only the Owner is offered "Owner".
   const filterRoles = roles.filter((role) => viewerIsOwner || role.name !== OWNER)
-  const router = useRouter()
+  // Through the list's loader, so the table shows its grey rows while the
+  // filtered list loads — decided 2026-10-20.
+  const { navigate } = useUsersLoading()
   const pathname = usePathname()
   const params = useSearchParams()
 
@@ -102,15 +105,13 @@ function UsersFilter() {
     // is rarely page 3 of a filtered one.
     next.delete("page")
 
-    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+    navigate(`${pathname}?${next.toString()}`)
   }
 
   function clear() {
     const next = new URLSearchParams(params.toString())
     KEYS.forEach((key) => next.delete(key))
-    router.push(next.toString() ? `${pathname}?${next}` : pathname, {
-      scroll: false,
-    })
+    navigate(next.toString() ? `${pathname}?${next}` : pathname)
   }
 
   return (
@@ -198,7 +199,7 @@ function UsersFilter() {
                     </span>
                     <span className="text-[0.7rem] leading-tight text-muted-foreground">
                       {role.name === OWNER
-                        ? "Full access, and can deactivate administrators"
+                        ? "Full access. Can manage admins."
                         : role.name === "ADMIN"
                           ? "Full access"
                           : "Only what they are given"}

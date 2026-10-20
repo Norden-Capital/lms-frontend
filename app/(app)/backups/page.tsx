@@ -67,7 +67,7 @@ export default async function BackupsPage({
       <div className="flex h-full min-h-0 flex-col gap-5 p-4 sm:p-6">
         <PageHeader
           title="Backups"
-          description="Copies of the database, and whether they can actually be restored."
+          description="Copies of your data, kept safe."
         />
         <p className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {result.error.message}
@@ -86,7 +86,7 @@ export default async function BackupsPage({
 
       <PageHeader
         title="Backups"
-        description="Copies of the database, and whether they can actually be restored."
+        description="Copies of your data, kept safe."
         actions={
           <div className="flex items-center gap-2">
             <BackUpNowButton running={running} />

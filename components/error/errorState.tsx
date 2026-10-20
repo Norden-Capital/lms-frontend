@@ -11,6 +11,7 @@ function ErrorState({
   title,
   description,
   className,
+  size = "default",
   children,
 }: {
   code: string
@@ -18,27 +19,45 @@ function ErrorState({
   title: string
   description: string
   className?: string
+  /**
+   * "sm" for states inside the app frame — coming soon, an inbox that could
+   * not load — decided 2026-10-20. The full-window error pages keep "default".
+   */
+  size?: "default" | "sm"
   children?: React.ReactNode
 }) {
+  const small = size === "sm"
+
   return (
     <div
       className={cn(
-        "flex min-h-svh flex-col items-center justify-center gap-5 p-6",
+        "flex min-h-svh flex-col items-center justify-center p-6",
+        small ? "gap-4" : "gap-5",
         className
       )}
     >
       {/* Smaller text, bigger icon — decided 2026-10-20. The code keeps its size. */}
-      <div className="flex max-w-xs flex-col items-center gap-2.5 text-center">
-        <span className="flex size-16 items-center justify-center rounded-full bg-muted">
-          <Icon className="size-8" />
+      <div className={cn("flex max-w-xs flex-col items-center text-center", small ? "gap-2" : "gap-2.5")}>
+        <span
+          className={cn(
+            "flex items-center justify-center rounded-full bg-muted",
+            small ? "size-11" : "size-16"
+          )}
+        >
+          <Icon className={small ? "size-5" : "size-8"} />
         </span>
-        <span className="font-mono text-xs font-bold tracking-widest text-muted-foreground tabular-nums">
+        <span
+          className={cn(
+            "font-mono font-bold tracking-widest text-muted-foreground tabular-nums",
+            small ? "text-[0.65rem]" : "text-xs"
+          )}
+        >
           {code}
         </span>
-        <h1 className="font-heading text-lg font-semibold tracking-tight text-balance">
+        <h1 className={cn("font-heading font-semibold tracking-tight text-balance", small ? "text-sm" : "text-lg")}>
           {title}
         </h1>
-        <p className="text-xs text-muted-foreground text-balance">
+        <p className={cn("text-muted-foreground text-balance", small ? "text-[0.7rem]" : "text-xs")}>
           {description}
         </p>
       </div>

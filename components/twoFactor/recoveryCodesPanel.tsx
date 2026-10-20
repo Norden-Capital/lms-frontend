@@ -72,9 +72,8 @@ function RecoveryCodesPanel({
       <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
         <TriangleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
         <p className="text-sm text-destructive">
-          This is the only time these are shown. Only scrambled copies are
-          stored, so nobody can retrieve them later — not support, not an
-          administrator. Save them before you continue.
+          You will only see these once. Nobody can get them back later. Save
+          them now.
         </p>
       </div>
 

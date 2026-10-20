@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import {
   AlertCircle,
   Archive,
@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { useInboxLoading } from "@/components/inbox/inboxLoading"
 import { NewMark } from "@/components/layout/newMark"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -78,7 +79,7 @@ function FolderNav({
   folders: MailFolder[]
   selectedId: string
 }) {
-  const router = useRouter()
+  const { navigate } = useInboxLoading()
   const pathname = usePathname()
   const params = useSearchParams()
 
@@ -99,7 +100,7 @@ function FolderNav({
     // would show a message the list does not contain.
     next.delete("mail")
 
-    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+    navigate(`${pathname}?${next.toString()}`, "list")
   }
 
   // The rule between mail being dealt with and mail finished with.
@@ -108,7 +109,7 @@ function FolderNav({
   const current = folders.find((folder) => folder.id === selectedId)
 
   return (
-    <div className="flex min-w-0 items-center gap-1 py-1">
+    <div className="flex min-w-0 items-center gap-0.5 py-1">
       {collapsed
         ? // Just where you are. Everything else is one click away, and on a pane
           // this narrow the alternative is a row that scrolls sideways — which
@@ -122,7 +123,17 @@ function FolderNav({
           )
         : (
           <div
+            // The mouse wheel scrolls the row sideways — it still scrolls, it
+            // just shows no bar (decided 2026-10-20). Trackpads and touch
+            // scroll it sideways on their own.
+            onWheel={(event) => {
+              if (event.deltaY !== 0 && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+                event.currentTarget.scrollLeft += event.deltaY
+              }
+            }}
             className={cn(
+              // No scrollbar drawn, in either engine.
+              "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
               // ⚠️ py-1 is not spacing, it is headroom. The unread marks sit at
               // `-top-0.5`, outside their button — and setting overflow on one
               // axis makes the other clip too, so the row was shaving the top off
@@ -143,7 +154,7 @@ function FolderNav({
 
             <Separator
               orientation="vertical"
-              className="mx-1 data-vertical:h-5 data-vertical:self-center"
+              className="mx-1 data-vertical:h-4 data-vertical:self-center"
             />
 
             {categories.map((folder) => (
@@ -157,16 +168,23 @@ function FolderNav({
           </div>
         )}
 
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className="size-8 shrink-0"
-        onClick={() => setCollapsed((open) => !open)}
-        aria-label={collapsed ? "Show all folders" : "Show only this folder"}
-        aria-expanded={!collapsed}
-      >
-        {collapsed ? <ChevronRight /> : <ChevronLeft />}
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="size-7 shrink-0 hover:bg-foreground/10"
+              onClick={() => setCollapsed((open) => !open)}
+              aria-label={collapsed ? "Show all folders" : "Show only this folder"}
+              aria-expanded={!collapsed}
+            />
+          }
+        >
+          {collapsed ? <ChevronRight /> : <ChevronLeft />}
+        </TooltipTrigger>
+        <TooltipContent>{collapsed ? "Show all folders" : "Show only this folder"}</TooltipContent>
+      </Tooltip>
     </div>
   )
 }
@@ -200,15 +218,15 @@ function FolderButton({
                 : folder.label
             }
             className={cn(
-              "relative flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+              "relative flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
               selected
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
             )}
           />
         }
       >
-        <Icon className="size-4 shrink-0" />
+        <Icon className="size-3.5 shrink-0" />
 
         {/* The count has nowhere to go without a label, so the mark takes its
             place — the same pulsing dot the navbar's inbox button uses. Two

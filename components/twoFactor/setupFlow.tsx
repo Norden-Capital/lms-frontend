@@ -122,8 +122,7 @@ function AlreadyEnrolled() {
           Two-factor authentication is already on
         </h1>
         <p className="text-sm text-muted-foreground">
-          Nothing to set up. Signing in already asks for a code from your
-          authenticator app.
+          Nothing to do. You already sign in with a code from your app.
         </p>
       </header>
 
@@ -186,7 +185,7 @@ function SetupStep({
             <strong className="font-medium">
               Two-factor authentication is required.
             </strong>{" "}
-            No action is permitted on this account until it is switched on.
+            You can&apos;t use the app until you turn it on.
           </p>
         </div>
 
@@ -195,9 +194,7 @@ function SetupStep({
             Set up two-factor authentication
           </h1>
           <p className="text-sm text-muted-foreground">
-            A second step when you sign in: a 6-digit code from your phone, on top
-            of your password. If someone learns your password, it still is not
-            enough on its own.
+            When you sign in, you will also type a 6-digit code from your phone.
           </p>
         </header>
 
@@ -206,8 +203,7 @@ function SetupStep({
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium">You will need an authenticator app</p>
             <p className="text-sm text-muted-foreground">
-              Google Authenticator, 1Password, Authy or similar. Open it, add a
-              new account, and scan the code.
+              Open the app, add an account, and scan the code.
             </p>
           </div>
         </div>
@@ -254,7 +250,7 @@ function SetupStep({
                   demand explicit dimensions in exchange for nothing. */}
               <img
                 src={setup.qrCodeImage}
-                alt="QR code containing your two-factor setup key. The same key is written out below it."
+                alt="QR code to scan with your app. The same key is shown below."
                 className="size-44"
               />
             </div>
@@ -295,7 +291,7 @@ function SetupStep({
 
       <div className="self-start [grid-area:next]">
         <Button type="button" onClick={onContinue} disabled={!ready}>
-          I&apos;ve scanned it — next
+          Next
         </Button>
       </div>
 
@@ -345,8 +341,7 @@ function ConfirmStep({
           Enter the 6-digit code from the app
         </h1>
         <p className="text-sm text-muted-foreground">
-          This is what proves the scan worked. Two-factor is switched on once it
-          is accepted.
+          This turns on two-factor.
         </p>
       </header>
 
@@ -388,7 +383,7 @@ function ConfirmStep({
         <div className="flex flex-wrap items-center justify-center gap-3">
           {/* Back first, then forward — the order they read in. */}
           <Button type="button" variant="ghost" onClick={onBack} disabled={pending}>
-            Back to the QR code
+            Back
           </Button>
           <Button type="submit" disabled={pending}>
             {pending ? "Checking…" : "Turn on two-factor"}
@@ -514,8 +509,7 @@ function RecoveryCodesStep({
           Save your recovery codes
         </h1>
         <p className="text-sm text-muted-foreground">
-          Two-factor authentication is now on. These codes are how you get back
-          in if you lose your phone.
+          Two-factor is on. Use these codes if you lose your phone.
         </p>
       </header>
 

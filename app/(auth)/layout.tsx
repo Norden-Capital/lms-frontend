@@ -78,8 +78,7 @@ export default function AuthLayout({
             testimonial from an invented student — a quote from somebody who
             does not exist is not something to put in front of real people. */}
         <p className="relative mt-auto max-w-md text-sm leading-relaxed text-muted-foreground">
-          Every form, every submission, gathered in one secure place — so your
-          team spends its time on the data, not on chasing it.
+          All your forms and submissions, safe in one place.
         </p>
       </aside>
     </div>

@@ -36,7 +36,7 @@ function RegenerateRecoveryCodes({ email }: { email: string }) {
         </p>
         <RecoveryCodesPanel codes={state.recoveryCodes} email={email} />
         <p className="text-sm text-muted-foreground">
-          Any codes from before this moment have stopped working.
+          Your old codes no longer work.
         </p>
       </div>
     )

@@ -32,6 +32,7 @@ import {
   type UserAction,
 } from "@/components/users/userActionDialogs"
 import { StatusBadge, TwoFactorBadge } from "@/components/users/statusBadge"
+import { UserRowsSkeleton, useUsersLoading } from "@/components/users/usersLoading"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -46,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { LoadingCover } from "@/components/ui/loadingCover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Table,
@@ -308,6 +310,9 @@ function UsersTable({
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
+  // The wait for the server after a search, sort or page — shared with the
+  // filter button up in the header, which changes the same list.
+  const { navigate, loading } = useUsersLoading()
 
   // Selection is per page and deliberately not in the URL: it is a scratch
   // decision about rows on screen, not a place you would want to link somebody
@@ -339,7 +344,7 @@ function UsersTable({
     if (key !== "page") next.delete("page")
 
     setSelected(new Set())
-    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+    navigate(`${pathname}?${next.toString()}`)
   }
 
   /**
@@ -453,9 +458,8 @@ function UsersTable({
               <Info className="size-3.5" />
             </TooltipTrigger>
             <TooltipContent className="max-w-64">
-              Everyone with an account. Two-factor is required, so anyone showing
-              Off cannot use the application until they enrol. Tick rows to
-              export just those.
+              Everyone with an account. Users with 2FA off can&apos;t use the app
+              yet. Tick rows to export only those.
             </TooltipContent>
           </Tooltip>
         </p>
@@ -564,7 +568,12 @@ function UsersTable({
         </DropdownMenu>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm border bg-card">
+      {/* relative: the loader covers the rows only, under the headings, so the
+          search box and the buttons above stay usable — decided 2026-10-20. */}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm border bg-card">
+        <LoadingCover show={loading} className="top-10 bg-card">
+          <UserRowsSkeleton />
+        </LoadingCover>
         {/* The scroll lives on the table's own container, reached through
             containerClassName. Wrapping it in another scrolling div does not
             work: that wrapper stays between the header and the outer element, so

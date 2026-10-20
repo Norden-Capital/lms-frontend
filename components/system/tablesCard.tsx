@@ -26,9 +26,7 @@ function TablesCard({ tables }: { tables: SystemHealth["database"]["tables"] }) 
       title="Tables"
       hint={
         <>
-          Row counts and total size, from{" "}
-          <span className="font-mono">pg_stat_user_tables</span>. Counts are
-          estimates, not exact — Postgres does not keep a running total.
+          Rows and size of each table. Row counts are close, not exact.
         </>
       }
       action={

@@ -31,8 +31,7 @@ function BackendPanel({
         title="JVM heap"
         hint={
           <>
-            Sawing up and down as garbage collection runs is healthy. Climbing
-            and never falling back is a leak.
+            Memory the app uses. Up and down is fine. Always rising is a problem.
           </>
         }
         bodyClassName="gap-3 p-3"
@@ -57,8 +56,7 @@ function BackendPanel({
         title="Response time"
         hint={
           <>
-            The slowest endpoint&rsquo;s 95th percentile, not the whole
-            application&rsquo;s. An average would hide the tail people feel.
+            How fast the slowest page answers, for most requests.
           </>
         }
         bodyClassName="gap-3 p-3"
@@ -86,7 +84,7 @@ function BackendPanel({
       <Panel title="Traffic and errors" bodyClassName="gap-3">
         <StatRow
           label="Requests per minute"
-          hint="Throughput. Falling to zero matters as much as spiking."
+          hint="Requests each minute. A sudden drop to zero is bad too."
           value={
             history.length > 0
               ? count(history[history.length - 1].requestsPerMinute)
@@ -96,7 +94,7 @@ function BackendPanel({
         />
         <StatRow
           label="5xx error rate"
-          hint="The backend broke. Unlike 4xx, which is it refusing correctly."
+          hint="Requests that failed because of a server error."
           value={percent(backend.error5xxRate, 2)}
           detail={`${count(backend.errors5xx)} of ${count(backend.totalRequests)}`}
           percent={backend.error5xxRate}
@@ -104,7 +102,7 @@ function BackendPanel({
         />
         <StatRow
           label="4xx refusals"
-          hint="Refused on purpose — not signed in, no permission, not found."
+          hint="Requests turned away on purpose, like no access or not found."
           value={count(backend.errors4xx)}
           detail={
             backend.totalRequests > 0
@@ -120,7 +118,7 @@ function BackendPanel({
         />
         <StatRow
           label="Uptime"
-          hint="Since the container last started — usually just when you deployed."
+          hint="Time since the app last started."
           value={duration(backend.uptimeSeconds)}
         />
       </Panel>
@@ -128,7 +126,7 @@ function BackendPanel({
       <Panel title="Database connections" bodyClassName="gap-3">
         <StatRow
           label="Active connections"
-          hint="Running a query. Pinned at the maximum means requests are queueing."
+          hint="Busy right now. Always at the max means things wait."
           value={count(backend.pool.active)}
           detail={`of ${backend.pool.max}`}
           percent={
@@ -139,7 +137,7 @@ function BackendPanel({
         />
         <StatRow
           label="Idle connections"
-          hint="Open and ready. Reusing one is far cheaper than reconnecting."
+          hint="Open and ready to use."
           value={count(backend.pool.idle)}
           detail={`of ${backend.pool.max}`}
           percent={
@@ -149,12 +147,12 @@ function BackendPanel({
         />
         <StatRow
           label="Threads waiting"
-          hint="Blocked waiting for a free connection. Above zero is a problem."
+          hint="Waiting for a free connection. Above zero is a problem."
           value={count(backend.pool.pending)}
         />
         <StatRow
           label="Connection wait time"
-          hint="Wait to borrow a connection. Rises before anything visibly breaks."
+          hint="Time spent waiting for a connection. Should stay low."
           value={`${backend.pool.waitMillis.toFixed(1)} ms`}
         />
       </Panel>

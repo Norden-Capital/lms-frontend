@@ -108,7 +108,7 @@ const ACTIVITY_ICON = {
 const STATUS_TEXT: Record<string, { label: string; tone: string }> = {
   ACTIVE: { label: "Active", tone: "text-success" },
   PENDING_VERIFICATION: {
-    label: "Invited — not joined yet",
+    label: "Invited, not joined yet",
     tone: "text-warning",
   },
   SUSPENDED: { label: "Suspended", tone: "text-destructive" },
@@ -240,7 +240,7 @@ function EditDetailsForm({
         name="phone"
         type="tel"
         aria-label="Phone"
-        placeholder="Phone — optional"
+        placeholder="Phone (optional)"
         defaultValue={user.phone ?? ""}
         maxLength={20}
         disabled={saving}
@@ -675,8 +675,7 @@ function UserDetail({
                the system, and showing an empty list would state the first while
                meaning the second. */
             <p className="rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
-              This system does not keep an activity log yet, so there is nothing
-              to show — for anybody.
+              Activity is not tracked yet.
             </p>
           ) : activity.length === 0 ? (
             <p className="rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">

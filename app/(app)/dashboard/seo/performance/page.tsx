@@ -56,12 +56,10 @@ export default async function SeoPerformancePage({
         hint={
           dimension === "query" ? (
             <>
-              ⚠️ These will not add up to the totals on the Overview. Google
-              leaves out rare and anonymised searches, so the terms it shows you
-              always account for less traffic than the site actually had.
+              These add up to less than the Overview. Google hides some searches.
             </>
           ) : (
-            <>Clicks, impressions, click-through rate and average position.</>
+            <>How each one did in Google Search.</>
           )
         }
         action={

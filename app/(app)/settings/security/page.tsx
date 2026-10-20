@@ -42,8 +42,8 @@ export default async function SecurityPage() {
           <p className="text-sm font-medium">Two-factor authentication</p>
           <p className="text-sm text-muted-foreground">
             {user.mfaEnabled
-              ? "On. Signing in asks for a code from your authenticator app."
-              : "Off. Your password is currently the only thing protecting this account."}
+              ? "On. You sign in with a code from your app."
+              : "Off. Only your password protects this account."}
           </p>
         </div>
 
@@ -67,9 +67,8 @@ export default async function SecurityPage() {
           <div className="flex flex-col gap-1">
             <p className="text-sm font-medium">Recovery codes</p>
             <p className="text-sm text-muted-foreground">
-              Single-use codes for signing in when you do not have your phone.
-              Generate a new set if you are running low, or if you think someone
-              else has seen them.
+              One-time codes to sign in without your phone. Make new ones if
+              you run low or someone saw them.
             </p>
           </div>
 

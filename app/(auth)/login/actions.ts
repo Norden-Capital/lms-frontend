@@ -61,7 +61,7 @@ export async function login(
   }
 
   if (!data.accessToken) {
-    return { message: "The server returned an unexpected response." }
+    return { message: "Something went wrong. Please try again." }
   }
 
   await createSession(data.accessToken, data.expiresInSeconds ?? 60 * 60 * 24)

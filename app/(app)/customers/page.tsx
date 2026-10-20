@@ -38,7 +38,7 @@ export default async function CustomersPage() {
     <div className="flex h-full flex-col gap-6 overflow-y-auto p-6 pb-3">
       <PageHeader
         title="Customer list"
-        description="Everyone the company sells to, and how they arrived."
+        description="All your customers and where they came from."
       />
 
       {result.ok ? (

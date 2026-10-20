@@ -80,7 +80,7 @@ const ADMIN_ONLY = ["/users"]
  * Backups. The backend refuses the same people; this only sends them to the
  * no-access screen before a page they cannot use starts loading.
  */
-const OWNER_ONLY = ["/action-log", "/system-health", "/backups"]
+const OWNER_ONLY = ["/configuration", "/action-log", "/system-health", "/backups"]
 
 type Claims = { typ?: string; exp?: number; role?: string }
 

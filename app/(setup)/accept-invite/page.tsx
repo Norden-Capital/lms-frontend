@@ -40,8 +40,8 @@ export default async function AcceptInvitePage({
       <div className="mx-auto flex w-full max-w-xs flex-col gap-4">
         <LinkHeader icon={MailX} title="This invitation can't be used">
           {result && !result.ok && result.error.status !== 400
-            ? "We couldn't check your invitation right now. Please try again in a moment."
-            : "It has expired, was already used, or a newer one was sent. Ask your administrator to send you a new invitation."}
+            ? "We couldn't check your invitation. Please try again soon."
+            : "It is old or already used. Ask an admin for a new one."}
         </LinkHeader>
         <p className="text-center text-xs text-muted-foreground">
           Already set up your account?{" "}
@@ -57,8 +57,7 @@ export default async function AcceptInvitePage({
   return (
     <div className="mx-auto flex w-full max-w-xs flex-col gap-4">
       <LinkHeader icon={UserRoundPlus} title={`Welcome, ${result.data.firstName}`}>
-        Choose a password for your Norden Capital account. Next, you&apos;ll set up two-factor
-        authentication with an app like Google Authenticator.
+        Choose a password. Next, you will set up two-factor sign-in.
       </LinkHeader>
 
       <SetPasswordForm

@@ -34,9 +34,7 @@ export default async function SeoPagesPage() {
         title="Pages"
         hint={
           <>
-            Traffic comes from the performance report and covers every page.
-            Index status is fetched one URL at a time and is kept once fetched,
-            so the age of each answer is shown beside it.
+            Traffic for every page. Click Check to see if Google shows a page.
           </>
         }
         action={
@@ -44,8 +42,7 @@ export default async function SeoPagesPage() {
           // remaining quota — this is our own tally of the calls we made, so
           // anything else using the same property's budget is invisible to it.
           <span className="font-mono text-[0.7rem] text-muted-foreground tabular-nums">
-            {count(remaining)} of {count(quota.limit)} checks left today · used by
-            this app
+            {count(remaining)} of {count(quota.limit)} checks left today (this app)
           </span>
         }
         className="min-h-0 flex-1"

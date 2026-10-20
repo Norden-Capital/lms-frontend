@@ -34,6 +34,7 @@ function ComingSoon({
       title={title}
       description={description ?? "This page is on its way. Check back soon."}
       className={cn("min-h-0 flex-1", className)}
+      size="sm"
     >
       {showDashboardLink ? (
         <Button size="sm" variant="outline" render={<Link href="/dashboard" />}>

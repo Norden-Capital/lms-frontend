@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import {
   ChevronDown,
   ChevronUp,
@@ -25,6 +25,7 @@ import {
   type LogParty,
 } from "@/lib/actionLogTypes"
 import type { Page } from "@/lib/userTypes"
+import { ActionLogRowsSkeleton } from "@/components/actionLog/actionLogLoading"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -38,6 +39,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { LoadingCover } from "@/components/ui/loadingCover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Table,
@@ -96,6 +98,9 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
   const router = useRouter()
   const pathname = usePathname()
   const [typed, setTyped] = useState(query.search ?? "")
+  // A search, sort or page waits on the server. This says so, over the rows
+  // only — decided 2026-10-20.
+  const [loading, startLoading] = useTransition()
   const pageSize = logPageSize(query.size)
   const rows = page.content
 
@@ -144,7 +149,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
     if (next.sort) params.set("sort", next.sort)
     if (next.page && next.page !== "1") params.set("page", next.page)
     const qs = params.toString()
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    startLoading(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }))
   }
 
   return (
@@ -166,8 +171,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
               <Info className="size-3.5" />
             </TooltipTrigger>
             <TooltipContent className="max-w-64">
-              Who did what to accounts, and when. Only you can see this. Tick
-              lines to export just those.
+              Who did what, and when. Tick lines to export only those.
             </TooltipContent>
           </Tooltip>
         </p>
@@ -261,7 +265,11 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
       </div>
 
       {/* ── The white panel ──────────────────────────────────────────────── */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm border bg-card">
+      {/* relative: the loader covers the rows only, under the headings. */}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-sm border bg-card">
+        <LoadingCover show={loading} className="top-10 bg-card">
+          <ActionLogRowsSkeleton />
+        </LoadingCover>
         <Table
           containerClassName={cn("min-h-0 flex-1 overflow-auto", THIN_SCROLLBAR)}
           className={cn(rows.length === 0 && "h-full")}

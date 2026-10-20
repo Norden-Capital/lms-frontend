@@ -123,8 +123,8 @@ function PermissionPicker({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           {changed === 0
-            ? "Matching the role exactly."
-            : `${changed} ${changed === 1 ? "exception" : "exceptions"} to the role.`}
+            ? "Same as the role."
+            : `${changed} ${changed === 1 ? "change" : "changes"} from the role.`}
         </p>
 
         {changed > 0 && (
@@ -279,8 +279,7 @@ function PermissionPicker({
                         with no account of themselves read as a fault. */}
                     {!unlocked && (
                       <p className="px-2 text-xs text-muted-foreground">
-                        Turn on <span className="font-medium">read</span> to
-                        grant anything else here.
+                        Turn on <span className="font-medium">read</span> first.
                       </p>
                     )}
                   </div>

@@ -1,12 +1,18 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Search, Star } from "lucide-react"
+import { Paperclip, RotateCw, Search, SquarePen, Star } from "lucide-react"
+import { toast } from "sonner"
 
+import { mailAction } from "@/app/(app)/inbox/actions"
 import { AccountSwitcher } from "@/components/inbox/accountSwitcher"
+import { BrandLabels, LabelLogo } from "@/components/inbox/brandLabels"
+import { ListSkeleton, useInboxLoading } from "@/components/inbox/inboxLoading"
 import { FolderNav } from "@/components/inbox/folderNav"
-import { Badge } from "@/components/ui/badge"
+import { LoadingCover } from "@/components/ui/loadingCover"
+import { TablePagination } from "@/components/ui/tablePagination"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -24,10 +30,12 @@ import {
 import { duration } from "@/lib/format"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import type {
+  InboxOverview,
   Mail,
-  MailAccount,
   MailFolder,
+  MailPage,
   MailQuery,
+  MailSender,
 } from "@/lib/mailTypes"
 import { cn } from "@/lib/utils"
 
@@ -47,14 +55,6 @@ import { cn } from "@/lib/utils"
  */
 
 /**
- * Which badge a label gets.
- *
- * <p>Not a colour per label — that way lies a legend nobody reads. One label is
- * emphasised, one is deliberately quiet, and everything else sits in between,
- * which is enough for the eye to group them without being told what the colours
- * mean.
- */
-/**
  * The "no filter" option needs a value of its own.
  *
  * <p>A Select cannot use an empty string for a choosable item — an empty value
@@ -62,37 +62,31 @@ import { cn } from "@/lib/utils"
  * the trigger would show nothing. This is a sentinel, translated back to an
  * absent parameter the moment it is chosen, so the address bar never carries it.
  */
-const ALL_BRANDS = "all"
+const ALL_MAIL = "all"
 
-function badgeVariant(label: string): "default" | "secondary" | "outline" {
-  const lower = label.toLowerCase()
-  if (lower === "work") return "default"
-  if (lower === "personal") return "outline"
-  return "secondary"
-}
+/** Every brand at once — the backend reads "brands" the same way. */
+const ALL_BRANDS = "brands"
 
 function MailList({
-  mails,
+  page,
   selectedId,
   query,
-  brands,
-  accounts,
-  accountId,
+  overview,
   folders,
   folderId,
   canStar,
+  canSend,
   now,
 }: {
-  mails: Mail[]
-  /** Every brand with a mailbox, for the filter beside the search. */
-  brands: string[]
-  /** The mailboxes and folders, drawn in this pane's own header. */
-  accounts: MailAccount[]
-  accountId: string
+  page: MailPage
+  /** The mailbox, its brands and its From addresses. */
+  overview: InboxOverview
+  /** The folders, drawn in this pane's own header. */
   folders: MailFolder[]
   folderId: string
   /** Whether this account holds `INBOX:STAR`. */
   canStar: boolean
+  canSend: boolean
   /** The open message, so the row can mark itself. */
   selectedId: string | null
   /** What the address bar currently says. The single source of truth. */
@@ -110,6 +104,7 @@ function MailList({
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
+  const { navigate, loading } = useInboxLoading()
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(params.toString())
@@ -122,8 +117,10 @@ function MailList({
     // ends up showing what the list says is not there. Dropping it lets the
     // server pick the first of whatever survived.
     if (key !== "mail") next.delete("mail")
+    if (key !== "compose") next.delete("compose")
 
-    router.push(`${pathname}?${next.toString()}`, { scroll: false })
+    // Opening an email or the writer loads the right pane; anything else, the list.
+    navigate(`${pathname}?${next.toString()}`, key === "mail" || key === "compose" ? "mail" : "list")
   }
 
   /**
@@ -151,7 +148,10 @@ function MailList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typed, query.q])
 
+  const [reloading, startReload] = useTransition()
   const unreadOnly = query.filter === "unread"
+  const mails = page.mails
+  const brands = overview.brands
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -166,7 +166,7 @@ function MailList({
           one horizontal line across the split rather than each starting at its
           own height. */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-        <AccountSwitcher accounts={accounts} selectedId={accountId} />
+        <AccountSwitcher email={overview.email} />
 
         {/* The nav takes what is left and scrolls inside it, rather than the
             switcher and the folders each giving up half. The switcher has one
@@ -197,6 +197,23 @@ function MailList({
           border; this is the top of the list itself, and a second line so close
           to the first boxed the search in rather than introducing what follows. */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 p-4 pb-2">
+        {/* Opens the writing pane on the right, where an email would be. */}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                size="icon"
+                aria-label="New email"
+                aria-disabled={!canSend}
+                onClick={() => canSend && setParam("compose", "new")}
+                className="shrink-0 hover:bg-primary/80"
+              />
+            }
+          >
+            <SquarePen />
+          </TooltipTrigger>
+          <TooltipContent>{canSend ? "New email" : "You need the INBOX:SEND permission."}</TooltipContent>
+        </Tooltip>
         <div className="relative min-w-0 flex-1">
           <Search
             className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -205,52 +222,86 @@ function MailList({
           <Input
             value={typed}
             onChange={(event) => setTyped(event.target.value)}
-            placeholder="Search"
+            placeholder="Search emails"
             aria-label="Search messages"
             className="pl-9"
           />
         </div>
 
-        {/* Beside the search rather than in the navbar, because it does the same
-            job: both narrow what is in the list below, and controls that narrow
-            the same thing belong together. The mailbox switcher upstairs is a
-            different question — it changes which mail exists at all. */}
+        {/* All mail, every brand at once, or one brand: mail sent to that
+            address. After the search, because both narrow the same list. */}
         <Select
-          value={query.brand ?? ALL_BRANDS}
-          onValueChange={(value) =>
-            setParam("brand", value === ALL_BRANDS ? null : value)
-          }
+          value={query.brand ?? ALL_MAIL}
+          onValueChange={(value) => setParam("brand", value === ALL_MAIL ? null : value)}
         >
-          <SelectTrigger className="w-32 shrink-0" aria-label="Brand">
-            {/* Same trap as the mailbox switcher: without a formatter this
-                renders the raw value, and the sentinel would show as "all". */}
+          <SelectTrigger className="w-48 shrink-0" aria-label="Brand">
+            {/* Without a formatter this renders the raw value. */}
             <SelectValue>
-              {(value: string | null) =>
-                !value || value === ALL_BRANDS ? "All brands" : value
-              }
+              {(value: string | null) => {
+                if (!value || value === ALL_MAIL) return "All mail"
+                if (value === ALL_BRANDS) return "All brands"
+                const chosen = brands.find((brand) => brand.email === value)
+                if (!chosen) return value
+                return (
+                  <span className="flex min-w-0 items-center gap-2">
+                    <LabelLogo src={chosen.logoUrl} />
+                    <span className="truncate">{chosen.name}</span>
+                  </span>
+                )
+              }}
             </SelectValue>
           </SelectTrigger>
-          {/* No scrolling popup — see the note in `accountSwitcher`. */}
-          <SelectContent align="end" alignItemWithTrigger={false}>
-            <SelectItem value={ALL_BRANDS}>All brands</SelectItem>
+          {/* min-w-max so a whole name fits; a plain dropdown, not a scrolling popup. */}
+          <SelectContent align="end" alignItemWithTrigger={false} className="min-w-max">
+            <SelectItem value={ALL_MAIL}>All mail</SelectItem>
+            {brands.length > 0 && <SelectItem value={ALL_BRANDS}>All brands</SelectItem>}
             {brands.map((brand) => (
-              <SelectItem key={brand} value={brand}>
-                {brand}
+              <SelectItem key={brand.email} value={brand.email} className="pr-8">
+                <span className="flex items-center gap-2 whitespace-nowrap">
+                  <LabelLogo src={brand.logoUrl} />
+                  {brand.name}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        {/* Asks Gmail again — new mail shows without reloading the whole tab. */}
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Reload"
+                className="shrink-0 bg-card hover:bg-foreground/10"
+                onClick={() => startReload(() => router.refresh())}
+              />
+            }
+          >
+            <RotateCw className={cn(reloading && "animate-spin")} />
+          </TooltipTrigger>
+          <TooltipContent>Reload</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* ── The messages ──────────────────────────────────────────────────── */}
-      <div className={cn("min-h-0 flex-1 overflow-y-auto px-4 pb-4", THIN_SCROLLBAR)}>
+      {/* relative: the loader is laid over the messages only, so the search
+          box above stays usable while a search loads. */}
+      <div className="relative min-h-0 flex-1">
+      <LoadingCover show={loading === "list"}>
+        <div className="px-4">
+          <ListSkeleton />
+        </div>
+      </LoadingCover>
+      <div className={cn("h-full overflow-y-auto px-4 pb-4", THIN_SCROLLBAR)}>
         {mails.length === 0 ? (
           <p className="pt-6 text-center text-sm text-muted-foreground">
             {query.q
               ? `No messages match "${query.q}".`
               : unreadOnly
                 ? "Nothing unread."
-                : "No messages."}
+                : "No messages here."}
           </p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -260,6 +311,7 @@ function MailList({
                 mail={mail}
                 selected={mail.id === selectedId}
                 canStar={canStar}
+                brands={brands}
                 now={now}
                 onOpen={() => setParam("mail", mail.id)}
               />
@@ -267,6 +319,21 @@ function MailList({
           </div>
         )}
       </div>
+      </div>
+
+      {/* ── Pages ───────────────────────────────────────────────────────── */}
+      {page.total > 0 && (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t px-4 py-1.5 text-[0.7rem] text-muted-foreground">
+          <p className="tabular-nums">
+            {`${(page.page - 1) * page.size + 1}–${(page.page - 1) * page.size + mails.length} of ${page.total}`}
+          </p>
+          <TablePagination
+            page={page.page}
+            totalPages={page.totalPages}
+            onPage={(next) => setParam("page", String(next))}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -275,12 +342,14 @@ function MailRow({
   mail,
   selected,
   canStar,
+  brands,
   now,
   onOpen,
 }: {
   mail: Mail
   selected: boolean
   canStar: boolean
+  brands: MailSender[]
   now: Date
   onOpen: () => void
 }) {
@@ -296,7 +365,22 @@ function MailRow({
    * not fill when clicked reads as broken rather than unbuilt, and there is no
    * mailbox behind this to remember it in.
    */
+  // Turned on straight away, and back if Gmail refuses.
   const [starred, setStarred] = useState(mail.starred)
+  const [, start] = useTransition()
+
+  function toggleStar() {
+    if (!canStar) return
+    const next = !starred
+    setStarred(next)
+    start(async () => {
+      const result = await mailAction(mail.id, next ? "star" : "unstar")
+      if (!result.ok) {
+        setStarred(!next)
+        toast.error(result.message ?? "The star could not be changed.")
+      }
+    })
+  }
 
   return (
     // ⚠️ Not a `<button>` wrapping everything any more, and it cannot be: the
@@ -338,6 +422,10 @@ function MailRow({
 
         {/* Pushed to the end rather than floated, so a long sender name truncates
             instead of shoving the age off the row. */}
+        {mail.hasAttachments && (
+          <Paperclip className="size-3 shrink-0 text-muted-foreground" aria-label="Has attachments" />
+        )}
+
         <span className="ml-auto shrink-0 text-xs text-muted-foreground">
           {duration(age)} ago
         </span>
@@ -349,11 +437,11 @@ function MailRow({
                 type="button"
                 // pointer-events-auto against the wrapper's `none`: this is the
                 // one thing in the row that is not part of opening it.
-                onClick={() => canStar && setStarred((on) => !on)}
+                onClick={toggleStar}
                 aria-disabled={!canStar}
                 aria-pressed={starred}
                 aria-label={starred ? "Starred" : "Not starred"}
-                className="pointer-events-auto -m-1 shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
+                className="pointer-events-auto -m-1 shrink-0 rounded-sm p-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
               />
             }
           >
@@ -372,8 +460,7 @@ function MailRow({
               <>
                 <p className="font-medium">Star this message</p>
                 <p className="mt-0.5 text-background/70">
-                  This needs the INBOX:STAR permission, which your account does
-                  not have.
+                  You need the INBOX:STAR permission.
                 </p>
               </>
             )}
@@ -396,18 +483,16 @@ function MailRow({
           them never line up — which is what turns a list into something you
           have to read rather than scan. */}
       <span className="pointer-events-none relative line-clamp-2 min-h-8 text-xs text-muted-foreground">
-        {mail.body}
+        {mail.preview}
       </span>
 
-      {mail.labels.length > 0 && (
-        <span className="pointer-events-none relative flex flex-wrap gap-2 pt-1">
-          {mail.labels.map((label) => (
-            <Badge key={label} variant={badgeVariant(label)}>
-              {label}
-            </Badge>
-          ))}
-        </span>
-      )}
+      {/* The labels are the brands: each with its brand's logo. */}
+      <BrandLabels
+        labels={mail.labels}
+        brand={mail.brand}
+        brands={brands}
+        className="pointer-events-none relative pt-1"
+      />
     </div>
   )
 }

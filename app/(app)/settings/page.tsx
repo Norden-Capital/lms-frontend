@@ -24,8 +24,7 @@ const SECTIONS = [
   },
   {
     title: "Security",
-    description:
-      "Two-factor authentication, password, and how this account is protected.",
+    description: "Two-factor sign-in and password.",
     href: "/settings/security",
     icon: ShieldCheck,
   },

@@ -135,7 +135,7 @@ function ContainerCard({
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline justify-between gap-3">
           <HintedLabel label="CPU" className="text-xs text-muted-foreground">
-            Share of the whole machine, so 100% would mean every core.
+            Share of the whole server. 100% means fully busy.
           </HintedLabel>
           <span className="font-heading text-sm font-semibold tabular-nums">
             {percent(container.cpuPercent)}
@@ -167,11 +167,11 @@ function ContainerCard({
           label="Memory"
           hint={
             unlimited
-              ? "No cap is set, so the ceiling is the machine's RAM."
-              : "Against the cap set on this container."
+              ? "No limit set, so it can use all the server's memory."
+              : "Memory used, out of its limit."
           }
           value={bytes(container.memoryUsed)}
-          detail={`of ${bytes(container.memoryLimit)}${unlimited ? " · no cap" : ""}`}
+          detail={`of ${bytes(container.memoryLimit)}${unlimited ? " · no limit" : ""}`}
           percent={memoryPercent}
         />
       )}
@@ -179,17 +179,17 @@ function ContainerCard({
       <div className="mt-auto flex flex-col gap-1.5 border-t pt-2.5">
         <Row
           label="Restarts"
-          hint="Times Docker has restarted it. Climbing on its own means crashing."
+          hint="Times it restarted. If this keeps going up, it is crashing."
           value={count(container.restarts)}
         />
         <Row
           label="Uptime"
-          hint="Since this container last started, which a restart resets."
+          hint="Time since it last started."
           value={duration(container.uptimeSeconds)}
         />
         <Row
           label="Network"
-          hint="Total in and out since it started — a running total, not a rate."
+          hint="Data in and out since it started."
           value={`${bytes(container.networkIn)} in`}
           detail={`${bytes(container.networkOut)} out`}
         />
@@ -215,7 +215,7 @@ function ContainersPanel({
       <Panel
         className="lg:h-full"
         title="Containers"
-        hint={<>Read through a proxy, never the Docker socket itself.</>}
+        hint={<>Shows the parts of the app running on the server.</>}
         action={
           <span className="flex items-center gap-1.5 text-[0.7rem] text-muted-foreground">
             <Boxes className="size-3.5" aria-hidden />
@@ -225,12 +225,10 @@ function ContainersPanel({
         bodyClassName="items-center justify-center gap-2 p-8"
       >
         <p className="max-w-md text-center text-sm font-medium">
-          No Docker endpoint is answering
+          Can&apos;t read the containers
         </p>
         <p className="max-w-md text-center text-sm text-muted-foreground">
-          {containers?.detail} Container figures come from a read-only proxy that
-          holds the Docker socket so the backend never has to. On the server it
-          runs alongside the application; locally it needs starting with{" "}
+          {containers?.detail} To fix it locally, run{" "}
           <span className="font-mono text-xs">
             docker compose up -d docker-socket-proxy
           </span>
@@ -261,9 +259,7 @@ function ContainersPanel({
         </span>
         {stopped > 0 && (
           <Hint>
-            Stopped containers get a count rather than a card — Docker keeps
-            every one it has ever run. Anything crashing is restarting, not
-            stopped, and stays on screen.
+            Stopped ones are only counted, not shown.
           </Hint>
         )}
       </p>

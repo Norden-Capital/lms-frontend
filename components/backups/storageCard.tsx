@@ -78,9 +78,7 @@ function StorageCard({ status }: { status: BackupStatus }) {
         action={toggle}
         hint={
           <>
-            The copies in Cloudflare R2, against the 10 GB free allowance. Past
-            it, Cloudflare charges about $0.015 per GB a month. Every backup is
-            kept, so this slowly fills.
+            Backups in the cloud. The first 10 GB are free.
           </>
         }
         value={status.cloudConfigured ? percent(used, 1) : "Off"}
@@ -89,10 +87,10 @@ function StorageCard({ status }: { status: BackupStatus }) {
         detail={
           status.cloudConfigured
             ? `Cloudflare R2 — ${bytes(status.cloudBackupBytes)} of ${bytes(status.cloudLimitBytes)}`
-            : "Cloudflare R2 is not set up — backups are on the server only."
+            : "Cloud is off. Backups are on the server only."
         }
         footerIcon={HardDrive}
-        footer="Free up to 10 GB in Cloudflare R2"
+        footer="Free up to 10 GB"
       />
     )
   }
@@ -109,9 +107,8 @@ function StorageCard({ status }: { status: BackupStatus }) {
       action={toggle}
       hint={
         <>
-          The server&apos;s whole disk. The dark part of the bar is backups, the
-          light part is everything else (the app, the database, the system). A
-          full disk stops backups and the app.
+          The server&apos;s disk. Dark part is backups. If it gets full, the app
+          stops.
         </>
       }
       value={percent(used, 1)}

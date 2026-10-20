@@ -40,22 +40,22 @@ function DatabasePanel({ health }: { health: SystemHealth }) {
         <Panel title="Storage" bodyClassName="gap-3">
           <StatRow
             label="Data"
-            hint="What your tables and indexes occupy."
+            hint="Space your data takes."
             value={bytes(database.sizeBytes)}
           />
           <StatRow
             label="On disk"
-            hint="The whole Postgres directory. This is the number that fills a disk."
+            hint="All database files on the disk."
             value={bytes(database.onDiskBytes)}
           />
           <StatRow
             label="Write-ahead log"
-            hint="Changes are written here before the tables. Growing without stopping is trouble."
+            hint="A log of recent changes. Always growing is a problem."
             value={bytes(database.walBytes)}
           />
           <StatRow
             label="Share of disk"
-            hint="Postgres against the whole machine."
+            hint="Database size compared to the whole disk."
             value={percent(shareOfDisk, 2)}
             detail={`of ${bytes(server.diskTotal)}`}
             percent={shareOfDisk}
@@ -66,9 +66,7 @@ function DatabasePanel({ health }: { health: SystemHealth }) {
           title="Cache hit ratio"
           hint={
             <>
-              <span className="font-mono">hits ÷ (hits + reads)</span>. Below
-              about 99% means it is reading disk often enough to slow things
-              down.
+              How often data comes from fast memory. Below 99% can be slow.
             </>
           }
           className="lg:flex-1"
@@ -83,7 +81,7 @@ function DatabasePanel({ health }: { health: SystemHealth }) {
           </div>
 
           <p className="text-center text-[0.7rem] text-muted-foreground">
-            Below 99% is usually a missing index, not too little memory
+            Higher is better
           </p>
         </Panel>
       </div>
@@ -96,7 +94,7 @@ function DatabasePanel({ health }: { health: SystemHealth }) {
             // ones too. Two meanings of one word across two tabs is how a pool
             // sitting at its limit gets read as healthy.
             label="Open connections"
-            hint="Every connection to this database, busy or idle. Hitting the limit causes errors, not slowness."
+            hint="All open connections. At the limit, new ones fail."
             value={count(database.activeConnections)}
             detail={`of ${database.maxConnections}`}
             percent={
@@ -107,18 +105,18 @@ function DatabasePanel({ health }: { health: SystemHealth }) {
           />
           <StatRow
             label="Running queries"
-            hint="Actually executing right now, rather than sitting idle."
+            hint="Queries working right now."
             value={count(database.runningQueries)}
           />
           <StatRow
             label="Slow queries"
-            hint="Queries over a second. Needs the pg_stat_statements extension."
+            hint="Queries that take over one second."
             value={database.slowQueriesAvailable ? "0" : "—"}
             detail={database.slowQueriesAvailable ? undefined : "not enabled"}
           />
           <StatRow
             label="Uptime"
-            hint="Since Postgres started. Longer than the backend's is healthy."
+            hint="Time since the database last started."
             value={duration(database.uptimeSeconds)}
           />
         </Panel>

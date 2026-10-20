@@ -168,7 +168,7 @@ function ServerPanel({
       <div className="flex flex-col gap-4">
         <Panel
           title="Server"
-          hint={<>Fixed specifications, not live readings.</>}
+          hint={<>The server&apos;s fixed specs.</>}
           action={
             <span className="flex items-center gap-1.5 text-[0.7rem] font-medium text-success">
               <span className="size-1.5 rounded-full bg-success" aria-hidden />
@@ -181,31 +181,31 @@ function ServerPanel({
             icon={Server}
             label="OS"
             value={server.os}
-            hint="The distribution on the machine, not inside the containers."
+            hint="The system the server runs."
           />
           <Fact
             icon={Cpu}
             label="CPU"
             value={`${server.cores} cores`}
-            hint="Cores available. Average Load above this number means work is queueing."
+            hint="Number of cores. Load above this means work waits."
           />
           <Fact
             icon={MemoryStick}
             label="Memory"
             value={bytes(server.memoryTotal)}
-            hint="Total RAM, shared by the system and both containers."
+            hint="Total memory on the server."
           />
           <Fact
             icon={HardDrive}
             label="Storage"
             value={bytes(server.diskTotal)}
-            hint="The whole disk. Docker volumes have no quota of their own."
+            hint="Total disk space on the server."
           />
           <Fact
             icon={Gauge}
             label="Load"
             value={`${server.load1.toFixed(2)} · ${server.load5.toFixed(2)} · ${server.load15.toFixed(2)}`}
-            hint="Tasks waiting for a core over 1, 5 and 15 minutes. Above the core count means queueing."
+            hint="How busy the server was over 1, 5 and 15 minutes."
           />
 
           <div className="mt-1 flex flex-col gap-1 border-t pt-3 text-xs text-muted-foreground">
@@ -219,7 +219,7 @@ function ServerPanel({
             </span>
             <span className="flex items-center justify-between gap-2">
               <HintedLabel label="Processes">
-                Everything running on the machine, not just this application.
+                Everything running on the server.
               </HintedLabel>
               <span className="font-medium text-foreground tabular-nums">
                 {server.processes}
@@ -232,8 +232,7 @@ function ServerPanel({
           title="Disk"
           hint={
             <>
-              The whole machine. Docker volumes have no quota, so this is the
-              only real ceiling.
+              Disk space used on the whole server.
             </>
           }
           className="lg:flex-1"
@@ -260,8 +259,7 @@ function ServerPanel({
             title="CPU usage"
             hint={
               <>
-                Non-idle share across all cores, from{" "}
-                <span className="font-mono">/proc/stat</span>.
+                How busy the processor is.
               </>
             }
             series={history.map((s) => s.cpu)}
@@ -274,8 +272,7 @@ function ServerPanel({
             title="RAM usage"
             hint={
               <>
-                <span className="font-mono">(Total − Available) ÷ Total</span>.
-                Excludes the file cache, which Linux counts as used.
+                Memory in use right now.
               </>
             }
             series={history.map((s) => s.memory)}
@@ -291,14 +288,11 @@ function ServerPanel({
           hint={
             server.networkIsHost ? (
               <>
-                The machine&rsquo;s real interfaces. Docker&rsquo;s virtual ones
-                are left out — a request crosses three of them and would be
-                counted three times.
+                Data the server sends and receives.
               </>
             ) : (
               <>
-                ⚠️ The application&rsquo;s own traffic, not the
-                machine&rsquo;s — the host counters are not mounted here.
+                Only the app&rsquo;s own traffic, not the whole server.
               </>
             )
           }
@@ -367,7 +361,7 @@ function SystemOverview({ initial }: { initial: SystemHealth | null }) {
       {error && (
         <TopBanner
           key={error}
-          message={`Not updating. ${error} The figures below are from the last successful reading.`}
+          message={`Not updating. ${error} Showing the last numbers we got.`}
         />
       )}
 

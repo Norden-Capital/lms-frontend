@@ -44,8 +44,8 @@ function OtpForm() {
         </h1>
         <p className="text-xs text-muted-foreground">
           {useRecovery
-            ? "Enter one of the recovery codes you saved when you set up two-factor authentication."
-            : "Open your authenticator app and enter the 6-digit code for Norden Capital."}
+            ? "Enter one of the recovery codes you saved."
+            : "Enter the 6-digit code from your authenticator app."}
         </p>
       </div>
 

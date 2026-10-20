@@ -6,6 +6,7 @@ import {
   ScrollText,
   Settings,
   Share2,
+  SlidersHorizontal,
   UserCog,
   Users,
 } from "lucide-react"
@@ -91,9 +92,16 @@ export const navSections: NavSection[] = [
     title: "Platform",
     ownerOnly: true,
     items: [
-      { title: "Action Log", href: "/action-log", icon: ScrollText },
+      // Order decided 2026-10-20: set it up, watch it, keep it safe, look back.
+      {
+        title: "Configuration",
+        href: "/configuration",
+        icon: SlidersHorizontal,
+        items: [{ title: "Brands", href: "/configuration/brands" }],
+      },
       { title: "System Health", href: "/system-health", icon: HardDrive },
       { title: "Backups", href: "/backups", icon: DatabaseBackup },
+      { title: "Action Log", href: "/action-log", icon: ScrollText },
     ],
   },
 ]

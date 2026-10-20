@@ -4,6 +4,7 @@ import { ShieldAlert } from "lucide-react"
 
 import { PageHeader } from "@/components/layout/pageHeader"
 import { UsersFilter } from "@/components/users/usersFilter"
+import { UsersLoadingProvider } from "@/components/users/usersLoading"
 import { UsersTable } from "@/components/users/usersTable"
 import { requireUser } from "@/lib/auth"
 import { listUsers, type UserQuery } from "@/lib/users"
@@ -66,6 +67,10 @@ export default async function UsersPage({
     // full 24px above a border that is itself only a few pixels from the bottom
     // of the window left the two looking unrelated.
     <div className="flex h-full flex-col gap-6 overflow-hidden p-6 pb-3">
+      {/* Around both the filter and the table, so a filter change shows the
+          table's loader too — decided 2026-10-20. It renders no element of its
+          own, so the layout is unchanged. */}
+      <UsersLoadingProvider>
       {/* No back chevron: this is where /users/new and /users/[id] go back to. */}
       <PageHeader
         title="User management"
@@ -95,6 +100,7 @@ export default async function UsersPage({
           </div>
         </div>
       )}
+      </UsersLoadingProvider>
     </div>
   )
 }

@@ -207,8 +207,8 @@ function ChangeRoleDialog({
           tone="bg-muted text-foreground"
           title="Change role"
         >
-          <Email address={user.email} />{" "}will be signed out, and any permission
-          set just for them is cleared.
+          <Email address={user.email} />{" "}will be signed out. Their custom
+          permissions are removed.
         </DialogHead>
 
         {/* A dropdown — decided 2026-10-19 — instead of a card per role. */}
@@ -293,14 +293,14 @@ function ResetTwoFactorDialog({
         >
           {user.mfaEnabled ? (
             <>
-              The authenticator app and recovery codes for{" "}
-              <Email address={user.email} />{" "}stop working now. They set up a new
-              one the next time they sign in.
+              The app and recovery codes for{" "}
+              <Email address={user.email} />{" "}stop working now. They set it up
+              again at next sign-in.
             </>
           ) : (
             <>
-              <Email address={user.email} />{" "}hasn&apos;t set up two-factor yet,
-              so there is nothing to reset.
+              <Email address={user.email} />{" "}hasn&apos;t set up two-factor yet.
+              Nothing to reset.
             </>
           )}
         </DialogHead>
@@ -374,8 +374,8 @@ function EmailLinkDialog({
             </>
           ) : (
             <>
-              We&apos;ll send a link to <Email address={user.email} />{" "}to choose
-              a new password. It works for 30 minutes.
+              We&apos;ll email <Email address={user.email} />{" "}a link to set a
+              new password. It works for 30 minutes.
             </>
           )}
         </DialogHead>
@@ -499,9 +499,8 @@ function DeactivateUserDialog({
             </>
           ) : (
             <>
-              <Email address={user.email} />{" "}can&apos;t sign in, and is signed
-              out now. Nothing is deleted — you can turn the account back on
-              later.
+              <Email address={user.email} />{" "}is signed out and can&apos;t sign
+              in. Nothing is deleted. You can turn it back on later.
             </>
           )}
         </DialogHead>
