@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { FileQuestion } from "lucide-react"
+import { FileQuestion, Headset } from "lucide-react"
 
 import { ErrorState } from "@/components/error/errorState"
 import { Button } from "@/components/ui/button"
@@ -16,11 +16,12 @@ export default function NotFound() {
       title="We can't find that page"
       description="The link may be broken, or the course or lesson it pointed to has since been removed."
     >
-      <Button size="lg" render={<Link href="/dashboard" />}>
-        Go to dashboard
-      </Button>
-      <Button variant="outline" size="lg" render={<Link href="/help-center" />}>
+      <Button variant="outline" size="sm" render={<Link href="/help-center" />}>
+        <Headset data-icon="inline-start" />
         Contact IT support
+      </Button>
+      <Button size="sm" render={<Link href="/dashboard" />}>
+        Go to dashboard
       </Button>
     </ErrorState>
   )

@@ -6,9 +6,7 @@
  * for updates, and a file that reads the session cookie cannot be imported from
  * the browser.
  *
- * <p>⚠️ Nothing produces this yet. It is written as the shape the API will
- * return so the screen can be built against it, and so the day the backend
- * arrives the only change is where the data comes from.
+ * <p>The shape the backend's `GET /api/backups` returns — see BackupService.
  */
 
 /**
@@ -34,24 +32,37 @@ export type BackupRun = {
   /** Size of the finished file. Zero when the run never produced one. */
   sizeBytes: number
   durationSeconds: number
-  /** Where it was stored. Null when it never got that far. */
+  /**
+   * Where the file is now: "Server + Cloudflare R2", "Server", "Cloudflare R2",
+   * or "Deleted". Null while running, and when it never got that far.
+   */
   destination: string | null
   /**
    * Why it failed, in a sentence a person can act on.
    *
-   * <p>"Failed" on its own is useless at two in the morning. "Google refused the
-   * upload — the permission expired" tells you what to go and fix.
+   * <p>"Failed" on its own is useless at two in the morning. "Saved on the
+   * server, but the copy to Cloudflare R2 failed — SignatureDoesNotMatch" tells
+   * you what to go and fix.
    */
   error: string | null
   /**
-   * Where the finished file sits, for opening it at the destination.
+   * A file exists and can be downloaded.
    *
-   * <p>Null whenever there is nothing to open — a run that failed before it
-   * uploaded, and a run still going. The log keys the "open" action off this
-   * rather than off the outcome, so a success that somehow left no file is
-   * still honest about having nothing behind it.
+   * <p>The log keys Download and Delete off this rather than off the outcome:
+   * a failed run whose cloud copy broke is still kept on the server, and a
+   * deleted success has nothing behind it.
    */
-  url: string | null
+  downloadable: boolean
+  /** When the Owner deleted it. The row stays, so the history stays true. */
+  deletedAt: string | null
+  /** The nightly run, or "Back up now". */
+  trigger: "scheduled" | "manual"
+  /** Who pressed "Back up now". Null for the nightly run. */
+  triggeredBy: string | null
+  /** The copy was loaded into a scratch database and its data came back. */
+  restoreTested: boolean
+  /** What that test found — "Restored 12 tables, 345 rows". */
+  restoreNote: string | null
 }
 
 /**
@@ -133,32 +144,36 @@ export type BackupStatus = {
   /** The schedule in words, e.g. "Every day at 03:00". */
   schedule: string
   /**
-   * Files sitting at the destination right now, after retention has pruned.
+   * Backups with a file still kept.
    *
-   * <p>Smaller than {@link totalRuns} and meant to be — retention deletes old
-   * copies on purpose. Showing both says "we have run this 412 times and are
-   * keeping 38 of them", which is the difference between a working retention
-   * rule and one that quietly never fires.
+   * <p>Nothing is deleted automatically — decided 2026-10-20 — so this only
+   * falls below {@link totalRuns} when the Owner deletes one by hand.
    */
   storedCount: number
   storedBytes: number
   /** Every run that ever succeeded, including copies since deleted. */
   totalRuns: number
-  /** Where backups are sent, for the screen to name. */
+  /** "Server + Cloudflare R2", or "Server only" when R2 is not set up. */
   destination: string
   /**
-   * The destination's whole quota — not just what backups occupy.
+   * The server disk the backups are written to — used and whole size.
    *
-   * <p>⚠️ On a personal Google account this is the <em>same</em> 15 GB as Gmail
-   * and Photos. Backups are around a megabyte each and will never fill it on
-   * their own; a phone uploading its camera roll will. That is exactly why this
-   * is on the page: the thing most likely to stop backups working is something
-   * that has nothing to do with backups.
+   * <p>Everything is kept, so this is the figure that one day runs out. The
+   * R2 copy has its own 10 GB free allowance, far beyond what a small database
+   * needs for years.
    */
   destinationUsedBytes: number
   destinationTotalBytes: number
-  /** Oldest first, one per day, for the heatmap. */
+  /** Oldest first, one per day from 1 January of the first year, for the heatmap. */
   days: BackupDay[]
-  /** Newest first. */
-  runs: BackupRun[]
+  /** A backup is in progress right now — the page refreshes itself while it is. */
+  running: boolean
+  /** What the backups take on the server disk — part of destinationUsedBytes. */
+  serverBackupBytes: number
+  /** An R2 bucket is set up. */
+  cloudConfigured: boolean
+  /** What the backups take in Cloudflare R2. */
+  cloudBackupBytes: number
+  /** The R2 allowance the page measures against — the 10 GB free tier. */
+  cloudLimitBytes: number
 }

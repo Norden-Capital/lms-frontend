@@ -61,6 +61,9 @@ export const ACTION_TYPES: Record<string, { label: string; tone: "neutral" | "go
   SIGN_IN: { label: "Signed in", tone: "neutral" },
   SIGN_IN_FAILED: { label: "Sign-in failed", tone: "warn" },
   ACCOUNT_LOCKED: { label: "Account locked", tone: "bad" },
+  BACKUP_STARTED: { label: "Backup started", tone: "neutral" },
+  BACKUP_DOWNLOADED: { label: "Backup downloaded", tone: "warn" },
+  BACKUP_DELETED: { label: "Backup deleted", tone: "bad" },
 }
 
 export function actionLabel(action: string) {

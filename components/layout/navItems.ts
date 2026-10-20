@@ -1,6 +1,6 @@
 import {
-  Activity,
   DatabaseBackup,
+  HardDrive,
   LayoutDashboard,
   LifeBuoy,
   ScrollText,
@@ -92,7 +92,7 @@ export const navSections: NavSection[] = [
     ownerOnly: true,
     items: [
       { title: "Action Log", href: "/action-log", icon: ScrollText },
-      { title: "System Health", href: "/system-health", icon: Activity },
+      { title: "System Health", href: "/system-health", icon: HardDrive },
       { title: "Backups", href: "/backups", icon: DatabaseBackup },
     ],
   },

@@ -33,7 +33,7 @@ export default function GlobalError({
           title="The application failed to load"
           description="Something broke before the page could render. Reloading may fix it — if not, IT will need the reference below."
         >
-          <Button size="lg" onClick={() => unstable_retry()}>
+          <Button size="sm" onClick={() => unstable_retry()}>
             <RotateCw data-icon="inline-start" />
             Try again
           </Button>

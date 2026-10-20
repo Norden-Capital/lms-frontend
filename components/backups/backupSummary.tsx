@@ -3,18 +3,17 @@ import {
   CircleAlert,
   CircleCheck,
   Clock,
-  Cloud,
-  HardDrive,
   History,
   Hourglass,
   Repeat,
 } from "lucide-react"
 
 import { Countdown, Elapsed } from "@/components/backups/liveClock"
+import { StorageCard } from "@/components/backups/storageCard"
 import { StatCard } from "@/components/stats/statCard"
 import type { BackupStatus } from "@/lib/backupTypes"
 import { formatCountdown, remaining } from "@/lib/countdown"
-import { bytes, count, duration, percent, utcStamp } from "@/lib/format"
+import { bytes, count, duration, utcStamp } from "@/lib/format"
 
 /**
  * The four figures worth putting beside the log.
@@ -51,60 +50,6 @@ import { bytes, count, duration, percent, utcStamp } from "@/lib/format"
  */
 const OVERDUE_SECONDS = 26 * 60 * 60
 
-/**
- * Where the storage bar changes colour.
- *
- * <p>Amber well before full, because the useful warning is the one that arrives
- * while there is still time to do something. A bar that only turns red at 100%
- * is a bar that tells you after the backup has already failed.
- */
-const STORAGE_WARN = 60
-const STORAGE_FULL = 80
-
-/**
- * Where more space is bought.
- *
- * <p>Google One rather than Drive itself: Drive shows what is full, Google One
- * is where the plan changes. Sending somebody to the wrong one of those two
- * leaves them to find this page again on their own.
- */
-const UPGRADE_URL = "https://one.google.com/storage"
-
-/**
- * Buying more room, next to the figure that says it is running out.
- *
- * <p>On the figure's row rather than under the bar, because it answers that
- * number directly — the percentage is the problem, and this is the only thing
- * on the card anybody can do about it.
- *
- * <p>A link rather than a button, and the difference is honest: a button on this
- * screen does something to the backups. This leaves for somebody else's website.
- *
- * <p>The blue is `--info`, a theme token. It was a hardcoded hex here, with a
- * note saying the second use is what should promote it — the inbox's unread dot
- * is that second use, so it was promoted. Both now read from one definition
- * instead of being the same blue only by coincidence.
- *
- * <p>Leaves in a new tab. This is an operations screen, and losing a half-formed
- * thought about backups to a detour through Google's billing pages is a poor
- * trade for one browser tab.
- */
-function Upgrade() {
-  return (
-    <a
-      href={UPGRADE_URL}
-      target="_blank"
-      rel="noreferrer noopener"
-      // Underlined at rest, not on hover. A link that only announces itself once
-      // the pointer is on it cannot be found by somebody looking for it, and is
-      // invisible to anybody navigating by keyboard.
-      className="text-xs font-medium text-info underline underline-offset-4 transition-colors hover:text-info/80"
-    >
-      Upgrade
-    </a>
-  )
-}
-
 function BackupSummary({
   status,
   now,
@@ -126,25 +71,6 @@ function BackupSummary({
     : null
 
   const overdue = sinceSeconds === null || sinceSeconds > OVERDUE_SECONDS
-
-  const usedPercent =
-    status.destinationTotalBytes > 0
-      ? (status.destinationUsedBytes / status.destinationTotalBytes) * 100
-      : 0
-
-  const storageTone =
-    usedPercent >= STORAGE_FULL
-      ? "text-destructive"
-      : usedPercent >= STORAGE_WARN
-        ? "text-warning"
-        : "text-success"
-
-  const storageBarTone =
-    usedPercent >= STORAGE_FULL
-      ? "bg-destructive"
-      : usedPercent >= STORAGE_WARN
-        ? "bg-warning"
-        : "bg-success"
 
   return (
     // A column beside the log rather than a band across the top. Two across on a
@@ -170,25 +96,7 @@ function BackupSummary({
     // a table that also scrolls gives the page two of them arguing. The cards
     // were made small enough to fit instead.
     <div className="grid gap-4 sm:grid-cols-2 lg:h-full lg:min-h-0 lg:grid-cols-1 lg:gap-2 lg:[grid-auto-rows:minmax(min-content,1fr)]">
-      <StatCard
-        icon={Cloud}
-        label={status.destination}
-        hint={
-          <>
-            ⚠️ The whole account, not just backups. On a personal Google account
-            this is the same space as Gmail and Photos — and a full Drive stops
-            backups working.
-          </>
-        }
-        value={percent(usedPercent, 1)}
-        action={<Upgrade />}
-        tone={storageTone}
-        bar={{ percent: usedPercent, tone: storageBarTone }}
-        footerIcon={HardDrive}
-        footer={`${bytes(status.destinationUsedBytes)} of ${bytes(
-          status.destinationTotalBytes
-        )} used`}
-      />
+      <StorageCard status={status} />
 
       <StatCard
         icon={Clock}
@@ -254,12 +162,12 @@ function BackupSummary({
         label="Backups"
         hint={
           <>
-            Kept: every day for a fortnight, weekly for three months, monthly for
-            a year. The gap between the two numbers is retention working.
+            Every backup is kept — nothing is deleted automatically. The two
+            numbers only differ when you delete one by hand.
           </>
         }
         value={`${count(status.storedCount)} kept`}
-        detail={`${bytes(status.storedBytes)} of backups at the destination`}
+        detail={`${bytes(status.storedBytes)} in ${status.destination}`}
         footerIcon={History}
         footer={`${count(status.totalRuns)} made in total`}
       />

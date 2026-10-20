@@ -577,6 +577,8 @@ function UserActionDialogs({
 
 export {
   UserActionDialogs,
+  DialogHead,
+  Refusal,
   canChangePermissions,
   canChangeRole,
   canManage,

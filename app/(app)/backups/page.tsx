@@ -1,10 +1,14 @@
 import type { Metadata } from "next"
 
+import {
+  BackUpNowButton,
+  RefreshWhileRunning,
+  ReloadButton,
+} from "@/components/backups/backupActions"
 import { BackupLog } from "@/components/backups/backupLog"
 import { BackupSummary } from "@/components/backups/backupSummary"
 import { BackupYear } from "@/components/backups/backupYear"
 import { PageHeader } from "@/components/layout/pageHeader"
-import { TopBanner } from "@/components/ui/topBanner"
 import { requireUser } from "@/lib/auth"
 import { getBackupStatus } from "@/lib/backups"
 import type { BackupQuery } from "@/lib/backupTypes"
@@ -16,12 +20,9 @@ export const metadata: Metadata = {
 /**
  * Copies of the database, and whether they can be trusted.
  *
- * <p>⚠️ <b>The layout is real, the numbers are not.</b> Nothing backs anything up
- * yet — this is the screen built first so the shape can be argued with before the
- * machinery exists, the same way System Health was. The banner says so, because a
- * backup page is the one screen somebody opens specifically to decide they do not
- * need to worry, and one that looks healthy while nothing exists behind it is
- * worse than no page at all.
+ * <p>Real since 2026-10-20: the backend copies the database every night at
+ * 03:00 UTC, checks the copy, and keeps it on the server and in Cloudflare R2 —
+ * see the backend's BackupService. Nothing is deleted automatically.
  *
  * <p>Three panels, in the order the questions get asked:
  *
@@ -34,14 +35,12 @@ export const metadata: Metadata = {
  *       fact.</li>
  * </ul>
  *
- * <p>Two things deliberately absent, both recorded in `bugForLater.md`:
- * <b>restoring</b> a backup, and <b>proving</b> one can be restored. The second
- * matters more — until it exists, a green square means "the file uploaded", which
- * is not the same claim as "the data comes back".
+ * <p>Restoring is deliberately not a button: putting an old copy back over the
+ * live database is a job for the server, done by hand. Each copy is read back
+ * (`pg_restore --list`) before it counts as a success.
  *
- * <p>Administrators only, via middleware's `ADMIN_ONLY` — the last moment a real
- * 403 can still be returned, since a page that has begun rendering has already
- * sent a 200.
+ * <p>The Owner only, via middleware's `OWNER_ONLY`; the backend refuses anybody
+ * else too.
  */
 export default async function BackupsPage({
   searchParams,
@@ -58,19 +57,42 @@ export default async function BackupsPage({
   // React reports as a mismatch.
   const now = new Date()
 
-  // Ordered here rather than in the table, the same split the users list uses:
-  // the component asks for a sort by writing it into the address bar, and the
-  // rows come back already in that order. The day this is a real API, the sort
-  // is a query parameter forwarded to it and nothing on the screen changes.
-  const { status, log } = await getBackupStatus(query, now)
+  // Ordered by the backend, the same split the users list uses: the component
+  // asks for a sort by writing it into the address bar, and the rows come back
+  // already in that order.
+  const result = await getBackupStatus(query)
+
+  if (!result.ok) {
+    return (
+      <div className="flex h-full min-h-0 flex-col gap-5 p-4 sm:p-6">
+        <PageHeader
+          title="Backups"
+          description="Copies of the database, and whether they can actually be restored."
+        />
+        <p className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          {result.error.message}
+        </p>
+      </div>
+    )
+  }
+
+  const { status, log } = result.data
+
+  const running = status.running
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-y-auto p-4 pb-3 sm:p-6 lg:overflow-hidden">
-      <TopBanner message="Preview — nothing is backing up yet. Every figure on this page is an example." />
+      <RefreshWhileRunning running={running} />
 
       <PageHeader
         title="Backups"
         description="Copies of the database, and whether they can actually be restored."
+        actions={
+          <div className="flex items-center gap-2">
+            <BackUpNowButton running={running} />
+            <ReloadButton />
+          </div>
+        }
       />
 
       {/* Two columns, not three rows. The left holds the history — the year

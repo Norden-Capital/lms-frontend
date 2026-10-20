@@ -28,10 +28,10 @@ export default function NoAccess() {
       title="This is for administrators"
       description="Managing accounts comes with being an administrator — it is not something that can be granted to you one permission at a time. If you need it, somebody has to change your role."
     >
-      <Button size="lg" render={<Link href="/dashboard" />}>
+      <Button size="sm" render={<Link href="/dashboard" />}>
         Go to dashboard
       </Button>
-      <Button variant="outline" size="lg" render={<Link href="/help-center" />}>
+      <Button variant="outline" size="sm" render={<Link href="/help-center" />}>
         Help centre
       </Button>
     </ErrorState>

@@ -18,10 +18,10 @@ export default function Forbidden() {
       title="You don't have access to this"
       description="Your role doesn't include this area. Some access can be granted to you individually and some — Management, for instance — comes only with being an administrator. An administrator can tell you which this is."
     >
-      <Button size="lg" render={<Link href="/dashboard" />}>
+      <Button size="sm" render={<Link href="/dashboard" />}>
         Go to dashboard
       </Button>
-      <Button variant="outline" size="lg" render={<Link href="/help-center" />}>
+      <Button variant="outline" size="sm" render={<Link href="/help-center" />}>
         Request access
       </Button>
     </ErrorState>

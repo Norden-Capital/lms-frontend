@@ -31,12 +31,12 @@ export default function Error({
       title="Something went wrong on our end"
       description="This isn't your fault. Trying again usually works — if it doesn't, send IT the reference below."
     >
-      <Button size="lg" onClick={() => unstable_retry()}>
+      <Button variant="outline" size="sm" render={<Link href="/dashboard" />}>
+        Go to dashboard
+      </Button>
+      <Button size="sm" onClick={() => unstable_retry()}>
         <RotateCw data-icon="inline-start" />
         Try again
-      </Button>
-      <Button variant="outline" size="lg" render={<Link href="/dashboard" />}>
-        Go to dashboard
       </Button>
 
       {/* The digest is the only thread tying this screen to a server log. */}

@@ -1,21 +1,19 @@
 import type { Metadata } from "next"
+import { LifeBuoy } from "lucide-react"
+
+import { ComingSoon } from "@/components/layout/comingSoon"
 
 export const metadata: Metadata = {
   title: "Help Center",
 }
 
-/**
- * Stub. The most-linked of the three — the sidebar, the login screen, and the
- * 404/403 pages all send people here, so it is the one worth filling in first.
- * Someone who lands here is usually already stuck.
- */
+/** Not built yet — a "coming soon" page until it is. */
 export default function HelpCenterPage() {
   return (
-    <>
-      <h1 className="font-heading text-2xl font-semibold tracking-tight">
-        Help Center
-      </h1>
-      <p className="text-sm text-muted-foreground">Content to come.</p>
-    </>
+    <ComingSoon
+      icon={LifeBuoy}
+      title="Help Center"
+      description="Guides and answers are on their way."
+    />
   )
 }

@@ -9,12 +9,10 @@ import {
   CircleAlert,
   CircleCheck,
   CircleSlash,
-  Download,
-  ExternalLink,
   LoaderCircle,
-  Trash2,
 } from "lucide-react"
 
+import { RowActions } from "@/components/backups/backupActions"
 import { Panel } from "@/components/system/panel"
 import { Button } from "@/components/ui/button"
 import {
@@ -41,8 +39,8 @@ import { cn } from "@/lib/utils"
  *
  * <p>This is the panel that gets used when something is wrong, so it carries the
  * <b>reason</b> a run failed rather than only the fact. "Failed" tells nobody
- * anything at two in the morning; "Google refused the upload — the connection
- * expired" says what to go and fix.
+ * anything at two in the morning; "the copy to Cloudflare R2 failed —
+ * SignatureDoesNotMatch" says what to go and fix.
  *
  * <p>⚠️ A day where nothing ran at all produces no row here, because there was no
  * run to write down. That is precisely why the heatmap above exists: absence is
@@ -143,77 +141,6 @@ function took(seconds: number): string {
   if (minutes < 60) return `${minutes}m ${Math.round(seconds % 60)}s`
 
   return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, "0")}m`
-}
-
-const ACTION_BUTTON =
-  "rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40"
-
-/**
- * Open, download, delete — in that order, and that order is the argument.
- *
- * <p>Least to most destructive, left to right. The one that ends a backup sits
- * furthest from the one that merely looks at it, so a misplaced click lands on
- * something harmless.
- *
- * <p><b>Open</b> goes to the file where it actually lives, at the destination.
- * It is keyed off whether there <em>is</em> a file rather than off the outcome:
- * a run that failed has nothing to show, a run still going has not finished
- * writing one, and a success that somehow left nothing behind should say so
- * rather than offer a link into thin air.
- *
- * <p>Download and delete are drawn but not wired — see bugForLater #24. A button
- * that silently does nothing is worse than one that says why it cannot.
- *
- * <p>⚠️ When delete is built it needs a confirmation. It is the one control on
- * this screen that destroys a backup, which is the thing the screen exists to
- * protect.
- */
-function Actions({ url }: { url: string | null }) {
-  return (
-    <span className="flex items-center justify-end gap-1">
-      {url ? (
-        <a
-          href={url}
-          target="_blank"
-          rel="noreferrer noopener"
-          title="Open this backup in Google Drive"
-          aria-label="Open this backup in Google Drive"
-          className={ACTION_BUTTON}
-        >
-          <ExternalLink className="size-3.5" />
-        </a>
-      ) : (
-        <button
-          type="button"
-          disabled
-          title="This run left no file to open"
-          aria-label="Open this backup in Google Drive"
-          className={ACTION_BUTTON}
-        >
-          <ExternalLink className="size-3.5" />
-        </button>
-      )}
-
-      <button
-        type="button"
-        disabled
-        title="Downloading a backup is not built yet"
-        aria-label="Download this backup"
-        className={ACTION_BUTTON}
-      >
-        <Download className="size-3.5" />
-      </button>
-      <button
-        type="button"
-        disabled
-        title="Deleting a backup is not built yet"
-        aria-label="Delete this backup"
-        className={ACTION_BUTTON}
-      >
-        <Trash2 className="size-3.5" />
-      </button>
-    </span>
-  )
 }
 
 function BackupLog({
@@ -468,11 +395,33 @@ function BackupLog({
                           />
                           {outcome.label}
                         </span>
+                        {/* The restore test, under the status it backs up:
+                            the copy was loaded into a scratch database and its
+                            data came back. */}
+                        {run.restoreTested ? (
+                          <span
+                            className="mt-0.5 block text-[0.7rem] text-muted-foreground"
+                            title={run.restoreNote ?? undefined}
+                          >
+                            Restore tested
+                          </span>
+                        ) : null}
                       </td>
 
                       <td className="px-3 py-2.5 text-right text-xs tabular-nums">
                         {run.sizeBytes > 0 ? (
-                          bytes(run.sizeBytes)
+                          run.deletedAt ? (
+                            <>
+                              <span className="text-muted-foreground line-through">
+                                {bytes(run.sizeBytes)}
+                              </span>
+                              <span className="block text-[0.7rem] text-muted-foreground">
+                                deleted
+                              </span>
+                            </>
+                          ) : (
+                            bytes(run.sizeBytes)
+                          )
                         ) : (
                           <span className="text-muted-foreground/50">—</span>
                         )}
@@ -483,7 +432,7 @@ function BackupLog({
                       </td>
 
                       <td className="py-2.5 pr-4 text-right">
-                        <Actions url={run.url} />
+                        <RowActions run={run} />
                       </td>
                     </tr>
 

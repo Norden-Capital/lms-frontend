@@ -23,21 +23,22 @@ function ErrorState({
   return (
     <div
       className={cn(
-        "flex min-h-svh flex-col items-center justify-center gap-6 p-6",
+        "flex min-h-svh flex-col items-center justify-center gap-5 p-6",
         className
       )}
     >
-      <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-        <span className="flex size-10 items-center justify-center rounded-full bg-muted">
-          <Icon className="size-5" />
+      {/* Smaller text, bigger icon — decided 2026-10-20. The code keeps its size. */}
+      <div className="flex max-w-xs flex-col items-center gap-2.5 text-center">
+        <span className="flex size-16 items-center justify-center rounded-full bg-muted">
+          <Icon className="size-8" />
         </span>
-        <span className="font-mono text-xs tracking-widest text-muted-foreground tabular-nums">
+        <span className="font-mono text-xs font-bold tracking-widest text-muted-foreground tabular-nums">
           {code}
         </span>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance">
+        <h1 className="font-heading text-lg font-semibold tracking-tight text-balance">
           {title}
         </h1>
-        <p className="text-sm text-muted-foreground text-balance">
+        <p className="text-xs text-muted-foreground text-balance">
           {description}
         </p>
       </div>

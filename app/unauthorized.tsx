@@ -17,7 +17,7 @@ export default function Unauthorized() {
       title="Your session has ended"
       description="You've been signed out, either because the session expired or you signed in somewhere else."
     >
-      <Button size="lg" render={<Link href="/login" />}>
+      <Button size="sm" render={<Link href="/login" />}>
         Sign in again
       </Button>
     </ErrorState>

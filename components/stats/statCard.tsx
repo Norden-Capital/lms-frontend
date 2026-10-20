@@ -61,6 +61,12 @@ type Bar = {
   percent: number
   /** The colour to draw it in — the caller owns the thresholds. */
   tone: string
+  /**
+   * The bar split into parts, drawn one after another — "backups, then
+   * everything else" on a disk. When given, these are drawn instead of
+   * {@link percent}, which stays the total.
+   */
+  segments?: { percent: number; tone: string }[]
 }
 
 /**
@@ -89,6 +95,7 @@ function StatCard({
   detail,
   footer,
   footerIcon: FooterIcon,
+  extra,
 }: {
   label: string
   value: React.ReactNode
@@ -145,6 +152,8 @@ function StatCard({
    * lines the discs up down a column of cards.
    */
   footerIcon?: React.ComponentType<{ className?: string }>
+  /** Anything more, at the bottom of the panel under the detail. */
+  extra?: React.ReactNode
 }) {
   const rising = (change?.percent ?? 0) >= 0
   const Arrow = rising ? ArrowBigUpDash : ArrowBigDownDash
@@ -223,7 +232,18 @@ function StatCard({
 
           {/* Under the figure rather than beside it: a bar is the same quantity
               drawn a second way, so it belongs directly below what it repeats. */}
-          {bar ? (
+          {bar?.segments ? (
+            <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-muted">
+              {bar.segments.map((segment, i) => (
+                <div
+                  key={i}
+                  className={cn("h-full", segment.tone)}
+                  // Floored like the plain bar, so a tiny part still shows.
+                  style={{ width: `${Math.min(Math.max(segment.percent, 1), 100)}%` }}
+                />
+              ))}
+            </div>
+          ) : bar ? (
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
               <div
                 className={cn("h-full rounded-full", bar.tone)}
@@ -239,6 +259,8 @@ function StatCard({
           {detail ? (
             <p className="mt-1.5 text-[0.7rem] text-muted-foreground">{detail}</p>
           ) : null}
+
+          {extra}
         </div>
       </div>
 
