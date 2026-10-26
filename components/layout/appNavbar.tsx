@@ -83,26 +83,23 @@ function AppNavbar({
       </Breadcrumb>
 
       <div className="ml-auto flex items-center gap-2">
-        {/* Both buttons are deliberately identical — they are peers, and any
-            divergence would read as one of them meaning something different.
-            Note that only one of them goes anywhere yet: notifications have no
-            screen to open. */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="relative overflow-hidden bg-card"
-          aria-label="Notifications"
-        >
-          <LiquidGlassLayers />
-          {/* relative so the icon paints above the glass layers */}
-          <Bell className="relative" />
-        </Button>
+        {/* Switched off until notifications exist — decided 2026-10-26. Kept in
+            place so the header does not shift when they arrive. The span holds
+            the hint: a disabled button takes no pointer events of its own. */}
+        <span title="Coming soon" className="inline-flex">
+          <Button
+            variant="outline"
+            size="icon"
+            className="relative overflow-hidden bg-card"
+            aria-label="Notifications (coming soon)"
+            disabled
+          >
+            <LiquidGlassLayers />
+            {/* relative so the icon paints above the glass layers */}
+            <Bell className="relative" />
+          </Button>
+        </span>
 
-        {/* Drawn only for an account that holds INBOX:READ. Hidden rather than
-            disabled, the same rule the admin-only menu sections follow: a button
-            that always refuses reads as something you are supposed to have and
-            cannot. The page refuses the route regardless — this only decides
-            what to draw. */}
         {/* Drawn only for an account that holds INBOX:READ. Hidden rather than
             disabled: a button that always refuses reads as something you are
             supposed to have and cannot. The dot is real — see InboxButton. */}

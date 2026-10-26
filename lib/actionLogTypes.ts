@@ -21,6 +21,14 @@ export type ActionLogEntry = {
   ip: string | null
 }
 
+/** One day of somebody's sign-ins. Only days with something on them are sent. */
+export type SignInDay = {
+  /** YYYY-MM-DD, in the business time zone. */
+  date: string
+  ok: number
+  failed: number
+}
+
 /** What the URL can carry. */
 export type ActionLogQuery = {
   action?: string

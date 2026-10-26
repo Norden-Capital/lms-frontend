@@ -21,7 +21,7 @@ export const metadata: Metadata = {
  * Copies of the database, and whether they can be trusted.
  *
  * <p>Real since 2026-10-20: the backend copies the database every night at
- * 03:00 UTC, checks the copy, and keeps it on the server and in Cloudflare R2 —
+ * 03:00 Toronto time, checks the copy, and keeps it on the server and in Cloudflare R2 —
  * see the backend's BackupService. Nothing is deleted automatically.
  *
  * <p>Three panels, in the order the questions get asked:

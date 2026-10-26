@@ -1,16 +1,14 @@
 "use client"
 
-import { Fragment, useEffect, useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import {
   CalendarDays,
-  Check,
   KeyRound,
   LogIn,
   Mail,
   MailCheck,
-  Minus,
   Phone,
   ShieldCheck,
   UserRound,
@@ -24,13 +22,14 @@ import { canChangePermissions, canManage } from "@/components/users/userActionDi
 import { PageHeader } from "@/components/layout/pageHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SignInYear } from "@/components/users/signInYear"
 import { UserActivityTable } from "@/components/users/userActivityTable"
 import { UserQuickActions } from "@/components/users/userQuickActions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TruncatedText } from "@/components/ui/truncatedText"
 import { useAccess } from "@/components/access/accessProvider"
 import { roleLabel } from "@/lib/roles"
-import type { ActionLogEntry } from "@/lib/actionLogTypes"
+import type { ActionLogEntry, SignInDay } from "@/lib/actionLogTypes"
 import type { UserDetail as UserAccount } from "@/lib/userTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
@@ -40,7 +39,7 @@ import { cn } from "@/lib/utils"
  *
  * <p>Two columns. The left is who this is — the facts that identify the person
  * and never change while you are reading. The right is what the account
- * <em>does</em>: its permissions, and what has happened to it. That split is the
+ * <em>does</em>: when it signs in, and what has happened to it. That split is the
  * whole idea behind the layout: the identity stays put as a reference while the
  * side you are actually working in fills the rest of the screen.
  *
@@ -269,6 +268,8 @@ function UserDetail({
   user,
   isSelf,
   activity,
+  signIns,
+  thisYear,
   activityHidden = false,
 }: {
   user: UserAccount
@@ -276,11 +277,14 @@ function UserDetail({
   isSelf: boolean
   /** Their latest action-log lines — what they did and what was done to them. */
   activity?: ActionLogEntry[]
+  /** Every day they signed in or had a wrong try — the year chart. */
+  signIns?: SignInDay[]
+  /** Today's year, worked out on the server. */
+  thisYear: number
   /** True when the viewer is not the Owner, who alone can see the log. */
   activityHidden?: boolean
 }) {
   const access = useAccess()
-  const { actionColumns: ACTION_COLUMNS, groups: RESOURCE_GROUPS } = access
 
   // Editing in place — decided 2026-10-19, replacing the separate edit page.
   // `?edit=1` (from the table's "Edit details") opens the page already
@@ -326,7 +330,6 @@ function UserDetail({
     })
   }
 
-  const held = new Set(user.permissions)
   const status = STATUS_TEXT[user.status] ?? {
     label: user.status,
     tone: "text-muted-foreground",
@@ -498,130 +501,21 @@ function UserDetail({
         </div>
       </aside>
 
-      {/* min-w-0 so the permission table can scroll inside this column rather
-          than widening it and pushing the whole page sideways. */}
+      {/* min-w-0 so the year chart can scroll inside this column rather than
+          widening it and pushing the whole page sideways. */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 lg:pl-6">
-        {/* 1.2 of 3. Permissions is the shorter list today at three resources,
-            but it grows a row per module added and the log grows a row per
-            thing anybody does — so the split is by share of the height rather
-            than by content, and neither can crowd the other out later. */}
-        <Panel title="Permissions" className="min-h-0 flex-[1.2]">
-          {/* A matrix, not a list. Twelve permissions written out as sentences
-              is a wall of text nobody audits; a grid of resources against
-              actions can be read down a column — everyone who can delete — as
-              well as across. It is the same shape as the picker on the add
-              screen, which is what makes the two comparable. */}
-          <div
-            className={cn(
-              // Both axes: it can outgrow its share downwards as modules are
-              // added, and sideways whenever the window is narrow.
-              "min-h-0 flex-1 overflow-auto pr-2",
-              THIN_SCROLLBAR,
-            )}
-          >
-            <table className="w-full min-w-[32rem] border-collapse text-sm">
-              {/* The header stays put while the resources scroll under it —
-                  a column of ticks with no heading in sight is unreadable, and
-                  this is exactly the table somebody scrolls while checking one
-                  action across every module.
+        {/* Sign-ins in place of the permission grid — decided 2026-10-26.
+            Permissions are still one click away, under Change permissions. */}
+        {activityHidden ? null : signIns ? (
+          <SignInYear days={signIns} thisYear={thisYear} />
+        ) : (
+          <p className="shrink-0 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
+            Sign-ins could not be loaded.
+          </p>
+        )}
 
-                  bg-background, not transparent: a sticky row with no fill of
-                  its own lets the rows slide visibly through it. */}
-              <thead className="sticky top-0 z-10 bg-background">
-                <tr className="border-b">
-                  <th className="py-2 pr-4 text-left font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
-                    Module
-                  </th>
-                  {ACTION_COLUMNS.map((action) => (
-                    <th
-                      key={action}
-                      className="px-2 py-2 text-center font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase"
-                    >
-                      {action}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {/* Grouped as the sidebar groups them, so a module is found
-                    where somebody expects to find it rather than in an
-                    alphabetical list of twenty-two strings. */}
-                {RESOURCE_GROUPS.map((group) => (
-                  <Fragment key={group.key}>
-                    <tr className="border-b bg-muted/40">
-                      <td
-                        colSpan={ACTION_COLUMNS.length + 1}
-                        className="py-1.5 font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase"
-                      >
-                        {group.label}
-                      </td>
-                    </tr>
-
-                    {group.modules.map((resource) => (
-                      <tr
-                        key={resource.key}
-                        className="border-b last:border-b-0"
-                      >
-                        <td className="py-2.5 pr-4 pl-3">
-                          <span className="font-medium">{resource.label}</span>
-                        </td>
-
-                        {ACTION_COLUMNS.map((action) => {
-                          const exists = resource.actions.includes(action)
-                          const granted =
-                            exists && held.has(`${resource.key}:${action}`)
-
-                          return (
-                            <td
-                              key={action}
-                              className="px-2 py-2.5 text-center"
-                            >
-                              {/* Three states, three marks. A blank cell for an
-                                  action a module does not have would look like
-                                  a permission somebody forgot to grant. */}
-                              {!exists ? (
-                                <span
-                                  className="text-muted-foreground/40"
-                                  title="Not applicable"
-                                >
-                                  ·
-                                </span>
-                              ) : (
-                                <span
-                                  className={cn(
-                                    "inline-flex",
-                                    granted
-                                      ? "text-success"
-                                      : "text-muted-foreground/50",
-                                  )}
-                                >
-                                  {granted ? (
-                                    <Check className="size-4" aria-hidden />
-                                  ) : (
-                                    <Minus className="size-4" aria-hidden />
-                                  )}
-                                  <span className="sr-only">
-                                    {granted ? "Granted" : "Not granted"}
-                                  </span>
-                                </span>
-                              )}
-                            </td>
-                          )
-                        })}
-                      </tr>
-                    ))}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
-
-        {/* 1.8 of 3 — the larger share, because a log is read by scanning
-            several entries at once while the matrix is read one cell at a
-            time. */}
-        <Panel title="Activity" className="min-h-0 flex-[1.8]">
+        {/* Everything under the chart. */}
+        <Panel title="Activity" className="min-h-0 flex-1">
           {/* What this person did, not what their record contains. The two
               panels that used to sit here restated the left column — created,
               verified, last sign-in, all already three inches to the left — so

@@ -98,6 +98,24 @@ export function utcStamp(iso: string): string {
   return `${date.getUTCDate()} ${month} ${date.getUTCFullYear()}, ${time}`
 }
 
+/**
+ * "26 Oct 2026, 03:00" on Toronto's clock — the backups' time zone since
+ * 2026-10-26. Summer and winter time are handled by the browser's calendar.
+ */
+export function torontoStamp(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Toronto",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(iso))
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? ""
+  return `${part("day")} ${part("month")} ${part("year")}, ${part("hour")}:${part("minute")}`
+}
+
 /** Thousands separators, so 1204 does not read as 12:04. */
 export function count(value: number): string {
   return new Intl.NumberFormat("en-GB").format(Math.round(value))

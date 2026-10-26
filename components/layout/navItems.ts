@@ -70,7 +70,18 @@ export const navSections: NavSection[] = [
   {
     title: "Customers",
     items: [
-      { title: "Customer List", href: "/customers", icon: Users },
+      // Three lists — decided 2026-10-26: people who asked, people who
+      // started and stopped, people who signed. Coming soon for now.
+      {
+        title: "Customer List",
+        href: "/customers",
+        icon: Users,
+        items: [
+          { title: "Leads", href: "/customers/leads" },
+          { title: "Abandoned", href: "/customers/abandoned" },
+          { title: "Customers", href: "/customers/list" },
+        ],
+      },
     ],
   },
   {

@@ -32,7 +32,7 @@ import {
   type BackupQuery,
   type BackupSortKey,
 } from "@/lib/backupTypes"
-import { bytes, duration, utcStamp } from "@/lib/format"
+import { bytes, duration, torontoStamp } from "@/lib/format"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
 
@@ -380,7 +380,7 @@ function BackupLog({
                     >
                       <td className="py-2.5 pl-4 whitespace-nowrap">
                         <span className="font-mono text-xs">
-                          {utcStamp(run.startedAt)}
+                          {torontoStamp(run.startedAt)}
                         </span>
                         <span className="block text-[0.7rem] text-muted-foreground">
                           ({duration(ago)} ago)

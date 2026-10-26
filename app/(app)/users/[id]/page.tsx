@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { UserDetail } from "@/components/users/userDetail"
-import { listActionLog } from "@/lib/actionLog"
+import { getSignIns, listActionLog } from "@/lib/actionLog"
 import { requireUser } from "@/lib/auth"
 import { OWNER } from "@/lib/roles"
 import { getUser } from "@/lib/users"
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
  *
  * <p>A page rather than a drawer. The two were weighed earlier: a drawer keeps
  * the list visible and suits a quick edit, but this screen has to hold a role, a
- * status, two-factor state and a per-user permission grid — which is more than a
+ * status, two-factor state and a year of sign-ins — which is more than a
  * side panel can show without becoming a page in a panel's clothing. Being a URL
  * also means a row can be linked to, which is how anyone actually asks a
  * colleague about an account.
@@ -47,8 +47,11 @@ export default async function UserDetailPage({
 
   // Their activity, from the action log — which only the Owner may read.
   const isOwner = me.role === OWNER
-  const log = isOwner ? await listActionLog({ user: id, size: "50" }) : null
+  const [log, signInLog] = isOwner
+    ? await Promise.all([listActionLog({ user: id, size: "50" }), getSignIns(id)])
+    : [null, null]
   const activity = log?.ok ? log.data.content : undefined
+  const signIns = signInLog?.ok ? signInLog.data : undefined
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden p-6 pb-3">
@@ -59,6 +62,8 @@ export default async function UserDetailPage({
         user={result.data}
         isSelf={me.id === result.data.id}
         activity={activity}
+        signIns={signIns}
+        thisYear={new Date().getFullYear()}
         activityHidden={!isOwner}
       />
     </div>

@@ -13,7 +13,7 @@ import { StorageCard } from "@/components/backups/storageCard"
 import { StatCard } from "@/components/stats/statCard"
 import type { BackupStatus } from "@/lib/backupTypes"
 import { formatCountdown, remaining } from "@/lib/countdown"
-import { bytes, count, duration, utcStamp } from "@/lib/format"
+import { bytes, count, duration, torontoStamp } from "@/lib/format"
 
 /**
  * The four figures worth putting beside the log.
@@ -117,7 +117,7 @@ function BackupSummary({
           )
         }
         detail={
-          status.nextRunAt ? `Starts ${utcStamp(status.nextRunAt)} UTC` : "No run scheduled"
+          status.nextRunAt ? `Starts ${torontoStamp(status.nextRunAt)} Toronto time` : "No run scheduled"
         }
         footerIcon={Repeat}
         footer={status.schedule}
@@ -148,7 +148,7 @@ function BackupSummary({
         tone={overdue ? "text-destructive" : "text-foreground"}
         detail={
           lastSuccess
-            ? `Last good backup ${utcStamp(lastSuccess.toISOString())} UTC`
+            ? `Last good backup ${torontoStamp(lastSuccess.toISOString())} Toronto time`
             : "No good backup yet."
         }
         footerIcon={Hourglass}

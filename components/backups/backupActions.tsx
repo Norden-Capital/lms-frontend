@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
 import type { BackupRun } from "@/lib/backupTypes"
-import { bytes, utcStamp } from "@/lib/format"
+import { bytes, torontoStamp } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /**
@@ -192,7 +192,7 @@ function DeleteBackupDialog({
     <AlertDialog open={open} onOpenChange={pending ? undefined : onOpenChange}>
       <AlertDialogContent size="sm">
         <DialogHead icon={Trash2} tone="bg-destructive/10 text-destructive" title="Delete backup?">
-          The backup from {utcStamp(run.startedAt)} UTC ({bytes(run.sizeBytes)}) is removed from{" "}
+          The backup from {torontoStamp(run.startedAt)} Toronto time ({bytes(run.sizeBytes)}) is removed from{" "}
           {PLACES[run.destination ?? ""] ?? "the server"}. You can&apos;t undo this.
         </DialogHead>
 
