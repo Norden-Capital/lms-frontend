@@ -59,7 +59,9 @@ export const navSections: NavSection[] = [
         href: "/dashboard",
         icon: LayoutDashboard,
         items: [
-          // Order decided 2026-10-20: SEO, email, then paid ads.
+          // Order decided 2026-10-20: SEO, email, then paid ads. Leads on top
+          // since 2026-10-26 — the page everyone lands on after signing in.
+          { title: "Leads Overview", href: "/dashboard/leads" },
           { title: "SEO Overview", href: "/dashboard/seo" },
           { title: "Email Overview", href: "/dashboard/email" },
           { title: "Paid Ads Overview", href: "/dashboard/paid-ads" },
@@ -126,10 +128,18 @@ export const settingsSection: NavSection = {
   title: "Settings",
   items: [
     { title: "Help Center", href: "/help-center", icon: LifeBuoy },
-    // Points at the section root, not /settings/profile: isNavItemActive does a
-    // longest-prefix match, so this row stays lit anywhere under /settings —
-    // including /settings/security.
-    { title: "System Settings", href: "/settings", icon: Settings },
+    // Its pages listed under it, like Configuration — decided 2026-10-26.
+    // isNavItemActive matches by prefix, so it stays lit anywhere under /settings.
+    {
+      title: "System Settings",
+      href: "/settings",
+      icon: Settings,
+      items: [
+        { title: "Dashboard", href: "/settings/dashboard" },
+        { title: "Security", href: "/settings/security" },
+        { title: "Notifications", href: "/settings/notifications" },
+      ],
+    },
   ],
 }
 

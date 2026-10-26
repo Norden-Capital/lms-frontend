@@ -220,10 +220,12 @@ function AddUserForm() {
               decides the choice, and two of those in a narrow column would wrap
               into unreadable slivers.
 
-              flex-1 here and on each card, so the two split whatever height the
-              Details column sets rather than sitting at the top with a pool of
-              empty card underneath them. */}
-          <div className="flex flex-1 flex-col gap-2">
+              A grid of equal rows (auto-rows-fr) — decided 2026-10-26. Flex-1
+              cards split the height too, but a card whose text needed more than
+              its half grew past it, so Admin and Member came out different
+              sizes. Equal fr rows are always the same height, the tallest
+              card's, and still fill whatever the Details column sets. */}
+          <div className="grid flex-1 auto-rows-fr gap-2">
             {roles
               .filter((option) => isAssignable(option.name))
               .map((option) => {
@@ -239,11 +241,9 @@ function AddUserForm() {
                 <label
                   key={option.name}
                   className={cn(
-                    // flex-1 rather than a natural height: `flex: 1 1 0%` makes
-                    // both cards exactly equal whatever their text does, so
-                    // Member's two-line sentence does not make it the taller of
-                    // the two options.
-                    "flex flex-1 cursor-pointer flex-col gap-1 rounded-md border p-3 transition-colors",
+                    // The row decides the height (see the grid above), so
+                    // both cards match whatever their text does.
+                    "flex cursor-pointer flex-col gap-1 rounded-md border p-3 transition-colors",
                     selected
                       ? "border-foreground/40 bg-muted/60"
                       : "bg-card hover:bg-muted/40",

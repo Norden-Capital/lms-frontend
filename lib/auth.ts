@@ -34,6 +34,10 @@ export type SessionUser = {
   status: string
   mfaEnabled: boolean
   permissions: string[]
+  /** ISO 8601. When the account was made. */
+  createdAt?: string
+  /** ISO 8601, or null before the first sign-in. */
+  lastLoginAt?: string | null
 }
 
 /**

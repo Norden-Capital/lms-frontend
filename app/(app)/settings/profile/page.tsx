@@ -1,22 +1,6 @@
-import type { Metadata } from "next"
-import { UserRound } from "lucide-react"
+import { redirect } from "next/navigation"
 
-import { ComingSoon } from "@/components/layout/comingSoon"
-import { requireUser } from "@/lib/auth"
-
-export const metadata: Metadata = {
-  title: "Profile",
-}
-
-/** Not built yet — a "coming soon" page until it is. */
-export default async function ProfilePage() {
-  await requireUser()
-
-  return (
-    <ComingSoon
-      icon={UserRound}
-      title="Profile"
-      description="Coming soon: change your name, contact details and password."
-    />
-  )
+/** Profile was merged into My dashboard on 2026-10-26. Old links land there. */
+export default function ProfileRedirect() {
+  redirect("/settings/dashboard")
 }

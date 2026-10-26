@@ -57,6 +57,10 @@ export async function apiFetch<T>(
       requestHeaders.set("X-Client-IP", visitor)
       requestHeaders.set("X-Proxy-Secret", proxySecret)
     }
+    // The browser's description, so Settings can say "Chrome on Windows" for
+    // each session — added 2026-10-26. Believed under the same secret.
+    const agent = await visitorAgent()
+    if (agent) requestHeaders.set("X-Client-Agent", agent.slice(0, 400))
   }
 
   if (authenticated) {
@@ -121,6 +125,14 @@ function safeJson(text: string) {
  * visitor first in x-forwarded-for. Null outside a request — at build time —
  * where there is no visitor to speak of.
  */
+async function visitorAgent(): Promise<string | null> {
+  try {
+    return (await incomingHeaders()).get("user-agent")
+  } catch {
+    return null
+  }
+}
+
 async function visitorAddress(): Promise<string | null> {
   try {
     const incoming = await incomingHeaders()

@@ -1,5 +1,7 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import { apiFetch } from "@/lib/api"
 
 /** Mirrors the backend's MfaConfirmResponse — the same shape enrolment returns. */
@@ -49,4 +51,57 @@ export async function regenerateCodes(
   }
 
   return { recoveryCodes: result.data.recoveryCodes }
+}
+
+export type ChangePasswordState = {
+  ok?: boolean
+  message?: string
+  fieldErrors?: Record<string, string>
+}
+
+/**
+ * Your own password — added 2026-10-26. The two new boxes must match before
+ * anything is sent. Every other session ends on the server.
+ */
+export async function changePassword(
+  _prevState: ChangePasswordState,
+  formData: FormData
+): Promise<ChangePasswordState> {
+  const currentPassword = String(formData.get("currentPassword") ?? "")
+  const newPassword = String(formData.get("newPassword") ?? "")
+  const repeat = String(formData.get("repeat") ?? "")
+
+  if (!currentPassword) return { fieldErrors: { currentPassword: "Type your current password" } }
+  if (newPassword.length < 8) return { fieldErrors: { newPassword: "Use at least 8 characters" } }
+  if (newPassword !== repeat) return { fieldErrors: { repeat: "The two passwords are not the same" } }
+
+  const result = await apiFetch<{ message: string }>("/api/users/me/password", {
+    method: "POST",
+    authenticated: true,
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+  if (!result.ok) return { message: result.error.message, fieldErrors: result.error.fieldErrors }
+
+  revalidatePath("/settings/security")
+  return { ok: true, message: result.data.message }
+}
+
+/** Signs out one of your sessions. */
+export async function endSession(id: string): Promise<{ ok: boolean; message: string }> {
+  const result = await apiFetch<{ message: string }>(`/api/users/me/sessions/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    authenticated: true,
+  })
+  revalidatePath("/settings/security")
+  return result.ok ? { ok: true, message: result.data.message } : { ok: false, message: result.error.message }
+}
+
+/** Signs out every session but this one. */
+export async function endOtherSessions(): Promise<{ ok: boolean; message: string }> {
+  const result = await apiFetch<{ message: string }>("/api/users/me/sessions/end-others", {
+    method: "POST",
+    authenticated: true,
+  })
+  revalidatePath("/settings/security")
+  return result.ok ? { ok: true, message: result.data.message } : { ok: false, message: result.error.message }
 }

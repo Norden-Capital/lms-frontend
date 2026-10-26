@@ -28,7 +28,8 @@ import { UserQuickActions } from "@/components/users/userQuickActions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TruncatedText } from "@/components/ui/truncatedText"
 import { useAccess } from "@/components/access/accessProvider"
-import { roleLabel } from "@/lib/roles"
+import { OWNER, roleLabel } from "@/lib/roles"
+import { STATUS_TEXT } from "@/lib/userStatusText"
 import type { ActionLogEntry, SignInDay } from "@/lib/actionLogTypes"
 import type { UserDetail as UserAccount } from "@/lib/userTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
@@ -50,28 +51,6 @@ import { cn } from "@/lib/utils"
  * none of them are exposed. Building this for real means adding the endpoint and
  * widening that record.
  */
-
-/**
- * The backend's `UserStatus` enum in words, and the colour that goes with it.
- *
- * <p>The pill is gone but the colour is not. Those are two separate jobs: the
- * badge's shape was there to pick one row out of twelve in a table, which this
- * page has no need of — but green-for-active and red-for-suspended is how the
- * state is read at a glance, and it costs nothing on a bare word.
- *
- * <p>Tones match `statusBadge.tsx` exactly, so the same account does not look
- * amber in the table and grey here. Anything unrecognised falls through to the
- * raw name rather than vanishing.
- */
-const STATUS_TEXT: Record<string, { label: string; tone: string }> = {
-  ACTIVE: { label: "Active", tone: "text-success" },
-  PENDING_VERIFICATION: {
-    label: "Invited, not joined yet",
-    tone: "text-warning",
-  },
-  SUSPENDED: { label: "Suspended", tone: "text-destructive" },
-  DEACTIVATED: { label: "Deactivated", tone: "text-muted-foreground" },
-}
 
 /**
  * Day-month-year with the month as a word.
@@ -293,7 +272,8 @@ function UserDetail({
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const canEdit = isSelf || canManage(user, access.viewerIsOwner)
+  // Never the Owner: made at setup, its details are fixed — decided 2026-10-26.
+  const canEdit = user.role !== OWNER && (isSelf || canManage(user, access.viewerIsOwner))
   const [editing, setEditing] = useState(
     () => canEdit && searchParams.get("edit") === "1"
   )
@@ -539,4 +519,5 @@ function UserDetail({
   )
 }
 
-export { UserDetail }
+// Shared with Settings, which shows your own account the same way.
+export { UserDetail, Fact, FactGroup, Panel, Unknown }

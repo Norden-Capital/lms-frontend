@@ -67,7 +67,7 @@ import {
 import { TablePagination } from "@/components/ui/tablePagination"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
-import { roleLabel } from "@/lib/roles"
+import { OWNER, roleLabel } from "@/lib/roles"
 import { useAccess } from "@/components/access/accessProvider"
 
 type SortKey =
@@ -193,7 +193,8 @@ function UserRowActions({ user }: { user: UserRow }) {
               <Eye data-icon="inline-start" />
               View details
             </DropdownMenuItem>
-            {manage && (
+            {/* Never for the Owner: made at setup, its details are fixed. */}
+            {manage && user.role !== OWNER && (
               <DropdownMenuItem render={<Link href={`/users/${user.id}?edit=1`} />}>
                 <SquarePen data-icon="inline-start" />
                 Edit details
@@ -525,12 +526,10 @@ function UsersTable({
               <Button
                 variant="outline"
                 size="icon-sm"
-                // Round, unlike the row menus. This one acts on the whole table,
-                // and the different shape is what stops it reading as one more
-                // per-row control that happens to have escaped upward. Smaller
-                // than the two beside it as well: it holds the rarely-used
-                // exports, so it should not carry the same weight as Add user.
-                className="rounded-full bg-card"
+                // The theme's square corners, like every other button — decided
+                // 2026-10-26 (it was round). Smaller than the two beside it: it
+                // holds the rarely-used exports, so it is lighter than Add user.
+                className="bg-card"
                 aria-label="More options"
               />
             }

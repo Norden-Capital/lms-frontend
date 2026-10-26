@@ -135,6 +135,16 @@ function Usage({
   )
 }
 
+/** One line beside the disk ring: a name with its hint, and a size. */
+function DiskRow({ label, value, hint }: { label: string; value: number; hint: string }) {
+  return (
+    <span className="flex items-center justify-between gap-2">
+      <HintedLabel label={label}>{hint}</HintedLabel>
+      <span className="font-medium text-foreground tabular-nums">{bytes(value)}</span>
+    </span>
+  )
+}
+
 function ServerPanel({
   health,
   history,
@@ -236,18 +246,43 @@ function ServerPanel({
             </>
           }
           className="lg:flex-1"
-          bodyClassName="items-center justify-center gap-3"
+          bodyClassName="flex-row items-center gap-5"
         >
-          <div className="size-32">
+          {/* The ring on the left, what fills it on the right — decided
+              2026-10-26, the ring alone left the card mostly empty. */}
+          <div className="size-32 shrink-0">
             <Donut
               percent={diskPercent}
               label={percent(diskPercent)}
               sublabel={`${bytes(diskUsed)} / ${bytes(server.diskTotal)}`}
             />
           </div>
-          <p className="text-center text-[0.7rem] text-muted-foreground">
-            {bytes(server.diskFree)} free
-          </p>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 border-l pl-5 text-xs text-muted-foreground">
+            {[
+              { label: "Used", value: diskUsed, hint: "Space taken on the server." },
+              { label: "Free", value: server.diskFree, hint: "Space still open." },
+              { label: "Total", value: server.diskTotal, hint: "All the disk space." },
+            ].map((row) => (
+              <DiskRow key={row.label} {...row} />
+            ))}
+            <span className="my-1 border-t" aria-hidden />
+            {[
+              // onDiskBytes already holds the log, so the two are split here.
+              {
+                label: "Database",
+                value: Math.max(0, health.database.onDiskBytes - health.database.walBytes),
+                hint: "The database's own files.",
+              },
+              { label: "Database log", value: health.database.walBytes, hint: "Recent changes, kept for safety." },
+              {
+                label: "Everything else",
+                value: Math.max(0, diskUsed - health.database.onDiskBytes),
+                hint: "System, apps and backups.",
+              },
+            ].map((row) => (
+              <DiskRow key={row.label} {...row} />
+            ))}
+          </div>
         </Panel>
       </div>
 

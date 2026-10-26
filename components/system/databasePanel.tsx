@@ -2,6 +2,7 @@ import { Donut } from "@/components/system/donut"
 import { Panel } from "@/components/system/panel"
 import { StatRow } from "@/components/system/statRow"
 import { TablesCard } from "@/components/system/tablesCard"
+import { HintedLabel } from "@/components/ui/hint"
 import { bytes, count, duration, percent } from "@/lib/format"
 import type { SystemHealth } from "@/lib/systemTypes"
 
@@ -13,6 +14,16 @@ import type { SystemHealth } from "@/lib/systemTypes"
  * which needs the `pg_stat_statements` extension — and the card says so rather
  * than reporting a zero it did not measure.
  */
+/** One line beside the ring: a name with its hint, and its value. */
+function Row({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) {
+  return (
+    <span className="flex items-center justify-between gap-2">
+      <HintedLabel label={label}>{hint}</HintedLabel>
+      <span className="font-medium text-foreground tabular-nums">{children}</span>
+    </span>
+  )
+}
+
 function DatabasePanel({ health }: { health: SystemHealth }) {
   const { database, server } = health
 
@@ -70,19 +81,40 @@ function DatabasePanel({ health }: { health: SystemHealth }) {
             </>
           }
           className="lg:flex-1"
-          bodyClassName="items-center justify-center gap-3"
+          bodyClassName="flex-row items-center gap-5"
         >
-          <div className="size-32">
+          {/* What it means on the left, the ring on the right — decided
+              2026-10-26. */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 border-r pr-5 text-xs text-muted-foreground">
+            <Row label="From memory" hint="Fast. Read without touching the disk.">
+              {percent(database.cacheHitRatio, 1)}
+            </Row>
+            <Row label="From disk" hint="Slow. Had to be read from the disk.">
+              {percent(Math.max(0, 100 - database.cacheHitRatio), 1)}
+            </Row>
+            <Row label="Goal" hint="Below this, pages can feel slow.">
+              99% or more
+            </Row>
+            <Row label="Status" hint="Good at the goal or above.">
+              <span className={database.cacheHitRatio >= 99 ? "text-success" : "text-warning"}>
+                {database.cacheHitRatio >= 99 ? "Good" : "Slow"}
+              </span>
+            </Row>
+            <span className="my-1 border-t" aria-hidden />
+            <Row label="Counted over" hint="Since the database last started.">
+              {duration(database.uptimeSeconds)}
+            </Row>
+            <Row label="Database size" hint="All the data it holds.">
+              {bytes(database.sizeBytes)}
+            </Row>
+          </div>
+          <div className="size-32 shrink-0">
             <Donut
               percent={database.cacheHitRatio}
               label={percent(database.cacheHitRatio, 1)}
               sublabel="from memory"
             />
           </div>
-
-          <p className="text-center text-[0.7rem] text-muted-foreground">
-            Higher is better
-          </p>
         </Panel>
       </div>
 

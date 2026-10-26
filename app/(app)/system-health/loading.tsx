@@ -84,10 +84,22 @@ export default function SystemHealthLoading() {
                 <Panel
                   title="Disk"
                   className="lg:flex-1"
-                  bodyClassName="items-center justify-center gap-3"
+                  bodyClassName="flex-row items-center gap-5"
                 >
-                  <Skeleton className="size-32 rounded-full" />
-                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="size-32 shrink-0 rounded-full" />
+                  {/* Three sizes, a line, three more — as on the real card. */}
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5 border-l pl-5">
+                    {Array.from({ length: 7 }, (_, index) =>
+                      index === 3 ? (
+                        <span key={index} className="my-1 border-t" />
+                      ) : (
+                        <div key={index} className="flex h-4 items-center justify-between gap-2">
+                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-3 w-12" />
+                        </div>
+                      )
+                    )}
+                  </div>
                 </Panel>
               </div>
 

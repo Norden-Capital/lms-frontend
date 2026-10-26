@@ -1,14 +1,13 @@
 import { PageHeader } from "@/components/layout/pageHeader"
-import { PermissionMatrixSkeleton } from "@/components/users/usersLoading"
 import { Skeleton } from "@/components/ui/skeleton"
+import { SignInYearSkeleton } from "@/components/users/signInYearSkeleton"
 import { cn } from "@/lib/utils"
 
 /**
  * One person's page while it loads — decided 2026-10-20. The same header, the
  * column of facts on the left and the two panels on the right, at the same
  * sizes, with grey shapes for the values, so nothing moves when they arrive.
- * The permission grid uses the real modules, which are already loaded by the
- * users layout.
+ * The sign-in year is drawn as the Backups page draws its own while loading.
  */
 
 /** A titled group of facts, as on the real page. */
@@ -112,13 +111,9 @@ export default function UserDetailLoading() {
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 lg:pl-6">
-          <PanelSkeleton title="Permissions" className="min-h-0 flex-[1.2]">
-            <div className="min-h-0 flex-1 overflow-hidden pr-2">
-              <PermissionMatrixSkeleton />
-            </div>
-          </PanelSkeleton>
+          <SignInYearSkeleton />
 
-          <PanelSkeleton title="Activity" className="min-h-0 flex-[1.8]">
+          <PanelSkeleton title="Activity" className="min-h-0 flex-1">
             <Skeleton className="h-[4.375rem] w-full" />
           </PanelSkeleton>
         </div>

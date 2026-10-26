@@ -225,7 +225,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Exports — the users table's round menu, same three formats. Links,
+        {/* Exports — the users table's menu, same three formats. Links,
             not buttons: the browser owns the download. */}
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -233,7 +233,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
               <Button
                 variant="outline"
                 size="icon-sm"
-                className="rounded-full bg-card"
+                className="bg-card"
                 aria-label="More options"
               />
             }

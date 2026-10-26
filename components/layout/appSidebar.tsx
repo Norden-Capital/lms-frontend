@@ -30,6 +30,7 @@ import {
   isNavItemActive,
   navSections,
   settingsSection,
+  type NavItem,
 } from "@/components/layout/navItems"
 import { SidebarTrigger } from "@/components/layout/sidebarTrigger"
 
@@ -111,6 +112,90 @@ function AppSidebar({
     (section) => (isAdmin || !section.adminOnly) && (isOwner || !section.ownerOnly)
   )
 
+  // One menu entry: a plain link, or a group that opens to show its pages.
+  // Used by the scrolling menu and by the pinned Settings block alike, so
+  // System Settings opens just like Configuration — decided 2026-10-26.
+  function renderItem(item: NavItem) {
+    const active = isNavItemActive(item.href, pathname)
+    const itemClass = cn(ROW, active ? ROW_ACTIVE : ROW_IDLE)
+
+    if (!item.items) {
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          aria-current={active ? "page" : undefined}
+          className={itemClass}
+        >
+          <item.icon className="size-4 shrink-0" />
+          {item.title}
+        </Link>
+      )
+    }
+
+    return (
+      // Open when you left it open (remembered in this browser),
+      // else when a child page is the one on screen — so landing on
+      // one never shows a closed parent with nothing selected.
+      <Collapsible
+        key={item.href}
+        open={groups[item.href] ?? active}
+        onOpenChange={(next) => toggleGroup(item.href, next)}
+      >
+        <CollapsibleTrigger className={cn(itemClass, "group")}>
+          <item.icon className="size-4 shrink-0" />
+          {item.title}
+          {/* aria-expanded, not data-open: Base UI's trigger
+              exposes its state through aria-expanded only.
+              Tailwind compiles `data-open` to [data-state=open],
+              a Radix convention that never matches here — the
+              chevron would silently never turn. */}
+          <ChevronDown className="ml-auto size-3.5 shrink-0 transition-transform group-aria-expanded:rotate-180" />
+        </CollapsibleTrigger>
+
+        {/* Base UI hands the panel its measured height as
+            --collapsible-panel-height and flags the in/out frames
+            with data-starting-style / data-ending-style, so
+            animating height between 0 and that variable is all the
+            smoothing needs. overflow-hidden stops the rows
+            spilling out mid-transition. */}
+        <CollapsibleContent className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-200 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
+          {/* The tree. The spine is drawn per-row rather than as a
+              border-l on the list: the last row only draws its top
+              half, so the line stops at the final tick instead of
+              running past it. */}
+          <ul className="ml-4 flex flex-col py-1">
+            {item.items.map((sub) => {
+              const subActive = isNavItemActive(sub.href, pathname)
+
+              return (
+                <li
+                  key={sub.href}
+                  className="relative before:absolute before:top-0 before:left-0 before:h-full before:w-px before:bg-[#E2E1DE] last:before:h-1/2"
+                >
+                  <Link
+                    href={sub.href}
+                    aria-current={subActive ? "page" : undefined}
+                    className={cn(
+                      "relative flex items-center py-1.5 pl-5 text-sm transition-colors",
+                      // the tick joining this row to the spine
+                      "before:absolute before:top-1/2 before:left-0 before:h-px before:w-3 before:bg-[#E2E1DE]",
+                      subActive
+                        ? "font-medium text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {sub.title}
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </CollapsibleContent>
+      </Collapsible>
+    )
+  }
+
   return (
     <aside
       inert={!open}
@@ -166,86 +251,7 @@ function AppSidebar({
                   flush with it. On the wrapper, not the rows, so collapsible
                   sub-trees shift with their parent. */}
               <div className="flex flex-col gap-0 pl-2">
-                {section.items.map((item) => {
-                const active = isNavItemActive(item.href, pathname)
-                const itemClass = cn(ROW, active ? ROW_ACTIVE : ROW_IDLE)
-
-                if (!item.items) {
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={itemClass}
-                    >
-                      <item.icon className="size-4 shrink-0" />
-                      {item.title}
-                    </Link>
-                  )
-                }
-
-                return (
-                  // Open when you left it open (remembered in this browser),
-                  // else when a child page is the one on screen — so landing on
-                  // one never shows a closed parent with nothing selected.
-                  <Collapsible
-                    key={item.href}
-                    open={groups[item.href] ?? active}
-                    onOpenChange={(next) => toggleGroup(item.href, next)}
-                  >
-                    <CollapsibleTrigger className={cn(itemClass, "group")}>
-                      <item.icon className="size-4 shrink-0" />
-                      {item.title}
-                      {/* aria-expanded, not data-open: Base UI's trigger
-                          exposes its state through aria-expanded only.
-                          Tailwind compiles `data-open` to [data-state=open],
-                          a Radix convention that never matches here — the
-                          chevron would silently never turn. */}
-                      <ChevronDown className="ml-auto size-3.5 shrink-0 transition-transform group-aria-expanded:rotate-180" />
-                    </CollapsibleTrigger>
-
-                    {/* Base UI hands the panel its measured height as
-                        --collapsible-panel-height and flags the in/out frames
-                        with data-starting-style / data-ending-style, so
-                        animating height between 0 and that variable is all the
-                        smoothing needs. overflow-hidden stops the rows
-                        spilling out mid-transition. */}
-                    <CollapsibleContent className="h-[var(--collapsible-panel-height)] overflow-hidden transition-[height] duration-200 ease-out data-[ending-style]:h-0 data-[starting-style]:h-0 motion-reduce:transition-none">
-                      {/* The tree. The spine is drawn per-row rather than as a
-                          border-l on the list: the last row only draws its top
-                          half, so the line stops at the final tick instead of
-                          running past it. */}
-                      <ul className="ml-4 flex flex-col py-1">
-                        {item.items.map((sub) => {
-                          const subActive = isNavItemActive(sub.href, pathname)
-
-                          return (
-                            <li
-                              key={sub.href}
-                              className="relative before:absolute before:top-0 before:left-0 before:h-full before:w-px before:bg-[#E2E1DE] last:before:h-1/2"
-                            >
-                              <Link
-                                href={sub.href}
-                                aria-current={subActive ? "page" : undefined}
-                                className={cn(
-                                  "relative flex items-center py-1.5 pl-5 text-sm transition-colors",
-                                  // the tick joining this row to the spine
-                                  "before:absolute before:top-1/2 before:left-0 before:h-px before:w-3 before:bg-[#E2E1DE]",
-                                  subActive
-                                    ? "font-medium text-foreground"
-                                    : "text-muted-foreground hover:text-foreground"
-                                )}
-                              >
-                                {sub.title}
-                              </Link>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </CollapsibleContent>
-                  </Collapsible>
-                )
-                })}
+                {section.items.map(renderItem)}
               </div>
             </div>
           ))}
@@ -260,21 +266,7 @@ function AppSidebar({
           </p>
 
           <div className="flex flex-col gap-0 pl-2">
-            {settingsSection.items.map((item) => {
-              const active = isNavItemActive(item.href, pathname)
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(ROW, active ? ROW_ACTIVE : ROW_IDLE)}
-                >
-                  <item.icon className="size-4 shrink-0" />
-                  {item.title}
-                </Link>
-              )
-            })}
+            {settingsSection.items.map(renderItem)}
           </div>
         </div>
 

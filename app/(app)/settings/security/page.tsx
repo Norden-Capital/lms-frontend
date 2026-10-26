@@ -1,10 +1,16 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ShieldCheck } from "lucide-react"
+import { KeyRound, MonitorSmartphone, ShieldCheck, Smartphone } from "lucide-react"
 
+import { ChangePasswordSheet } from "@/components/settings/changePasswordSheet"
+import { FaqGroup, FaqItem } from "@/components/settings/faqItem"
+import { EndOtherSessionsButton, SessionsList } from "@/components/settings/sessionsList"
 import { RegenerateRecoveryCodes } from "@/components/twoFactor/regenerateRecoveryCodes"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { requireUser } from "@/lib/auth"
+import { getMySessions } from "@/lib/me"
 
 export const metadata: Metadata = {
   title: "Security",
@@ -13,68 +19,97 @@ export const metadata: Metadata = {
 /**
  * Everything about proving who you are and keeping the account yours.
  *
- * Deliberately a page rather than a folder: two-factor is the first thing to
- * land here, but verifying an email address, changing a password and reviewing
- * active sessions all belong on this screen too. Anything that runs as a
+ * Deliberately a page rather than a folder: two-factor, recovery codes, your
+ * password and your sessions all live on this one screen. Anything that runs as a
  * multi-step flow — enrolment being the first — gets its own route beneath
  * this one and returns here when it finishes.
  */
 export default async function SecurityPage() {
-  const user = await requireUser()
+  const [user, sessions] = await Promise.all([requireUser(), getMySessions()])
+  const others = sessions.ok ? sessions.data.filter((s) => !s.current).length : 0
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
-          Security
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          How you sign in, and how this account is protected.
-        </p>
+        <h2 className="font-heading text-base font-semibold tracking-tight">Security</h2>
+        <p className="text-sm text-muted-foreground">Questions about keeping your account safe.</p>
       </div>
 
-      {/* Status comes off requireUser(), which already returned the user — no
-          second request to ask whether 2FA is on. */}
-      <div className="flex max-w-lg items-start gap-3 rounded-lg border bg-card p-4">
-        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+      {/* An FAQ — decided 2026-10-26. Every answer shown, one line each.
+          Order: password, two-factor, sessions. */}
+      <div className="flex w-full flex-col gap-8">
+        <FaqGroup title="Password">
+          <FaqItem question="How do I change my password?" icon={KeyRound} action={<ChangePasswordSheet />}>
+            <p>Use your current password to set a new one. You stay signed in here only.</p>
+          </FaqItem>
+        </FaqGroup>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p className="text-sm font-medium">Two-factor authentication</p>
-          <p className="text-sm text-muted-foreground">
-            {user.mfaEnabled
-              ? "On. You sign in with a code from your app."
-              : "Off. Only your password protects this account."}
-          </p>
-        </div>
-
-        {/* Unreachable in practice, and kept anyway. Two-factor is mandatory, so
-            anyone able to load this page has it on — an account without it is
-            redirected to /two-factor before any (app) page renders. If that rule
-            is ever relaxed, this is already correct rather than pointing at a
-            route that moved. */}
-        {!user.mfaEnabled && (
-          <Button size="sm" className="shrink-0" render={<Link href="/two-factor" />}>
-            Set up
-          </Button>
-        )}
-      </div>
-
-      {/* No "turn off" here, deliberately. Two-factor is mandatory, so the
-          only way out is an administrator clearing it — which is what
-          POST /api/users/{id}/2fa/reset is for. */}
-      {user.mfaEnabled && (
-        <div className="flex max-w-lg flex-col gap-3 rounded-lg border bg-card p-4">
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium">Recovery codes</p>
-            <p className="text-sm text-muted-foreground">
-              One-time codes to sign in without your phone. Make new ones if
-              you run low or someone saw them.
+        <FaqGroup title="Two-factor">
+          <FaqItem
+            question="Is my account protected?"
+            icon={ShieldCheck}
+            action={
+              user.mfaEnabled ? (
+                // On, and locked — decided 2026-10-26. Two-factor is required,
+                // so the switch shows the state and cannot change it. The span
+                // holds the tooltip: a disabled switch takes no pointer events.
+                <Tooltip>
+                  <TooltipTrigger render={<span className="inline-flex" />}>
+                    <Switch checked disabled aria-label="Two-factor is on" />
+                  </TooltipTrigger>
+                  <TooltipContent>Required for every account. Can&apos;t be turned off.</TooltipContent>
+                </Tooltip>
+              ) : (
+                // Unreachable in practice: two-factor is mandatory, so an account
+                // without it is sent to /two-factor before any page here loads.
+                <Button size="sm" render={<Link href="/two-factor" />}>
+                  Set up two-factor
+                </Button>
+              )
+            }
+          >
+            {/* Status comes off requireUser(): no second request. */}
+            <p>
+              {user.mfaEnabled ? (
+                <span>
+                  Yes. Two-factor is <span className="font-medium text-success">on</span>, so you need a code from your phone to sign in.
+                </span>
+              ) : (
+                <span>
+                  No. Two-factor is <span className="font-medium text-warning">off</span>, so only your password protects you.
+                </span>
+              )}
             </p>
-          </div>
+          </FaqItem>
 
-          <RegenerateRecoveryCodes email={user.email} />
-        </div>
-      )}
+          <FaqItem
+            question="I lost my phone. How do I sign in?"
+            icon={Smartphone}
+            action={user.mfaEnabled && <RegenerateRecoveryCodes email={user.email} />}
+          >
+            <p>Use a recovery code instead. Each code works once, so make new ones after.</p>
+          </FaqItem>
+        </FaqGroup>
+
+        <FaqGroup title="Sessions">
+          <FaqItem
+            question="Where am I signed in?"
+            icon={MonitorSmartphone}
+            action={<EndOtherSessionsButton disabled={others === 0} />}
+          >
+            <p>Every device signed in to your account. Don&apos;t know one? Sign it out.</p>
+          </FaqItem>
+          {/* Under the question, not in its answer column: the whole width,
+              with a little room on each side — decided 2026-10-26. */}
+          <div className="mx-2">
+            {sessions.ok ? (
+              <SessionsList sessions={sessions.data} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Sessions could not be loaded.</p>
+            )}
+          </div>
+        </FaqGroup>
+      </div>
     </div>
   )
 }

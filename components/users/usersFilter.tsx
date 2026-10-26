@@ -1,23 +1,27 @@
 "use client"
 
 import { usePathname, useSearchParams } from "next/navigation"
-import { CircleCheck, CircleDot, CircleX, ListFilter, X } from "lucide-react"
+import { CircleCheck, CircleDot, CircleX, ListFilter, Sparkles, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { useAccess } from "@/components/access/accessProvider"
 import { useUsersLoading } from "@/components/users/usersLoading"
 import { cn } from "@/lib/utils"
-import { OWNER, roleLabel } from "@/lib/roles"
+import { ADMIN, OWNER, roleLabel } from "@/lib/roles"
 
 /**
- * Filters for the user list, sitting up in the title row.
+ * Filters for the user list, sitting up in the title row. They open in a
+ * sheet from the right — decided 2026-10-26, was a dropdown.
  *
  * <p><b>They live in the URL, not in state.</b> That is what lets this button
  * stand next to the page title while the table it filters is somewhere else
@@ -79,10 +83,18 @@ function RadioDot({ selected }: { selected: boolean }) {
 /** The keys this component owns. Anything else in the URL is left alone. */
 const KEYS = ["role", "status", "mfa"] as const
 
+/** Where a role sits in the list: the Owner first, then administrators, then the rest. */
+function rank(role: string) {
+  return role === OWNER ? 0 : role === ADMIN ? 1 : 2
+}
+
 function UsersFilter() {
   const { roles, viewerIsOwner } = useAccess()
   // Nobody sees a role above their own: only the Owner is offered "Owner".
-  const filterRoles = roles.filter((role) => viewerIsOwner || role.name !== OWNER)
+  // Highest first: Owner, Administrator, then Member — decided 2026-10-26.
+  const filterRoles = roles
+    .filter((role) => viewerIsOwner || role.name !== OWNER)
+    .sort((a, b) => rank(a.name) - rank(b.name))
   // Through the list's loader, so the table shows its grey rows while the
   // filtered list loads — decided 2026-10-20.
   const { navigate } = useUsersLoading()
@@ -115,16 +127,14 @@ function UsersFilter() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
+    <Sheet>
+      <SheetTrigger
         render={
           <Button
             variant="outline"
             size="icon"
             className="relative rounded-md bg-card"
-            aria-label={
-              active > 0 ? `Filters, ${active} active` : "Filter users"
-            }
+            aria-label={active > 0 ? `Filters, ${active} active` : "Filter users"}
           />
         }
       >
@@ -136,222 +146,226 @@ function UsersFilter() {
             {active}
           </span>
         )}
-      </DropdownMenuTrigger>
+      </SheetTrigger>
 
-      {/* The sidebar's surface, not the popover's. Everything inside is a white
-          card, and on a white panel those cards had nothing to sit against —
-          the borders were doing all the work. A sunken background gives them
-          something to lift off, and matches the one other place in the app that
-          holds a stack of controls. */}
-      <DropdownMenuContent align="end" className="w-72 bg-sidebar">
-        {/* Plain labels rather than menu items, so choosing a role does not
-            close the panel. Setting two filters should not mean opening this
-            twice. */}
-        <div className="px-2 pt-1.5 pb-2">
-          <div className="flex items-center justify-between gap-2 pb-1.5">
-            <span className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
-              Role
-            </span>
-            {selectedRole && (
-              <button
-                type="button"
-                onClick={() => set("role", "any")}
-                className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-              >
-                Any role
-              </button>
-            )}
-          </div>
+      <SheetContent side="right">
+        <SheetHeader className="pr-12">
+          <SheetTitle>Filter users</SheetTitle>
+          <SheetDescription>Changes show right away.</SheetDescription>
+        </SheetHeader>
 
-          <div className="grid grid-cols-2 gap-2">
-            {filterRoles.map((role) => {
-              const selected = selectedRole === role.name
-
-              return (
-                // The mark is pushed to the card's right edge, matching the role
-                // cards on the add-user form. Text starts at a common left edge
-                // and the marks line up in their own column down the right,
-                // which is what makes the selected one findable at a glance.
-                <label
-                  key={role.name}
-                  className={cn(
-                    "flex cursor-pointer items-start justify-between gap-2 rounded-md border p-2 transition-colors",
-                    // The fill stays put whatever is chosen. Now the panel
-                    // behind these is the sunken sidebar surface, tinting the
-                    // selected card made it sink into the background — the one
-                    // card that should stand out was the one that disappeared.
-                    // Selection is the border and the filled mark instead.
-                    "bg-card hover:bg-muted/40",
-                    selected && "border-foreground/40"
-                  )}
+        {/* Choosing does not close the sheet: setting two filters should not
+            mean opening it twice. Scrolls on a short window. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="px-4 pt-1.5 pb-4">
+            <div className="flex items-center justify-between gap-2 pb-1.5">
+              <span className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
+                Role
+              </span>
+              {selectedRole && (
+                <button
+                  type="button"
+                  onClick={() => set("role", "any")}
+                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
                 >
-                  <input
-                    type="radio"
-                    name="role-filter"
-                    checked={selected}
-                    onChange={() => set("role", role.name)}
-                    className="sr-only"
-                  />
+                  Any role
+                </button>
+              )}
+            </div>
 
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-xs font-medium">
-                      {roleLabel(role.name)}
-                    </span>
-                    <span className="text-[0.7rem] leading-tight text-muted-foreground">
-                      {role.name === OWNER
-                        ? "Full access. Can manage admins."
-                        : role.name === "ADMIN"
-                          ? "Full access"
-                          : "Only what they are given"}
-                    </span>
-                  </span>
+            {/* Two a row, every card the same height (auto-rows-fr) — decided
+                2026-10-26. An odd count gets a dashed "Coming later" card, so
+                the last row is not one card and a hole. */}
+            <div className="grid auto-rows-fr grid-cols-2 gap-2">
+              {filterRoles.map((role) => {
+                const selected = selectedRole === role.name
 
-                  {/* Nudged down to meet the first line of text rather than the
+                return (
+                  // The mark is pushed to the card's right edge, matching the role
+                  // cards on the add-user form. Text starts at a common left edge
+                  // and the marks line up in their own column down the right,
+                  // which is what makes the selected one findable at a glance.
+                  <label
+                    key={role.name}
+                    className={cn(
+                      "flex cursor-pointer items-start justify-between gap-2 rounded-md border p-2 transition-colors",
+                      // The fill stays put whatever is chosen. Now the panel
+                      // behind these is the sunken sidebar surface, tinting the
+                      // selected card made it sink into the background — the one
+                      // card that should stand out was the one that disappeared.
+                      // Selection is the border and the filled mark instead.
+                      "bg-card hover:bg-muted/40",
+                      selected && "border-foreground/40"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="role-filter"
+                      checked={selected}
+                      onChange={() => set("role", role.name)}
+                      className="sr-only"
+                    />
+
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-xs font-medium">{roleLabel(role.name)}</span>
+                      <span className="text-[0.7rem] leading-tight text-muted-foreground">
+                        {role.name === OWNER
+                          ? "Full access. Can manage admins."
+                          : role.name === "ADMIN"
+                            ? "Full access"
+                            : "Only what they are given"}
+                      </span>
+                    </span>
+
+                    {/* Nudged down to meet the first line of text rather than the
                       top of its box. */}
-                  <span className="mt-0.5">
-                    <RadioDot selected={selected} />
+                    <span className="mt-0.5">
+                      <RadioDot selected={selected} />
+                    </span>
+                  </label>
+                )
+              })}
+              {filterRoles.length % 2 === 1 && (
+                <div className="flex items-center justify-center rounded-md border border-dashed p-2">
+                  {/* The same tag as "Coming soon" in the Settings menu. */}
+                  <span className="flex items-center gap-1 rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[0.6rem] tracking-wider text-muted-foreground uppercase">
+                    <Sparkles className="size-3 shrink-0" aria-hidden />
+                    Coming later
                   </span>
-                </label>
-              )
-            })}
-          </div>
-        </div>
-
-        <DropdownMenuSeparator />
-
-        <div className="px-2 pt-1.5 pb-2">
-          <div className="flex items-center justify-between gap-2 pb-1.5">
-            <span className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
-              Status
-            </span>
-            {selectedStatus && (
-              <button
-                type="button"
-                onClick={() => set("status", "any")}
-                className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-              >
-                Any status
-              </button>
-            )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Three across, so the icons line up as a row of states rather than a
-              column of options. The icon carries the meaning at this size — the
-              word is barely wide enough to read as a label on its own. */}
-          {/* Stacked, not three across. Each card carries a radio, an icon, a
-              title and a sentence — four things that will not fit side by side
-              in a dropdown without the sentence wrapping to three words a line. */}
-          <div className="flex flex-col gap-2">
-            {STATUSES.map((status) => {
-              const selected = selectedStatus === status.value
-              const Icon = status.icon
-
-              return (
-                <label
-                  key={status.value}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors",
-                    // The fill stays put whatever is chosen. Now the panel
-                    // behind these is the sunken sidebar surface, tinting the
-                    // selected card made it sink into the background — the one
-                    // card that should stand out was the one that disappeared.
-                    // Selection is the border and the filled mark instead.
-                    "bg-card hover:bg-muted/40",
-                    selected && "border-foreground/40"
-                  )}
+          <div className="border-t px-4 pt-4 pb-4">
+            <div className="flex items-center justify-between gap-2 pb-1.5">
+              <span className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
+                Status
+              </span>
+              {selectedStatus && (
+                <button
+                  type="button"
+                  onClick={() => set("status", "any")}
+                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
                 >
-                  <input
-                    type="radio"
-                    name="status-filter"
-                    checked={selected}
-                    onChange={() => set("status", status.value)}
-                    className="sr-only"
-                  />
-                  <Icon
-                    className="size-3.5 shrink-0 text-muted-foreground"
-                    aria-hidden
-                  />
-                  <span className="text-xs font-medium">{status.label}</span>
+                  Any status
+                </button>
+              )}
+            </div>
 
-                  {/* ml-auto rather than justify-between: the text between them
+            {/* Three across, one row — decided 2026-10-26. The icons line up as a
+                row of states rather than a column of options. */}
+            <div className="grid grid-cols-3 gap-2">
+              {STATUSES.map((status) => {
+                const selected = selectedStatus === status.value
+                const Icon = status.icon
+
+                return (
+                  <label
+                    key={status.value}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors",
+                      // The fill stays put whatever is chosen. Now the panel
+                      // behind these is the sunken sidebar surface, tinting the
+                      // selected card made it sink into the background — the one
+                      // card that should stand out was the one that disappeared.
+                      // Selection is the border and the filled mark instead.
+                      "bg-card hover:bg-muted/40",
+                      selected && "border-foreground/40"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="status-filter"
+                      checked={selected}
+                      onChange={() => set("status", status.value)}
+                      className="sr-only"
+                    />
+                    <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="min-w-0 truncate text-xs font-medium">{status.label}</span>
+
+                    {/* ml-auto rather than justify-between: the text between them
                       can be short, and only pushing the mark itself keeps the
                       icon and label together at the left. */}
-                  <span className="ml-auto">
-                    <RadioDot selected={selected} />
-                  </span>
-                </label>
-              )
-            })}
+                    <span className="ml-auto">
+                      <RadioDot selected={selected} />
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
           </div>
-        </div>
 
-        <DropdownMenuSeparator />
-
-        {/* Three stops on a track. Two-factor is one setting with a middle
+          {/* Three stops on a track. Two-factor is one setting with a middle
             position meaning "do not care", and a line makes that middle read as
             the resting state — which a stack of three radio rows never does.
 
             Real radio inputs underneath, hidden: arrow keys, focus and screen
             readers all work without reimplementing any of it. */}
-        <div className="px-2 pt-1.5 pb-3">
-          <span className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
-            Two-factor
-          </span>
+          <div className="border-t px-4 pt-4 pb-4">
+            <span className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
+              Two-factor
+            </span>
 
-          {/* Radios, not a slider. Off / Either / On is a choice between three
+            {/* Radios, not a slider. Off / Either / On is a choice between three
               named things, not a quantity — a track implies the middle is
               "halfway", when it actually means "do not care".
 
               Three across rather than stacked: the labels are one word each, so
               a column of them would be three rows of mostly empty card. */}
-          <div className="mt-1.5 grid grid-cols-3 gap-2">
-            {TWO_FACTOR_STOPS.map((stop) => {
-              const selected = (params.get("mfa") ?? "any") === stop.value
+            <div className="mt-1.5 grid grid-cols-3 gap-2">
+              {TWO_FACTOR_STOPS.map((stop) => {
+                const selected = (params.get("mfa") ?? "any") === stop.value
 
-              return (
-                <label
-                  key={stop.value}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors",
-                    // The fill stays put whatever is chosen. Now the panel
-                    // behind these is the sunken sidebar surface, tinting the
-                    // selected card made it sink into the background — the one
-                    // card that should stand out was the one that disappeared.
-                    // Selection is the border and the filled mark instead.
-                    "bg-card hover:bg-muted/40",
-                    selected && "border-foreground/40"
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="mfa-filter"
-                    checked={selected}
-                    onChange={() => set("mfa", stop.value)}
-                    className="sr-only"
-                  />
-                  <span className="truncate text-xs font-medium">
-                    {stop.label}
-                  </span>
-                  <span className="ml-auto">
-                    <RadioDot selected={selected} />
-                  </span>
-                </label>
-              )
-            })}
+                return (
+                  <label
+                    key={stop.value}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors",
+                      // The fill stays put whatever is chosen. Now the panel
+                      // behind these is the sunken sidebar surface, tinting the
+                      // selected card made it sink into the background — the one
+                      // card that should stand out was the one that disappeared.
+                      // Selection is the border and the filled mark instead.
+                      "bg-card hover:bg-muted/40",
+                      selected && "border-foreground/40"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="mfa-filter"
+                      checked={selected}
+                      onChange={() => set("mfa", stop.value)}
+                      className="sr-only"
+                    />
+                    <span className="truncate text-xs font-medium">{stop.label}</span>
+                    <span className="ml-auto">
+                      <RadioDot selected={selected} />
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
           </div>
         </div>
 
-        {active > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={clear}>
+        {/* Stacked, longest label on top. Clear only when something is set. */}
+        <SheetFooter className="border-t">
+          {active > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-card text-destructive hover:text-destructive"
+              onClick={clear}
+            >
               <X data-icon="inline-start" />
               Clear filters
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            </Button>
+          )}
+          <SheetClose render={<Button type="button" />}>Done</SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   )
 }
 

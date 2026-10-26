@@ -71,6 +71,8 @@ export const ACTION_TYPES: Record<string, { label: string; tone: "neutral" | "go
   SIGN_IN: { label: "Signed in", tone: "neutral" },
   SIGN_IN_FAILED: { label: "Sign-in failed", tone: "warn" },
   ACCOUNT_LOCKED: { label: "Account locked", tone: "bad" },
+  SESSION_ENDED: { label: "Signed out a session", tone: "neutral" },
+  PASSWORD_CHANGED: { label: "Password changed", tone: "neutral" },
   BACKUP_STARTED: { label: "Backup started", tone: "neutral" },
   BACKUP_DOWNLOADED: { label: "Backup downloaded", tone: "warn" },
   BACKUP_DELETED: { label: "Backup deleted", tone: "bad" },

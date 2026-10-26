@@ -1,23 +1,9 @@
-import type { Metadata } from "next"
-import { LayoutDashboard } from "lucide-react"
+import { redirect } from "next/navigation"
 
-import { ComingSoon } from "@/components/layout/comingSoon"
-import { requireUser } from "@/lib/auth"
-
-export const metadata: Metadata = {
-  title: "Dashboard",
-}
-
-/** Not built yet — a "coming soon" page until it is. */
-export default async function DashboardPage() {
-  await requireUser()
-
-  return (
-    <ComingSoon
-      icon={LayoutDashboard}
-      title="Overview"
-      description="Your key numbers in one place, coming soon."
-     
-    />
-  )
+/**
+ * The dashboard is Leads Overview — decided 2026-10-26. Signing in, and every
+ * "back to dashboard" button, comes here and lands there.
+ */
+export default function DashboardPage() {
+  redirect("/dashboard/leads")
 }

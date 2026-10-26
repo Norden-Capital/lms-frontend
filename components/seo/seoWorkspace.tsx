@@ -433,7 +433,8 @@ function SeoBody({ overview, note }: { overview: SeoOverview; note: string }) {
             <div className="flex min-w-0 flex-col p-4 md:absolute md:inset-0">
               <h3 className={SUB_HEADING}>Top countries</h3>
               <p className="mt-0.5 text-[0.7rem] text-muted-foreground">All visits, and how many from search.</p>
-              <div className="mt-4 min-h-0 min-w-0 flex-1 md:overflow-y-auto md:pr-1">
+              {/* pr-4: room between the numbers and the scrollbar — decided 2026-10-26. */}
+              <div className="mt-4 min-h-0 min-w-0 flex-1 md:overflow-y-auto md:pr-4">
                 <ShareList
                   empty="No visits yet."
                   total={allSessions}
