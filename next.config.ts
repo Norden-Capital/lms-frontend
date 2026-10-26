@@ -4,7 +4,23 @@ import type { NextConfig } from "next";
 // producing a `undefined/...` destination.
 const BACKEND_URL = process.env.BACKEND_URL;
 
+// Safety headers on every page — added 2026-10-26 after the live check found
+// none. Framing is allowed for this site only ('self'), so no other site can
+// show the sign-in page inside its own and trick people into typing there.
+const SECURITY_HEADERS = [
+  { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 const nextConfig: NextConfig = {
+  // Don't announce "Next.js" in every answer.
+  poweredByHeader: false,
+  headers() {
+    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+  },
   experimental: {
     // Required for the `forbidden()` / `unauthorized()` interrupts and their
     // matching `forbidden.tsx` / `unauthorized.tsx` conventions. Still flagged
