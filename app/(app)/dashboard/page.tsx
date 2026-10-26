@@ -17,7 +17,7 @@ export default async function DashboardPage() {
       icon={LayoutDashboard}
       title="Overview"
       description="Your key numbers in one place, coming soon."
-      showDashboardLink={false}
+     
     />
   )
 }

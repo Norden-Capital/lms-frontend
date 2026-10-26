@@ -2,7 +2,9 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 import { UserDetail } from "@/components/users/userDetail"
+import { listActionLog } from "@/lib/actionLog"
 import { requireUser } from "@/lib/auth"
+import { OWNER } from "@/lib/roles"
 import { getUser } from "@/lib/users"
 
 export const metadata: Metadata = {
@@ -43,16 +45,22 @@ export default async function UserDetailPage({
     throw new Error(result.error.message)
   }
 
+  // Their activity, from the action log — which only the Owner may read.
+  const isOwner = me.role === OWNER
+  const log = isOwner ? await listActionLog({ user: id, size: "50" }) : null
+  const activity = log?.ok ? log.data.content : undefined
+
   return (
     <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden p-6 pb-3">
       {/* The header is drawn by UserDetail, because its buttons — Edit
           details, Change permissions — depend on whether the page is editing,
           which only the client knows. */}
-      {/* No `activity` passed, and that is not an omission — nothing in the
-          system records what an account did. The panel says so plainly rather
-          than showing an empty list, which would read as "this person has done
-          nothing". It needs an `audit_log` table first. */}
-      <UserDetail user={result.data} isSelf={me.id === result.data.id} />
+      <UserDetail
+        user={result.data}
+        isSelf={me.id === result.data.id}
+        activity={activity}
+        activityHidden={!isOwner}
+      />
     </div>
   )
 }

@@ -482,14 +482,18 @@ function MailDisplay({
       </div>
 
       {/* ── What it says ──────────────────────────────────────────────────── */}
+      {/* An HTML email scrolls inside its own frame, so this area only scrolls
+          for plain text — otherwise opening the reply box, which makes the
+          area shorter, added a second scrollbar around the first. */}
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4",
+          "flex min-h-0 flex-1 flex-col gap-3 p-4",
+          message.html ? "overflow-hidden" : "overflow-y-auto",
           THIN_SCROLLBAR,
         )}
       >
         {message.html ? (
-          <div className="min-h-64 flex-1">
+          <div className="min-h-0 flex-1">
             <HtmlBody html={message.html} />
           </div>
         ) : (

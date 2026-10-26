@@ -6,9 +6,6 @@ import { toast } from "sonner"
 import {
   CalendarDays,
   Check,
-  FileDown,
-  FilePen,
-  FilePlus,
   KeyRound,
   LogIn,
   Mail,
@@ -16,7 +13,6 @@ import {
   Minus,
   Phone,
   ShieldCheck,
-  Trash2,
   UserRound,
 } from "lucide-react"
 
@@ -28,11 +24,13 @@ import { canChangePermissions, canManage } from "@/components/users/userActionDi
 import { PageHeader } from "@/components/layout/pageHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { UserActivityTable } from "@/components/users/userActivityTable"
 import { UserQuickActions } from "@/components/users/userQuickActions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { TruncatedText } from "@/components/ui/truncatedText"
 import { useAccess } from "@/components/access/accessProvider"
 import { roleLabel } from "@/lib/roles"
+import type { ActionLogEntry } from "@/lib/actionLogTypes"
 import type { UserDetail as UserAccount } from "@/lib/userTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
@@ -53,45 +51,6 @@ import { cn } from "@/lib/utils"
  * none of them are exposed. Building this for real means adding the endpoint and
  * widening that record.
  */
-
-/**
- * One thing this account did.
- *
- * <p>⚠️ <b>There is no audit table.</b> Nothing in the schema records an action
- * against the person who took it — the closest the database gets is
- * `users.last_login_at`, a single timestamp that each sign-in overwrites. So this
- * type describes a log the system cannot produce yet, and the page is fed
- * invented rows.
- *
- * <p>Building it for real is a table, not an endpoint: actor, action, subject,
- * timestamp, written on every state-changing request. Recorded as #21 on the bug
- * list.
- */
-type ActivityEntry = {
-  /** What they did, in the past tense: "Signed in", "Exported". */
-  action: string
-  /** What they did it to. Left out for actions with no object, like signing in. */
-  subject?: string
-  /** ISO 8601. */
-  at: string
-  /** Picks the glyph. Adding a kind here and nowhere else falls back to a dot. */
-  kind: "signIn" | "create" | "update" | "delete" | "export" | "security"
-}
-
-/**
- * A glyph per kind of action, so a long log can be skimmed by shape.
- *
- * <p>Deleting is the one worth spotting from across the room, so it is also the
- * only one that carries colour.
- */
-const ACTIVITY_ICON = {
-  signIn: { icon: LogIn, tone: "text-muted-foreground" },
-  create: { icon: FilePlus, tone: "text-muted-foreground" },
-  update: { icon: FilePen, tone: "text-muted-foreground" },
-  delete: { icon: Trash2, tone: "text-destructive" },
-  export: { icon: FileDown, tone: "text-muted-foreground" },
-  security: { icon: ShieldCheck, tone: "text-muted-foreground" },
-} as const
 
 /**
  * The backend's `UserStatus` enum in words, and the colour that goes with it.
@@ -310,16 +269,15 @@ function UserDetail({
   user,
   isSelf,
   activity,
+  activityHidden = false,
 }: {
   user: UserAccount
   /** Your own account, reached by its address — some actions do not apply. */
   isSelf: boolean
-  /**
-   * ⚠️ Always absent today. Nothing records what an account did — see
-   * {@link ActivityEntry} — so the panel says so rather than showing an empty
-   * list, which would read as "this person has done nothing".
-   */
-  activity?: ActivityEntry[]
+  /** Their latest action-log lines — what they did and what was done to them. */
+  activity?: ActionLogEntry[]
+  /** True when the viewer is not the Owner, who alone can see the log. */
+  activityHidden?: boolean
 }) {
   const access = useAccess()
   const { actionColumns: ACTION_COLUMNS, groups: RESOURCE_GROUPS } = access
@@ -669,31 +627,16 @@ function UserDetail({
               verified, last sign-in, all already three inches to the left — so
               the page said everything twice and nothing about the account's
               actual use. */}
-          {!activity ? (
-            /* Not "nothing happened" — "nothing is recorded". The difference
-               matters: one is a fact about this person, the other is a gap in
-               the system, and showing an empty list would state the first while
-               meaning the second. */
+          {activityHidden ? (
             <p className="rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
-              Activity is not tracked yet.
+              Only the Owner can see activity.
             </p>
-          ) : activity.length === 0 ? (
+          ) : !activity ? (
             <p className="rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
-              Nothing recorded for this account yet.
+              Activity could not be loaded.
             </p>
           ) : (
-            // pr-2 keeps the text off the bar rather than sliding under it as
-            // it appears.
-            <ul
-              className={cn(
-                "flex min-h-0 flex-1 flex-col overflow-y-auto pr-2",
-                THIN_SCROLLBAR,
-              )}
-            >
-              {activity.map((entry, index) => (
-                <LogEntry key={index} entry={entry} />
-              ))}
-            </ul>
+            <UserActivityTable entries={activity} userId={user.id} />
           )}
         </Panel>
       </div>
@@ -702,37 +645,4 @@ function UserDetail({
   )
 }
 
-/** One line of the log: what they did, to what, and when. */
-function LogEntry({ entry }: { entry: ActivityEntry }) {
-  const { icon: Icon, tone } = ACTIVITY_ICON[entry.kind]
-
-  return (
-    <li className="flex items-start gap-3 border-b py-3 first:pt-0 last:border-b-0 last:pb-0">
-      <span
-        className={cn(
-          "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border bg-card",
-          tone,
-        )}
-      >
-        <Icon className="size-3.5" aria-hidden />
-      </span>
-
-      <div className="flex min-w-0 flex-col gap-0.5">
-        {/* The verb carries the weight and the object stays muted — a column of
-            these is scanned for what happened, and the what-to only matters
-            once something has caught your eye. */}
-        <p className="truncate text-sm">
-          <span className="font-medium">{entry.action}</span>
-          {entry.subject && (
-            <span className="text-muted-foreground"> {entry.subject}</span>
-          )}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {formatDayTime(entry.at)}
-        </p>
-      </div>
-    </li>
-  )
-}
-
-export { UserDetail, type ActivityEntry }
+export { UserDetail }

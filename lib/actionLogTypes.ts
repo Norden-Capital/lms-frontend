@@ -29,6 +29,8 @@ export type ActionLogQuery = {
   size?: string
   /** `field,direction` — see the backend's ActionLogService. */
   sort?: string
+  /** A person's public id (NC-…): only lines they did or that were done to them. */
+  user?: string
 }
 
 /** Rows per page — more than the users table, because the log is long. */

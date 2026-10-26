@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { AppNavbar } from "@/components/layout/appNavbar"
 import { AppSidebar } from "@/components/layout/appSidebar"
@@ -17,6 +17,9 @@ import { SidebarTrigger } from "@/components/layout/sidebarTrigger"
  * Client-side for that state. The layout rendering it stays a Server Component,
  * so `children` are still server-rendered and pass straight through.
  */
+/** Where the sidebar's open or closed state is kept, in this browser only. */
+const SIDEBAR_KEY = "sidebar"
+
 function AppShell({
   children,
   identity,
@@ -52,7 +55,29 @@ function AppShell({
    */
   canOpenInbox?: boolean
 }) {
-  const [open, setOpen] = useState(true)
+  // Open or closed, remembered in this browser — decided 2026-10-26.
+  const [open, setOpenState] = useState(true)
+
+  useEffect(() => {
+    // Read after the first paint: the server cannot see this browser's storage.
+    const timer = window.setTimeout(() => {
+      try {
+        if (window.localStorage.getItem(SIDEBAR_KEY) === "closed") setOpenState(false)
+      } catch {
+        // Storage blocked: the sidebar simply starts open.
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  function setOpen(next: boolean) {
+    setOpenState(next)
+    try {
+      window.localStorage.setItem(SIDEBAR_KEY, next ? "open" : "closed")
+    } catch {
+      // Storage blocked: the choice is not remembered.
+    }
+  }
 
   return (
     // h-svh, not min-h-svh: the window is now exactly one screen and never

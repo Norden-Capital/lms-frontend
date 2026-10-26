@@ -10,6 +10,7 @@ import {
   deleteBrand,
   refreshBrand,
   setBrandActive,
+  setBrandGa4,
   updateBrand,
 } from "@/app/(app)/configuration/brands/actions"
 import { QuarterSparkline } from "@/components/charts/quarterSparkline"
@@ -74,6 +75,7 @@ function BrandsPanel({ brands }: { brands: Brand[] }) {
               <th className={HEAD}>Email address</th>
               <th className={HEAD}>Website</th>
               <th className={HEAD}>Replies</th>
+              <th className={HEAD}>Google Analytics</th>
               <th className={HEAD}>Added</th>
               <th className={HEAD}>Active</th>
               <th className={`${HEAD} pr-4 text-right`}>Actions</th>
@@ -183,9 +185,15 @@ function EditableText({
   value,
   label,
   type = "text",
+  placeholder,
+  allowEmpty = false,
   onSave,
 }: {
   value: string
+  /** Shown, faint, while there is no value. */
+  placeholder?: string
+  /** Saving an empty box clears the value, instead of being ignored. */
+  allowEmpty?: boolean
   /** What it is, for the tooltip and the screen reader — "name". */
   label: string
   type?: "text" | "email"
@@ -208,7 +216,7 @@ function EditableText({
     if (cancelled.current) return
     const next = draft.trim()
     setEditing(false)
-    if (!next || next === value) return
+    if ((!next && !allowEmpty) || next === value) return
     start(async () => {
       const result = await onSave(next)
       if (!result.ok) {
@@ -242,7 +250,7 @@ function EditableText({
             />
           }
         >
-          {pending ? draft : value}
+          {pending ? draft : value || <span className="text-muted-foreground/70">{placeholder}</span>}
         </TooltipTrigger>
         <TooltipContent>Click to change the {label}</TooltipContent>
       </Tooltip>
@@ -342,6 +350,16 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
         {/* This year by quarter, and the total: one more each time an email is
             answered from this brand's address. */}
         <QuarterSparkline values={brand.replies} unit={{ one: "reply", many: "replies" }} />
+      </td>
+      <td className="py-2.5 font-mono text-xs text-muted-foreground">
+        {/* Its GA4 property number, for the SEO Overview. Empty clears it. */}
+        <EditableText
+          value={brand.ga4PropertyId ?? ""}
+          label="Google Analytics ID"
+          placeholder="Add ID"
+          allowEmpty
+          onSave={(id) => setBrandGa4(brand.id, id)}
+        />
       </td>
       <td className="py-2.5 font-mono text-xs text-muted-foreground">{utcStamp(brand.createdAt)}</td>
       <td className="py-2.5">

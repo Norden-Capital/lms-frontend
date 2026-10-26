@@ -5,12 +5,12 @@ import { ComingSoon } from "@/components/layout/comingSoon"
 import { requireUser } from "@/lib/auth"
 
 export const metadata: Metadata = {
-  title: "Marketing overview",
+  title: "Paid ads overview",
 }
 
 /** Not built yet — a "coming soon" page until it is. */
-export default async function MarketingOverviewPage() {
+export default async function PaidAdsOverviewPage() {
   await requireUser()
 
-  return <ComingSoon icon={Megaphone} title="Marketing overview" />
+  return <ComingSoon icon={Megaphone} title="Paid ads overview" />
 }

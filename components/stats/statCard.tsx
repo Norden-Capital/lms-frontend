@@ -47,6 +47,8 @@ type Change = {
   percent: number
   /** The window it moved over — "in the last 28 days". */
   period: string
+  /** Down is the good way — a bounce rate — so a fall is green and a rise red. */
+  lowerIsBetter?: boolean
 }
 
 /**
@@ -295,7 +297,7 @@ function StatCard({
             <span
               className={cn(
                 "font-mono font-medium tabular-nums",
-                rising ? "text-success" : "text-destructive"
+                rising !== Boolean(change.lowerIsBetter) ? "text-success" : "text-destructive"
               )}
             >
               {/* Negatives carry their own minus; positives need the plus

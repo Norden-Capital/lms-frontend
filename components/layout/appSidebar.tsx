@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -53,6 +54,9 @@ const ROW =
 const ROW_ACTIVE = "bg-white font-medium text-foreground shadow-sm"
 const ROW_IDLE = "text-muted-foreground hover:text-foreground"
 
+/** Which sidebar menus are open, kept in this browser only. */
+const GROUPS_KEY = "sidebar-menus"
+
 function AppSidebar({
   open,
   onToggle,
@@ -70,6 +74,35 @@ function AppSidebar({
   isOwner?: boolean
 }) {
   const pathname = usePathname()
+
+  // Which menus (Overview, Configuration…) are open — decided 2026-10-26,
+  // remembered in this browser so they stay as you left them.
+  const [groups, setGroups] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    // Read after the first paint: the server cannot see this browser's storage.
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = window.localStorage.getItem(GROUPS_KEY)
+        if (saved) setGroups(JSON.parse(saved) as Record<string, boolean>)
+      } catch {
+        // Storage blocked or a bad value: menus open as the page decides.
+      }
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [])
+
+  function toggleGroup(href: string, next: boolean) {
+    setGroups((current) => {
+      const updated = { ...current, [href]: next }
+      try {
+        window.localStorage.setItem(GROUPS_KEY, JSON.stringify(updated))
+      } catch {
+        // Storage blocked: not remembered.
+      }
+      return updated
+    })
+  }
 
   // Filtered rather than dimmed or disabled. A greyed-out menu item invites
   // somebody to work out how to earn it, and here there is nothing to earn:
@@ -152,10 +185,14 @@ function AppSidebar({
                 }
 
                 return (
-                  // defaultOpen when a child route is active, so landing on
-                  // /assignments/pending does not show a collapsed parent with
-                  // nothing visibly selected.
-                  <Collapsible key={item.href} defaultOpen={active}>
+                  // Open when you left it open (remembered in this browser),
+                  // else when a child page is the one on screen — so landing on
+                  // one never shows a closed parent with nothing selected.
+                  <Collapsible
+                    key={item.href}
+                    open={groups[item.href] ?? active}
+                    onOpenChange={(next) => toggleGroup(item.href, next)}
+                  >
                     <CollapsibleTrigger className={cn(itemClass, "group")}>
                       <item.icon className="size-4 shrink-0" />
                       {item.title}

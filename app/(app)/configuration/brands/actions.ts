@@ -45,6 +45,16 @@ export async function refreshBrand(id: string): Promise<ActionState> {
   return done(`/api/brands/${encodeURIComponent(id)}/refresh`, { method: "POST" })
 }
 
+/** Sets the brand's Google Analytics ID; empty removes it. */
+export async function setBrandGa4(id: string, propertyId: string): Promise<ActionState> {
+  const result = await done(`/api/brands/${encodeURIComponent(id)}/ga4`, {
+    method: "PUT",
+    body: JSON.stringify({ propertyId }),
+  })
+  if (result.ok) revalidatePath("/dashboard/seo")
+  return result
+}
+
 export async function setBrandActive(id: string, active: boolean): Promise<ActionState> {
   return done(`/api/brands/${encodeURIComponent(id)}/active`, {
     method: "PUT",

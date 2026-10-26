@@ -10,6 +10,7 @@ export async function listActionLog(query: ActionLogQuery): Promise<ApiResult<Pa
   if (query.action) params.set("action", query.action)
   if (query.search) params.set("search", query.search)
   if (query.sort) params.set("sort", query.sort)
+  if (query.user) params.set("user", query.user)
   // The URL counts pages from 1, as people do; the API from 0.
   const page = Math.max(1, Number(query.page) || 1)
   params.set("page", String(page - 1))

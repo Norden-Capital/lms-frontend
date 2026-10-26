@@ -1,110 +1,72 @@
 import type { Metadata } from "next"
+import Link from "next/link"
+import { ChartLine, PlugZap } from "lucide-react"
 
-import { StatCard } from "@/components/stats/statCard"
-import { TrendChart } from "@/components/seo/trendChart"
-import { Panel } from "@/components/system/panel"
-import { THIN_SCROLLBAR } from "@/lib/scrollbar"
-import { getSeoOverview } from "@/lib/seo"
-import type { SeoMetrics } from "@/lib/seoTypes"
-import { count, percent } from "@/lib/format"
-import { cn } from "@/lib/utils"
+import { ErrorState } from "@/components/error/errorState"
+import { SeoWorkspace } from "@/components/seo/seoWorkspace"
+import { Button } from "@/components/ui/button"
+import { requireUser } from "@/lib/auth"
+import { OWNER } from "@/lib/roles"
+import { getSeoBrands, getSeoOverview } from "@/lib/seo"
+import type { SeoQuery } from "@/lib/seoTypes"
 
 export const metadata: Metadata = {
   title: "SEO overview",
 }
 
 /**
- * The four headline figures and the trend behind them.
- *
- * <p>Clicks, impressions, click-through rate and average position — the only
- * four numbers Search Console reports, so the only four there can be. Each shows
- * how it moved against the window immediately before, which is what turns a
- * figure into a direction.
- *
- * <p>⚠️ Every number is invented — see `lib/seoSample.ts`, and the banner is on
- * its way when there is a real connection to be absent. Nothing here has ever
- * spoken to Google.
+ * The SEO Overview — decided 2026-10-20: each brand's Google Analytics, read
+ * live by the backend (oneBase's data), drawn with this app's own cards.
+ * The brand and the period are in the address bar.
  */
-export default async function SeoOverviewPage() {
-  // Decided once, on the server, and passed down. Anything that reads the clock
-  // itself renders one answer here and a different one after hydration.
-  const now = new Date()
-  const overview = await getSeoOverview(now)
+export default async function SeoOverviewPage({ searchParams }: { searchParams: Promise<SeoQuery> }) {
+  const user = await requireUser()
+  const query = await searchParams
+  const brands = await getSeoBrands()
 
-  const unfinished = overview.days.filter((day) => !day.complete).length
+  if (!brands.ok) {
+    const notConnected = brands.error.status === 503
+    return (
+      <ErrorState
+        code="SEO"
+        icon={notConnected ? PlugZap : ChartLine}
+        title={notConnected ? "Google Analytics is not connected yet" : "Could not load the SEO overview"}
+        description={notConnected ? "The Google key goes in the server settings." : brands.error.message}
+        className="min-h-0 flex-1"
+        size="sm"
+      />
+    )
+  }
+
+  if (brands.data.length === 0) {
+    return (
+      <ErrorState
+        code="SEO"
+        icon={ChartLine}
+        title="No brand has Google Analytics yet"
+        description="Add a Google Analytics ID to a brand to see its visitors here."
+        className="min-h-0 flex-1"
+        size="sm"
+      >
+        {user.role === OWNER && (
+          <Button size="sm" variant="outline" render={<Link href="/configuration/brands" />}>
+            Go to Brands
+          </Button>
+        )}
+      </ErrorState>
+    )
+  }
+
+  const brand = brands.data.find((entry) => entry.id === query.brand) ?? brands.data[0]
+  const overview = await getSeoOverview(brand.id, query.range ?? "7d", query.from, query.to)
 
   return (
-    <div
-      className={cn(
-        "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pb-1",
-        THIN_SCROLLBAR
-      )}
-    >
-      <div className="grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Clicks"
-          value={count(overview.totals.clicks)}
-          change={movement(overview.totals, overview.previous, "clicks")}
-        />
-        <StatCard
-          label="Impressions"
-          value={count(overview.totals.impressions)}
-          change={movement(overview.totals, overview.previous, "impressions")}
-        />
-        <StatCard
-          label="Click-through rate"
-          value={percent(overview.totals.ctr * 100, 1)}
-          change={movement(overview.totals, overview.previous, "ctr")}
-        />
-        <StatCard
-          label="Average position"
-          value={overview.totals.position.toFixed(1)}
-          change={movement(overview.totals, overview.previous, "position")}
-        />
-      </div>
-
-      <Panel
-        title="Clicks"
-        hint={
-          <>
-            Clicks per day. The dashed part is still being counted by Google.
-          </>
-        }
-        action={
-          unfinished > 0 ? (
-            <span className="font-mono text-[0.7rem] text-muted-foreground">
-              last {unfinished} days still counting
-            </span>
-          ) : null
-        }
-        className="shrink-0"
-        bodyClassName="p-3"
-      >
-        <TrendChart days={overview.days} />
-      </Panel>
-    </div>
+    <SeoWorkspace
+      key={brand.id}
+      brands={brands.data}
+      query={{ ...query, brand: brand.id }}
+      overview={overview.ok ? overview.data : null}
+      error={overview.ok ? null : overview.error.message}
+    />
   )
-}
-
-/**
- * How a figure moved against the previous window.
- *
- * <p>⚠️ <b>Position is inverted and it is the only one.</b> Going from 18th to
- * 14th is an improvement, and the arithmetic makes it -22% — so the sign is
- * flipped for that metric alone. Without this the one metric people most want to
- * see improve is the one drawn in red when it does.
- */
-function movement(
-  now: SeoMetrics,
-  before: SeoMetrics,
-  key: keyof SeoMetrics
-): { percent: number; period: string } {
-  const previous = before[key]
-  const change = previous === 0 ? 0 : ((now[key] - previous) / previous) * 100
-  const lowerIsBetter = key === "position"
-
-  return {
-    percent: Number(((lowerIsBetter ? -change : change)).toFixed(1)),
-    period: "vs previous 28 days",
-  }
 }

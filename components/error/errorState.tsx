@@ -1,3 +1,4 @@
+import { LiquidGlassLayers } from "@/components/ui/liquidGlass"
 import { cn } from "@/lib/utils"
 
 /**
@@ -11,7 +12,8 @@ function ErrorState({
   title,
   description,
   className,
-  size = "default",
+  size = "sm",
+  iconFrame,
   children,
 }: {
   code: string
@@ -20,13 +22,20 @@ function ErrorState({
   description: string
   className?: string
   /**
-   * "sm" for states inside the app frame — coming soon, an inbox that could
-   * not load — decided 2026-10-20. The full-window error pages keep "default".
+   * "sm" everywhere since 2026-10-26: the error pages and the messages inside
+   * the app now share one size. "default" is the older, bigger one.
    */
   size?: "default" | "sm"
+  /**
+   * "button": the icon in the header buttons' square frame (outline, glass) —
+   * decided 2026-10-26, now on every page that uses this. "round" is the
+   * older circle, kept for the bigger size only.
+   */
+  iconFrame?: "round" | "button"
   children?: React.ReactNode
 }) {
   const small = size === "sm"
+  const frame = iconFrame ?? (small ? "button" : "round")
 
   return (
     <div
@@ -40,11 +49,15 @@ function ErrorState({
       <div className={cn("flex max-w-xs flex-col items-center text-center", small ? "gap-2" : "gap-2.5")}>
         <span
           className={cn(
-            "flex items-center justify-center rounded-full bg-muted",
+            "flex items-center justify-center",
+            frame === "button"
+              ? "relative overflow-hidden rounded-lg border bg-muted"
+              : "rounded-full bg-muted",
             small ? "size-11" : "size-16"
           )}
         >
-          <Icon className={small ? "size-5" : "size-8"} />
+          {frame === "button" && <LiquidGlassLayers />}
+          <Icon className={cn("relative", small ? "size-5" : "size-8")} />
         </span>
         <span
           className={cn(

@@ -1,8 +1,5 @@
-import Link from "next/link"
-import { LayoutDashboard } from "lucide-react"
 
 import { ErrorState } from "@/components/error/errorState"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 /**
@@ -16,15 +13,12 @@ function ComingSoon({
   icon,
   title,
   description,
-  showDashboardLink = true,
   className,
 }: {
   icon: React.ComponentType<{ className?: string }>
   /** What this page will be — "Email overview". */
   title: string
   description?: string
-  /** Off on the dashboard itself, where the link would go nowhere. */
-  showDashboardLink?: boolean
   className?: string
 }) {
   return (
@@ -35,14 +29,7 @@ function ComingSoon({
       description={description ?? "This page is on its way. Check back soon."}
       className={cn("min-h-0 flex-1", className)}
       size="sm"
-    >
-      {showDashboardLink ? (
-        <Button size="sm" variant="outline" render={<Link href="/dashboard" />}>
-          <LayoutDashboard data-icon="inline-start" />
-          Go to dashboard
-        </Button>
-      ) : null}
-    </ErrorState>
+    />
   )
 }
 

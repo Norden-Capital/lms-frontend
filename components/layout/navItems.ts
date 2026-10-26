@@ -5,7 +5,6 @@ import {
   LifeBuoy,
   ScrollText,
   Settings,
-  Share2,
   SlidersHorizontal,
   UserCog,
   Users,
@@ -60,9 +59,10 @@ export const navSections: NavSection[] = [
         href: "/dashboard",
         icon: LayoutDashboard,
         items: [
-          { title: "Email Overview", href: "/dashboard/email" },
+          // Order decided 2026-10-20: SEO, email, then paid ads.
           { title: "SEO Overview", href: "/dashboard/seo" },
-          { title: "Marketing Overview", href: "/dashboard/marketing" },
+          { title: "Email Overview", href: "/dashboard/email" },
+          { title: "Paid Ads Overview", href: "/dashboard/paid-ads" },
         ],
       },
     ],
@@ -71,7 +71,6 @@ export const navSections: NavSection[] = [
     title: "Customers",
     items: [
       { title: "Customer List", href: "/customers", icon: Users },
-      { title: "Channels", href: "/channels", icon: Share2 },
     ],
   },
   {

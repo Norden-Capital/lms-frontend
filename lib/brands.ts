@@ -19,6 +19,8 @@ export type Brand = {
   createdAt: string
   /** This year's replies sent from it, Q1 to Q4 — Reply and Reply all only. */
   replies: number[]
+  /** Its Google Analytics property, digits only — for the SEO Overview. */
+  ga4PropertyId: string | null
 }
 
 /** Every brand, by name. The Owner only — the backend refuses anybody else. */

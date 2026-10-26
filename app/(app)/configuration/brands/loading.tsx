@@ -81,6 +81,9 @@ export default function BrandsLoading() {
           </tbody>
         </table>
       </Panel>
+
+      {/* The warning box under the table, at its real height. */}
+      <Skeleton className="mt-auto h-36 shrink-0 rounded-md" aria-hidden />
     </div>
   )
 }

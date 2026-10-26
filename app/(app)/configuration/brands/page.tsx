@@ -2,10 +2,12 @@ import type { Metadata } from "next"
 import { forbidden } from "next/navigation"
 import { ShieldAlert } from "lucide-react"
 
+import { BrandWarnings } from "@/components/configuration/brandWarnings"
 import { BrandsPanel } from "@/components/configuration/brandsPanel"
 import { PageHeader } from "@/components/layout/pageHeader"
 import { requireUser } from "@/lib/auth"
 import { listBrands } from "@/lib/brands"
+import { getSeoRobot } from "@/lib/seo"
 
 export const metadata: Metadata = {
   title: "Brands",
@@ -18,7 +20,7 @@ export const metadata: Metadata = {
 export default async function BrandsPage() {
   await requireUser()
 
-  const brands = await listBrands()
+  const [brands, robotEmail] = await Promise.all([listBrands(), getSeoRobot()])
   if (!brands.ok && brands.error.status === 403) forbidden()
 
   return (
@@ -37,6 +39,9 @@ export default async function BrandsPage() {
           <p className="text-xs text-muted-foreground">{brands.error.message}</p>
         </div>
       )}
+
+      {/* Under the table: what to set up outside this app for a brand to work. */}
+      <BrandWarnings robotEmail={robotEmail} />
     </div>
   )
 }
