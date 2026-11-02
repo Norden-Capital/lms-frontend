@@ -29,6 +29,7 @@ import { TablePagination } from "@/components/ui/tablePagination"
 import {
   APPLICATION_PAGE_SIZES,
   applicationPageSize,
+  channelLabel,
   money,
   type ApplicationRow,
   type ApplicationsQuery,
@@ -55,6 +56,7 @@ function ApplicationsTable({
   page,
   query,
   brands,
+  channels,
   heading,
   empty,
   showResult,
@@ -62,6 +64,7 @@ function ApplicationsTable({
   page: Page<ApplicationRow>
   query: ApplicationsQuery
   brands: BrandOption[]
+  channels: string[]
   heading: string
   empty: string
   /** Abandoned people never reached LeadScout, so that list has no result to show. */
@@ -79,6 +82,7 @@ function ApplicationsTable({
     const params = new URLSearchParams()
     if (next.search) params.set("search", next.search)
     if (next.brand) params.set("brand", next.brand)
+    if (next.channel) params.set("channel", next.channel)
     if (next.size) params.set("size", next.size)
     if (next.page && next.page !== "1") params.set("page", next.page)
     const qs = params.toString()
@@ -135,6 +139,28 @@ function ApplicationsTable({
 
         <DropdownMenu>
           <DropdownMenuTrigger
+            render={<Button variant="outline" className="rounded-md bg-transparent font-normal" />}
+          >
+            {query.channel ? channelLabel(query.channel) : "All channels"}
+            <ChevronDown data-icon="inline-end" className="opacity-60" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-40">
+            <DropdownMenuRadioGroup
+              value={query.channel ?? ""}
+              onValueChange={(value) => go({ ...query, channel: value || undefined, page: undefined })}
+            >
+              <DropdownMenuRadioItem value="">All channels</DropdownMenuRadioItem>
+              {channels.map((channel) => (
+                <DropdownMenuRadioItem key={channel} value={channel}>
+                  {channelLabel(channel)}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
             render={
               <Button
                 variant="outline"
@@ -177,6 +203,7 @@ function ApplicationsTable({
               <TableHead className={cn(HEAD, STICKY_HEAD)}>Email</TableHead>
               <TableHead className={cn(HEAD, STICKY_HEAD)}>Phone</TableHead>
               <TableHead className={cn(HEAD, STICKY_HEAD)}>Brand</TableHead>
+              <TableHead className={cn(HEAD, STICKY_HEAD)}>Channel</TableHead>
               <TableHead className={cn(HEAD, STICKY_HEAD, "text-right")}>Amount</TableHead>
               {showResult ? <TableHead className={cn(HEAD, STICKY_HEAD, "pr-4")}>Result</TableHead> : null}
             </TableRow>
@@ -184,8 +211,8 @@ function ApplicationsTable({
           <TableBody>
             {rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={8} className="text-center align-middle text-sm text-muted-foreground">
-                  {query.search || query.brand ? "Nothing matches." : empty}
+                <TableCell colSpan={9} className="text-center align-middle text-sm text-muted-foreground">
+                  {query.search || query.brand || query.channel ? "Nothing matches." : empty}
                 </TableCell>
               </TableRow>
             ) : (
@@ -211,6 +238,7 @@ function ApplicationsTable({
                   <TableCell className="max-w-56 truncate text-sm">{row.email}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap tabular-nums">{row.phone ?? "—"}</TableCell>
                   <TableCell className="text-sm whitespace-nowrap">{row.brand}</TableCell>
+                  <TableCell className="text-sm whitespace-nowrap">{channelLabel(row.channel)}</TableCell>
                   <TableCell className="text-right text-sm tabular-nums">{money(row.amount)}</TableCell>
                   {showResult ? (
                     <TableCell className="pr-4 text-sm whitespace-nowrap">

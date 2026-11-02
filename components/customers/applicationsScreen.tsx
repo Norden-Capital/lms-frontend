@@ -3,7 +3,7 @@ import { ShieldAlert } from "lucide-react"
 
 import { ApplicationsTable } from "@/components/customers/applicationsTable"
 import { PageHeader } from "@/components/layout/pageHeader"
-import { listApplicationBrands, listApplications } from "@/lib/applications"
+import { listApplicationBrands, listApplicationChannels, listApplications } from "@/lib/applications"
 import type { ApplicationsQuery } from "@/lib/applicationTypes"
 
 /** The Leads, Abandoned and Failed pages: the same screen on a different list. */
@@ -24,7 +24,11 @@ async function ApplicationsScreen({
   empty: string
   showResult?: boolean
 }) {
-  const [result, brands] = await Promise.all([listApplications(status, query), listApplicationBrands()])
+  const [result, brands, channels] = await Promise.all([
+    listApplications(status, query),
+    listApplicationBrands(),
+    listApplicationChannels(),
+  ])
 
   if (!result.ok && result.error.status === 403) {
     forbidden()
@@ -40,6 +44,7 @@ async function ApplicationsScreen({
           page={result.data}
           query={query}
           brands={brands.ok ? brands.data : []}
+          channels={channels.ok ? channels.data : []}
           heading={heading}
           empty={empty}
           showResult={showResult}

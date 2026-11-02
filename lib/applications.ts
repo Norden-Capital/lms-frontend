@@ -21,6 +21,7 @@ export async function listApplications(
   const params = new URLSearchParams({ status })
   if (query.search) params.set("search", query.search)
   if (query.brand) params.set("brand", query.brand)
+  if (query.channel) params.set("channel", query.channel)
   // The URL counts pages from 1, as people do; the API from 0.
   params.set("page", String(Math.max(1, Number(query.page) || 1) - 1))
   params.set("size", String(applicationPageSize(query.size)))
@@ -31,6 +32,11 @@ export async function listApplications(
 /** The brands, for the filter. */
 export async function listApplicationBrands(): Promise<ApiResult<BrandOption[]>> {
   return apiFetch<BrandOption[]>("/api/applications/brands", { authenticated: true })
+}
+
+/** The channels, for the filter. */
+export async function listApplicationChannels(): Promise<ApiResult<string[]>> {
+  return apiFetch<string[]>("/api/applications/channels", { authenticated: true })
 }
 
 /** One client, with every time they applied. */

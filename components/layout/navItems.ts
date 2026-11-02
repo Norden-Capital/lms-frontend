@@ -109,7 +109,10 @@ export const navSections: NavSection[] = [
         title: "Configuration",
         href: "/configuration",
         icon: SlidersHorizontal,
-        items: [{ title: "Brands", href: "/configuration/brands" }],
+        items: [
+          { title: "Brands", href: "/configuration/brands" },
+          { title: "Channels", href: "/configuration/channels" },
+        ],
       },
       { title: "System Health", href: "/system-health", icon: HardDrive },
       { title: "Backups", href: "/backups", icon: DatabaseBackup },

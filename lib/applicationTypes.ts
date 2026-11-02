@@ -18,6 +18,8 @@ export type ApplicationRow = {
   language: string
   /** Sent in fake or test mode, so not a real lead. */
   test: boolean
+  /** Where they came from: the link's utm_source, or "seo" with none. */
+  channel: string
   createdAt: string
   updatedAt: string
 }
@@ -76,12 +78,26 @@ export type ApplicationsOverview = {
   leadscout: Record<string, number>
   daily: OverviewDay[]
   brands: OverviewBrand[]
+  funnel: Funnel
+}
+
+/** People at one step each — a refresh or a second try is still one person. */
+export type FunnelSteps = { visitors: number; step1: number; step2: number; step3: number }
+
+export type ChannelCount = FunnelSteps & { channel: string }
+
+export type Funnel = FunnelSteps & { channels: ChannelCount[] }
+
+/** "seo" → "SEO", "email" → "Email". */
+export function channelLabel(channel: string): string {
+  return channel === "seo" ? "SEO" : channel.charAt(0).toUpperCase() + channel.slice(1)
 }
 
 /** What a list's URL can carry. */
 export type ApplicationsQuery = {
   search?: string
   brand?: string
+  channel?: string
   page?: string
   size?: string
 }

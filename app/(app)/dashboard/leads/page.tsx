@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ShieldAlert } from "lucide-react"
 
+import { ChannelFunnel } from "@/components/customers/channelFunnel"
 import { LeadsChart } from "@/components/customers/leadsChart"
 import { OverviewFilters } from "@/components/customers/overviewFilters"
 import { PageHeader } from "@/components/layout/pageHeader"
@@ -68,6 +69,8 @@ function Numbers({ overview }: { overview: ApplicationsOverview }) {
 
   return (
     <>
+      <ChannelFunnel funnel={overview.funnel} />
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Leads" value={overview.leads} hint="Finished step 2 and LeadScout took them." />
         <StatCard label="Abandoned" value={overview.abandoned} hint="Finished step 1, but not step 2." />
