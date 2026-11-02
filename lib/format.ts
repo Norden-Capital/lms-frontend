@@ -76,44 +76,45 @@ export function percent(value: number, digits = 0): string {
 }
 
 /**
- * "20 Aug 2026, 03:00" — a moment, in UTC, spelled out.
- *
- * <p>Fixed to UTC and to `en-GB` rather than the reader's own settings, because
- * this renders on the server as well as in the browser: a component that formats
- * one way in each produces markup the two disagree about, which React reports as
- * a mismatch. Spelling the month out also removes the 05/06 ambiguity a numeric
- * date leaves behind.
- *
- * <p>The zone is named wherever this appears. A server keeping time in UTC and a
- * person reading it in Casablanca are an hour apart, and a bare "03:00" invites
- * everybody to assume it means their own.
+ * Canada's Eastern clock (Toronto) — the time every screen shows since
+ * 2026-11-02, so the numbers match the business day. Summer and winter time are
+ * handled by the calendar. Fixed rather than the reader's own zone, so the
+ * server and the browser write the same thing.
  */
-export function utcStamp(iso: string): string {
-  const date = new Date(iso)
-  const month = date.toLocaleString("en-GB", { month: "short", timeZone: "UTC" })
-  const time = `${String(date.getUTCHours()).padStart(2, "0")}:${String(
-    date.getUTCMinutes()
-  ).padStart(2, "0")}`
+const CANADA = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "America/Toronto",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+})
 
-  return `${date.getUTCDate()} ${month} ${date.getUTCFullYear()}, ${time}`
+function canadaParts(iso: string) {
+  const parts = CANADA.formatToParts(new Date(iso))
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? ""
+  return {
+    date: `${part("day")}/${part("month")}/${part("year")}`,
+    time: `${part("hour")}:${part("minute")}:${part("second")}`,
+  }
 }
 
-/**
- * "26 Oct 2026, 03:00" on Toronto's clock — the backups' time zone since
- * 2026-10-26. Summer and winter time are handled by the browser's calendar.
- */
-export function torontoStamp(iso: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "America/Toronto",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date(iso))
-  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? ""
-  return `${part("day")} ${part("month")} ${part("year")}, ${part("hour")}:${part("minute")}`
+/** "29/08/2026", on Toronto's clock. */
+export function canadaDate(iso: string): string {
+  return canadaParts(iso).date
+}
+
+/** "23:13:53", on Toronto's clock. */
+export function canadaTime(iso: string): string {
+  return canadaParts(iso).time
+}
+
+/** "29/08/2026 23:13:53", on Toronto's clock. */
+export function canadaStamp(iso: string): string {
+  const { date, time } = canadaParts(iso)
+  return `${date} ${time}`
 }
 
 /** Thousands separators, so 1204 does not read as 12:04. */

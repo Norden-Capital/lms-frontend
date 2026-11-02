@@ -2,6 +2,7 @@ import ExcelJS from "exceljs"
 import { NextResponse, type NextRequest } from "next/server"
 
 import { listActionLog } from "@/lib/actionLog"
+import { canadaDate, canadaTime } from "@/lib/format"
 import { actionLabel, type ActionLogEntry, type ActionLogQuery } from "@/lib/actionLogTypes"
 
 /**
@@ -23,7 +24,8 @@ const MAX_PAGES = 200
 type Format = "csv" | "json" | "xlsx"
 
 const COLUMNS: { key: string; header: string; width: number }[] = [
-  { key: "at", header: "When", width: 20 },
+  { key: "date", header: "Date", width: 12 },
+  { key: "time", header: "Time", width: 10 },
   { key: "action", header: "What", width: 24 },
   { key: "actor", header: "Who", width: 40 },
   { key: "target", header: "To whom", width: 40 },
@@ -34,8 +36,10 @@ const COLUMNS: { key: string; header: string; width: number }[] = [
 /** What a cell reads as, for a person in a spreadsheet. */
 function cell(entry: ActionLogEntry, key: string): string {
   switch (key) {
-    case "at":
-      return entry.at.replace("T", " ").slice(0, 19)
+    case "date":
+      return canadaDate(entry.at)
+    case "time":
+      return canadaTime(entry.at)
     case "action":
       return actionLabel(entry.action)
     case "actor":

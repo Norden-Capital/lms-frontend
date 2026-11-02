@@ -19,7 +19,8 @@ const STICKY_HEAD =
   "sticky top-0 z-10 bg-card shadow-[inset_0_-1px_0_var(--border)]"
 
 const COLUMNS = [
-  { label: "When" },
+  { label: "Date" },
+  { label: "Time" },
   { label: "What" },
   { label: "Who" },
   { label: "To whom" },

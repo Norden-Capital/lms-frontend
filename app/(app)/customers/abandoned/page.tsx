@@ -1,16 +1,26 @@
 import type { Metadata } from "next"
-import { UserX } from "lucide-react"
 
-import { ComingSoon } from "@/components/layout/comingSoon"
+import { ApplicationsScreen } from "@/components/customers/applicationsScreen"
+import type { ApplicationsQuery } from "@/lib/applicationTypes"
 import { requireUser } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Abandoned",
 }
 
-/** Not built yet — a "coming soon" page until it is. */
-export default async function AbandonedPage() {
+/** People who finished step 1 but not step 2. Someone who later became a lead leaves this list. */
+export default async function AbandonedPage({ searchParams }: { searchParams: Promise<ApplicationsQuery> }) {
   await requireUser()
 
-  return <ComingSoon icon={UserX} title="Abandoned" description="People who started and did not finish." />
+  return (
+    <ApplicationsScreen
+      status="ABANDONED"
+      query={await searchParams}
+      title="Abandoned"
+      description="People who finished step 1 but not step 2."
+      heading="All abandoned"
+      empty="Nobody has abandoned the form."
+      showResult={false}
+    />
+  )
 }

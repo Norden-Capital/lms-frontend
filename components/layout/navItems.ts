@@ -70,18 +70,18 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    title: "Customers",
+    title: "Leads",
     items: [
-      // Three lists — decided 2026-10-26: people who asked, people who
-      // started and stopped, people who signed. Coming soon for now.
+      // People who asked, people who started and stopped, and sends that failed.
+      // The Customers entry was dropped 2026-11-01, until people can sign.
       {
-        title: "Customer List",
+        title: "Leads List",
         href: "/customers",
         icon: Users,
         items: [
           { title: "Leads", href: "/customers/leads" },
           { title: "Abandoned", href: "/customers/abandoned" },
-          { title: "Customers", href: "/customers/list" },
+          { title: "Failed", href: "/customers/failed" },
         ],
       },
     ],
@@ -145,7 +145,7 @@ export const settingsSection: NavSection = {
 
 /**
  * Longest-prefix match, so a nested route like /customers/42 still lights up
- * Customer List. Exact-only would leave the sidebar with nothing active there.
+ * Leads List. Exact-only would leave the sidebar with nothing active there.
  */
 export function isNavItemActive(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(`${href}/`)

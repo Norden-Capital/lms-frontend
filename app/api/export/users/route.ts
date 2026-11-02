@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs"
 import { NextResponse, type NextRequest } from "next/server"
 
+import { canadaDate } from "@/lib/format"
 import { listUsers, type UserQuery } from "@/lib/users"
 import type { UserRow } from "@/lib/userTypes"
 
@@ -55,7 +56,7 @@ const COLUMNS: { key: keyof UserRow | "name"; header: string; width: number }[] 
 function cell(user: UserRow, key: (typeof COLUMNS)[number]["key"]): string | number {
   if (key === "name") return `${user.firstName} ${user.lastName}`
   if (key === "mfaEnabled") return user.mfaEnabled ? "On" : "Off"
-  if (key === "createdAt") return user.createdAt ? user.createdAt.slice(0, 10) : ""
+  if (key === "createdAt") return user.createdAt ? canadaDate(user.createdAt) : ""
 
   const value = user[key as keyof UserRow]
   return value === null || value === undefined ? "" : String(value)

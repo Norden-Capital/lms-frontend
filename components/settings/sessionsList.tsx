@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { TablePagination } from "@/components/ui/tablePagination"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { torontoStamp } from "@/lib/format"
+import { canadaDate, canadaStamp, canadaTime } from "@/lib/format"
 import type { MySession } from "@/lib/me"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { deviceName, isMobile } from "@/lib/userAgent"
@@ -32,11 +32,12 @@ const COLUMNS: { key: SortKey; label: string; className?: string }[] = [
   { key: "ip", label: "Address" },
   { key: "seen", label: "Last used" },
   { key: "at", label: "Signed in" },
+  { key: "at", label: "Time" },
 ]
 
 /** "Active now" within five minutes, else when it was last used. */
 function lastUsed(iso: string) {
-  return Date.now() - new Date(iso).getTime() < 5 * 60_000 ? "Active now" : torontoStamp(iso)
+  return Date.now() - new Date(iso).getTime() < 5 * 60_000 ? "Active now" : canadaStamp(iso)
 }
 
 function SessionsList({ sessions }: { sessions: MySession[] }) {
@@ -93,7 +94,7 @@ function SessionsList({ sessions }: { sessions: MySession[] }) {
               const Icon = !active ? ChevronsUpDown : sort.desc ? ChevronDown : ChevronUp
               return (
                 <TableHead
-                  key={key}
+                  key={label}
                   className={cn(HEAD, STICKY_HEAD, className)}
                   aria-sort={active ? (sort.desc ? "descending" : "ascending") : "none"}
                 >
@@ -138,7 +139,10 @@ function SessionsList({ sessions }: { sessions: MySession[] }) {
                   {lastUsed(session.lastSeenAt)}
                 </TableCell>
                 <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-                  {torontoStamp(session.createdAt)}
+                  {canadaDate(session.createdAt)}
+                </TableCell>
+                <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                  {canadaTime(session.createdAt)}
                 </TableCell>
                 <TableCell className="w-10 pr-4 text-right">
                   {!session.current && (

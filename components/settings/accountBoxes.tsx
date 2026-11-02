@@ -14,27 +14,12 @@ import { IDLE, type ActionState } from "@/lib/actionState"
 import type { SessionUser } from "@/lib/auth"
 import { OWNER, roleLabel } from "@/lib/roles"
 import { STATUS_TEXT } from "@/lib/userStatusText"
+import { canadaDate, canadaStamp } from "@/lib/format"
 
 /**
  * The two boxes under the sign-in year on My dashboard — decided 2026-10-26.
  * The bigger one holds what you can change; the smaller one what you cannot.
  */
-
-const DAY = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "America/Toronto",
-})
-const DAY_TIME = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-  timeZone: "America/Toronto",
-})
 
 /**
  * Your name and phone. Plain text until you press Edit — decided 2026-10-26 —
@@ -186,11 +171,11 @@ function AccountFacts({ user }: { user: SessionUser }) {
         <span className={user.mfaEnabled ? "text-success" : "text-warning"}>{user.mfaEnabled ? "On" : "Off"}</span>
       ),
     },
-    { label: "Created", hint: "When your account was made.", value: user.createdAt ? DAY.format(new Date(user.createdAt)) : "—" },
+    { label: "Created", hint: "When your account was made.", value: user.createdAt ? canadaDate(user.createdAt) : "—" },
     {
       label: "Last sign-in",
       hint: "Toronto time.",
-      value: user.lastLoginAt ? DAY_TIME.format(new Date(user.lastLoginAt)) : "Never",
+      value: user.lastLoginAt ? canadaStamp(user.lastLoginAt) : "Never",
     },
   ]
 

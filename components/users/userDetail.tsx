@@ -34,6 +34,7 @@ import type { ActionLogEntry, SignInDay } from "@/lib/actionLogTypes"
 import type { UserDetail as UserAccount } from "@/lib/userTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
+import { canadaDate, canadaStamp } from "@/lib/format"
 
 /**
  * One account, in full.
@@ -60,26 +61,14 @@ import { cn } from "@/lib/utils"
  * produces markup the browser then disagrees with. Spelling the month out also
  * removes the 05/06 ambiguity that a numeric format leaves behind.
  */
-const DAY = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-})
 
-const DAY_TIME = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-})
 
 function formatDay(value: string | null) {
-  return value ? DAY.format(new Date(value)) : null
+  return value ? canadaDate(value) : null
 }
 
 function formatDayTime(value: string | null) {
-  return value ? DAY_TIME.format(new Date(value)) : null
+  return value ? canadaStamp(value) : null
 }
 
 /**

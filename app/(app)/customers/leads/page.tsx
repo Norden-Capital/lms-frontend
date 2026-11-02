@@ -1,16 +1,25 @@
 import type { Metadata } from "next"
-import { UserPlus } from "lucide-react"
 
-import { ComingSoon } from "@/components/layout/comingSoon"
+import { ApplicationsScreen } from "@/components/customers/applicationsScreen"
+import type { ApplicationsQuery } from "@/lib/applicationTypes"
 import { requireUser } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Leads",
 }
 
-/** Not built yet — a "coming soon" page until it is. */
-export default async function LeadsPage() {
+/** People who finished step 2 and were taken by LeadScout. */
+export default async function LeadsPage({ searchParams }: { searchParams: Promise<ApplicationsQuery> }) {
   await requireUser()
 
-  return <ComingSoon icon={UserPlus} title="Leads" description="People who showed interest." />
+  return (
+    <ApplicationsScreen
+      status="LEAD"
+      query={await searchParams}
+      title="Leads"
+      description="People who finished the form and were sent to LeadScout."
+      heading="All leads"
+      empty="No leads yet."
+    />
+  )
 }

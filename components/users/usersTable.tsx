@@ -69,6 +69,7 @@ import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
 import { OWNER, roleLabel } from "@/lib/roles"
 import { useAccess } from "@/components/access/accessProvider"
+import { canadaDate } from "@/lib/format"
 
 type SortKey =
   | "id"
@@ -88,11 +89,6 @@ type SortKey =
  * in each produces markup the two disagree about. Spelling the month out also
  * removes the 05/06 ambiguity a numeric date leaves behind.
  */
-const JOINED = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-})
 
 /**
  * Centred columns are the ones holding a token rather than prose: an identifier
@@ -726,7 +722,7 @@ function UsersTable({
                     </TableCell>
 
                     <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-                      {user.createdAt ? JOINED.format(new Date(user.createdAt)) : "—"}
+                      {user.createdAt ? canadaDate(user.createdAt) : "—"}
                     </TableCell>
 
                     <TableCell className="pr-4 text-right">

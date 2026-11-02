@@ -52,6 +52,7 @@ import {
 import { TablePagination } from "@/components/ui/tablePagination"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
+import { canadaDate, canadaTime } from "@/lib/format"
 
 /** Column headings: the users table's letter-spaced mono. */
 const HEAD =
@@ -63,7 +64,8 @@ const STICKY_HEAD =
 
 /** The columns, and what each sorts by — the backend's names. */
 const COLUMNS: { key: string; label: string; className?: string }[] = [
-  { key: "at", label: "When" },
+  { key: "at", label: "Date" },
+  { key: "at", label: "Time" },
   { key: "action", label: "What" },
   { key: "actor", label: "Who" },
   { key: "target", label: "To whom" },
@@ -78,13 +80,6 @@ const TONE: Record<string, string> = {
   bad: "bg-destructive",
 }
 
-const WHEN = new Intl.DateTimeFormat("en-GB", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-})
 
 /**
  * The action log as a table, built like the users table — decided 2026-10-19:
@@ -288,7 +283,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
                 const Icon = !active ? ChevronsUpDown : sortDir === "desc" ? ChevronDown : ChevronUp
                 return (
                   <TableHead
-                    key={key}
+                    key={label}
                     className={cn(HEAD, STICKY_HEAD, className)}
                     aria-sort={active ? (sortDir === "desc" ? "descending" : "ascending") : "none"}
                   >
@@ -312,7 +307,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
           <TableBody>
             {rows.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={7} className="text-center align-middle text-sm text-muted-foreground">
+                <TableCell colSpan={8} className="text-center align-middle text-sm text-muted-foreground">
                   {query.search
                     ? `Nothing matches "${query.search}".`
                     : "Nothing has happened yet."}
@@ -329,7 +324,10 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
                     />
                   </TableCell>
                   <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-                    {WHEN.format(new Date(entry.at))}
+                    {canadaDate(entry.at)}
+                  </TableCell>
+                  <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                    {canadaTime(entry.at)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <span className="flex items-center gap-2 text-sm">

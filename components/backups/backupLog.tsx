@@ -32,7 +32,7 @@ import {
   type BackupQuery,
   type BackupSortKey,
 } from "@/lib/backupTypes"
-import { bytes, duration, torontoStamp } from "@/lib/format"
+import { bytes, canadaDate, canadaTime, duration } from "@/lib/format"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
 
@@ -82,30 +82,31 @@ const COLUMNS: {
 }[] = [
   {
     key: "startedAt",
-    label: "Created at",
+    label: "Date",
     align: "left",
-    width: "24%",
+    width: "15%",
     className: "pl-4",
   },
-  { key: "outcome", label: "Status", align: "left", width: "18%", className: "px-3" },
+  { key: "startedAt", label: "Time", align: "left", width: "12%", className: "px-3" },
+  { key: "outcome", label: "Status", align: "left", width: "17%", className: "px-3" },
   {
     key: "sizeBytes",
     label: "Size",
     align: "right",
-    width: "18%",
+    width: "16%",
     className: "px-3",
   },
   {
     key: "durationSeconds",
     label: "Duration",
     align: "right",
-    width: "19%",
+    width: "18%",
     className: "px-3",
   },
 ]
 
 /** Actions has no heading to sort by, so it carries its share here. */
-const ACTIONS_WIDTH = "21%"
+const ACTIONS_WIDTH = "22%"
 
 /**
  * ⚠️ <b>The columns are declared, not measured — and they have to be.</b>
@@ -309,7 +310,7 @@ function BackupLog({
 
                   return (
                     <th
-                      key={key}
+                      key={label}
                       className={cn(
                         HEAD,
                         align === "right" ? "text-right" : "text-left",
@@ -380,10 +381,16 @@ function BackupLog({
                     >
                       <td className="py-2.5 pl-4 whitespace-nowrap">
                         <span className="font-mono text-xs">
-                          {torontoStamp(run.startedAt)}
+                          {canadaDate(run.startedAt)}
                         </span>
                         <span className="block text-[0.7rem] text-muted-foreground">
                           ({duration(ago)} ago)
+                        </span>
+                      </td>
+
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <span className="font-mono text-xs">
+                          {canadaTime(run.startedAt)}
                         </span>
                       </td>
 
@@ -458,9 +465,9 @@ function BackupLog({
                         width to be a sentence. */}
                     {run.error && (
                       <tr className="border-b last:border-b-0">
-                        <td />
+                        <td colSpan={2} />
                         <td
-                          colSpan={COLUMNS.length}
+                          colSpan={COLUMNS.length - 1}
                           className="px-3 pb-2.5 text-[0.7rem] text-muted-foreground"
                         >
                           {run.error}

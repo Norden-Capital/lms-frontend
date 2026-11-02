@@ -16,6 +16,7 @@ import { TablePagination } from "@/components/ui/tablePagination"
 import { ACTION_TYPES, actionLabel, type ActionLogEntry } from "@/lib/actionLogTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import { cn } from "@/lib/utils"
+import { canadaDate, canadaTime } from "@/lib/format"
 
 /**
  * A person's activity on Users — decided 2026-10-26: the action log's table,
@@ -33,13 +34,6 @@ const TONE: Record<string, string> = {
   bad: "bg-destructive",
 }
 
-const WHEN = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-})
 
 const PAGE_SIZE = 10
 
@@ -66,7 +60,8 @@ function nameOf(label: string) {
 }
 
 const COLUMNS: { key: SortKey; label: string; className?: string }[] = [
-  { key: "at", label: "When", className: "pl-4" },
+  { key: "at", label: "Date", className: "pl-4" },
+  { key: "at", label: "Time" },
   { key: "action", label: "What" },
   { key: "with", label: "With whom", className: "pr-4" },
 ]
@@ -117,7 +112,7 @@ function UserActivityTable({ entries, userId }: { entries: ActionLogEntry[]; use
               const Icon = !active ? ChevronsUpDown : sort.desc ? ChevronDown : ChevronUp
               return (
                 <TableHead
-                  key={key}
+                  key={label}
                   className={cn(HEAD, STICKY_HEAD, className)}
                   aria-sort={active ? (sort.desc ? "descending" : "ascending") : "none"}
                 >
@@ -141,7 +136,10 @@ function UserActivityTable({ entries, userId }: { entries: ActionLogEntry[]; use
           {shown.map(({ entry, other }) => (
             <TableRow key={entry.id}>
               <TableCell className="pl-4 text-xs whitespace-nowrap text-muted-foreground tabular-nums">
-                {WHEN.format(new Date(entry.at))}
+                {canadaDate(entry.at)}
+              </TableCell>
+              <TableCell className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                {canadaTime(entry.at)}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <span className="flex items-center gap-2 text-sm">

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 /**
  * The action log's grey rows — decided 2026-10-20. The height of real lines:
- * a tick box, when, what, who, to whom, details, address. Used by the page's
+ * a tick box, date, time, what, who, to whom, details, address. Used by the page's
  * first load and laid over the rows while a search, sort or page loads.
  */
 function ActionLogRowsSkeleton({ rows = 10 }: { rows?: number }) {
@@ -11,7 +11,8 @@ function ActionLogRowsSkeleton({ rows = 10 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, index) => (
         <div key={index} className="flex h-12 items-center gap-6 border-b pr-4 pl-4">
           <Skeleton className="size-4 shrink-0 rounded-[4px]" />
-          <Skeleton className="h-3 w-32 shrink-0" />
+          <Skeleton className="h-3 w-20 shrink-0" />
+          <Skeleton className="h-3 w-14 shrink-0" />
           <span className="flex w-36 shrink-0 items-center gap-2">
             <Skeleton className="size-1.5 shrink-0 rounded-full" />
             <Skeleton className="h-3.5 w-28" />

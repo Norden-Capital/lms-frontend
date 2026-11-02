@@ -40,7 +40,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { bytes, utcStamp } from "@/lib/format"
+import { bytes, canadaStamp } from "@/lib/format"
 import { initialsOf } from "@/lib/initials"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
 import type {
@@ -470,7 +470,7 @@ function MailDisplay({
         {/* The time, and under it the brand and labels — decided 2026-10-20. */}
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <p className="font-mono text-xs whitespace-nowrap text-muted-foreground">
-            {utcStamp(message.receivedAt)} UTC
+            {canadaStamp(message.receivedAt)}
           </p>
           <BrandLabels
             labels={message.labels}

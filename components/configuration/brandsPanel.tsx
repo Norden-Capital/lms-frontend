@@ -32,7 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { Brand } from "@/lib/brands"
-import { utcStamp } from "@/lib/format"
+import { canadaDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /**
@@ -361,7 +361,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
           onSave={(id) => setBrandGa4(brand.id, id)}
         />
       </td>
-      <td className="py-2.5 font-mono text-xs text-muted-foreground">{utcStamp(brand.createdAt)}</td>
+      <td className="py-2.5 font-mono text-xs text-muted-foreground">{canadaDate(brand.createdAt)}</td>
       <td className="py-2.5">
         <Tooltip>
           <TooltipTrigger render={<span className="inline-flex" />}>
