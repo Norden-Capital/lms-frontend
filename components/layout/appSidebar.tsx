@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -55,18 +55,22 @@ const ROW =
 const ROW_ACTIVE = "bg-white font-medium text-foreground shadow-sm"
 const ROW_IDLE = "text-muted-foreground hover:text-foreground"
 
-/** Which sidebar menus are open, kept in this browser only. */
-const GROUPS_KEY = "sidebar-menus"
-
 function AppSidebar({
   open,
+  widthClassName,
   onToggle,
+  onNavigate,
   identity,
   isAdmin = false,
   isOwner = false,
 }: {
+  /** Open on this screen: decides whether its contents can be reached. */
   open: boolean
+  /** Its width, set by the shell per screen size. */
+  widthClassName: string
   onToggle: () => void
+  /** A menu link was clicked: on a phone, the shell closes the sidebar. */
+  onNavigate?: () => void
   /** The identity card, rendered on the server and handed down by the layout. */
   identity?: React.ReactNode
   /** Decides whether the admin-only sections are drawn at all. */
@@ -76,33 +80,20 @@ function AppSidebar({
 }) {
   const pathname = usePathname()
 
-  // Which menus (Overview, Configuration…) are open — decided 2026-10-26,
-  // remembered in this browser so they stay as you left them.
-  const [groups, setGroups] = useState<Record<string, boolean>>({})
-
-  useEffect(() => {
-    // Read after the first paint: the server cannot see this browser's storage.
-    const timer = window.setTimeout(() => {
-      try {
-        const saved = window.localStorage.getItem(GROUPS_KEY)
-        if (saved) setGroups(JSON.parse(saved) as Record<string, boolean>)
-      } catch {
-        // Storage blocked or a bad value: menus open as the page decides.
-      }
-    }, 0)
-    return () => window.clearTimeout(timer)
-  }, [])
+  // Which menus (Overview, Configuration…) are open — changed 2026-11-04:
+  // only the one holding the page on screen opens. You can still open or
+  // close one by hand; that lasts until you go to another page.
+  const [manual, setManual] = useState<{ path: string; groups: Record<string, boolean> }>({
+    path: pathname,
+    groups: {},
+  })
+  const groups = manual.path === pathname ? manual.groups : {}
 
   function toggleGroup(href: string, next: boolean) {
-    setGroups((current) => {
-      const updated = { ...current, [href]: next }
-      try {
-        window.localStorage.setItem(GROUPS_KEY, JSON.stringify(updated))
-      } catch {
-        // Storage blocked: not remembered.
-      }
-      return updated
-    })
+    setManual((current) => ({
+      path: pathname,
+      groups: { ...(current.path === pathname ? current.groups : {}), [href]: next },
+    }))
   }
 
   // Filtered rather than dimmed or disabled. A greyed-out menu item invites
@@ -134,9 +125,8 @@ function AppSidebar({
     }
 
     return (
-      // Open when you left it open (remembered in this browser),
-      // else when a child page is the one on screen — so landing on
-      // one never shows a closed parent with nothing selected.
+      // Open when a child page is the one on screen, unless you
+      // opened or closed it by hand on this page.
       <Collapsible
         key={item.href}
         open={groups[item.href] ?? active}
@@ -199,6 +189,9 @@ function AppSidebar({
   return (
     <aside
       inert={!open}
+      onClickCapture={(event) => {
+        if ((event.target as HTMLElement).closest("a")) onNavigate?.()
+      }}
       className={cn(
         // sticky + h-svh + self-start pins it to the viewport instead of
         // scrolling with the page. self-start matters: without it the flex
@@ -207,7 +200,9 @@ function AppSidebar({
         // bg-sidebar, not the literal it used to be. The filter panel now wants
         // the same surface, and two copies of a hex is one of them going stale.
         "sticky top-0 h-svh shrink-0 self-start overflow-hidden bg-sidebar transition-[width] duration-300 ease-in-out motion-reduce:transition-none",
-        open ? "w-70 border-r border-[#E8E8E5]" : "w-0"
+        // On a phone it lies over the page instead of pushing it aside.
+        "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-xl",
+        widthClassName
       )}
     >
       {/* Fixed width so the contents are clipped rather than reflowed as the

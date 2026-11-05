@@ -1,4 +1,7 @@
+"use client"
+
 import { Panel } from "@/components/system/panel"
+import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { bytes, count } from "@/lib/format"
 import type { SystemHealth } from "@/lib/systemTypes"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
@@ -20,7 +23,24 @@ import { cn } from "@/lib/utils"
  * responsible.
  */
 
+type DatabaseTable = SystemHealth["database"]["tables"][number]
+
+const SORT = {
+  name: (table: DatabaseTable) => table.name,
+  rows: (table: DatabaseTable) => table.rows,
+  bytes: (table: DatabaseTable) => table.bytes,
+}
+
+const COLUMNS: { key: keyof typeof SORT; label: string; className: string }[] = [
+  { key: "name", label: "Table", className: "pl-4 text-left" },
+  { key: "rows", label: "Rows", className: "px-3 text-right" },
+  { key: "bytes", label: "Size", className: "pr-4 text-right" },
+]
+
 function TablesCard({ tables }: { tables: SystemHealth["database"]["tables"] }) {
+  // Biggest first, as the server sends them, until a heading is clicked.
+  const { sorted, head } = useSort(tables, SORT)
+
   return (
     <Panel
       title="Tables"
@@ -61,20 +81,26 @@ function TablesCard({ tables }: { tables: SystemHealth["database"]["tables"] }) 
         <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b">
-              <th className="py-2 pl-4 text-left font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase">
-                Table
-              </th>
-              <th className="px-3 py-2 text-right font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase">
-                Rows
-              </th>
-              <th className="py-2 pr-4 text-right font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase">
-                Size
-              </th>
+              {COLUMNS.map(({ key, label, className }) => {
+                const props = head(key)
+                return (
+                  <th
+                    key={key}
+                    className={cn(
+                      "py-2 font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase",
+                      className
+                    )}
+                    aria-sort={ariaSort(props.active, props.desc)}
+                  >
+                    <SortButton label={label} {...props} />
+                  </th>
+                )
+              })}
             </tr>
           </thead>
 
           <tbody>
-            {tables.map((table) => (
+            {sorted.map((table) => (
               <tr key={table.name} className="border-b last:border-b-0">
                 <td className="py-2 pl-4">
                   <span className="font-mono text-xs">{table.name}</span>

@@ -40,7 +40,7 @@ export default function BrandsLoading() {
               <th className={`${HEAD} pl-4`}>Brand</th>
               <th className={HEAD}>Email address</th>
               <th className={HEAD}>Website</th>
-              <th className={HEAD}>Replies</th>
+              <th className={HEAD}>Applies</th>
               <th className={HEAD}>Added</th>
               <th className={HEAD}>Active</th>
               <th className={`${HEAD} pr-4 text-right`}>Actions</th>

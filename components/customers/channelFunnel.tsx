@@ -1,35 +1,9 @@
+import { ChannelFunnelTable, share } from "@/components/customers/channelFunnelTable"
 import { StatCard } from "@/components/stats/statCard"
-import { channelLabel, type Funnel, type FunnelSteps } from "@/lib/applicationTypes"
+import type { Funnel } from "@/lib/applicationTypes"
 import { count } from "@/lib/format"
 
 const HEAD = "px-3 py-2 font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase"
-
-/** "95.3%" of step 1, or nothing to divide by. */
-function share(part: number, whole: number) {
-  return whole === 0 ? "—" : `${((part / whole) * 100).toFixed(1)}%`
-}
-
-/** One number with its share of step 1 under it. */
-function Cell({ value, of, strong }: { value: number; of?: number; strong?: boolean }) {
-  return (
-    <td className="px-4 py-2 text-right">
-      <span className={strong ? "font-semibold" : "font-medium"}>{count(value)}</span>
-      {of === undefined ? null : <span className="ml-1.5 text-xs text-muted-foreground">({share(value, of)})</span>}
-    </td>
-  )
-}
-
-function Line({ name, steps, total }: { name: string; steps: FunnelSteps; total?: boolean }) {
-  return (
-    <tr className={total ? "border-t bg-muted/50" : "border-t"}>
-      <td className={total ? "px-4 py-2 font-semibold" : "px-4 py-2"}>{name}</td>
-      <Cell value={steps.visitors} strong={total} />
-      <Cell value={steps.step1} of={steps.step1} strong={total} />
-      <Cell value={steps.step2} of={steps.step1} strong={total} />
-      <Cell value={steps.step3} of={steps.step1} strong={total} />
-    </tr>
-  )
-}
 
 /**
  * The apply form's funnel, all channels and per channel — decided 2026-11-02.
@@ -71,23 +45,7 @@ function ChannelFunnel({ funnel }: { funnel: Funnel }) {
           By channel
         </h2>
         <div className="overflow-auto rounded-md border bg-card">
-          <table className="w-full text-sm tabular-nums">
-            <thead className="text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-medium">Source</th>
-                <th className="px-4 py-2 text-right font-medium">Visitors</th>
-                <th className="px-4 py-2 text-right font-medium">Step 1</th>
-                <th className="px-4 py-2 text-right font-medium">Step 2</th>
-                <th className="px-4 py-2 text-right font-medium">Step 3</th>
-              </tr>
-            </thead>
-            <tbody>
-              {funnel.channels.map((line) => (
-                <Line key={line.channel} name={channelLabel(line.channel)} steps={line} />
-              ))}
-              <Line name="Total" steps={funnel} total />
-            </tbody>
-          </table>
+          <ChannelFunnelTable funnel={funnel} />
         </div>
         <p className="px-3 py-1.5 text-[0.7rem] text-muted-foreground">
           No tag means SEO. A person who came from two channels counts in both, but once in Total.

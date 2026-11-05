@@ -38,6 +38,25 @@ function resultLabel(status: string | null): string {
   return RESULT[status] ?? status
 }
 
+const RESULT_LOOK: Record<string, { icon: typeof CircleCheck; tone: string }> = {
+  SOLD: { icon: CircleCheck, tone: "text-success" },
+  CPF: { icon: CircleCheck, tone: "text-success" },
+  NOT_SOLD: { icon: CircleMinus, tone: "text-muted-foreground" },
+  EXISTS: { icon: CircleDot, tone: "text-warning" },
+  ERROR: { icon: CircleX, tone: "text-destructive" },
+}
+
+/** LeadScout's answer as a pill, in the same style as the status. */
+function ResultPill({ status }: { status: string | null }) {
+  const { icon: Icon, tone } = (status && RESULT_LOOK[status]) || { icon: CircleDot, tone: "text-muted-foreground" }
+  return (
+    <span className={cn(PILL, tone)}>
+      <Icon className="size-3" aria-hidden />
+      {resultLabel(status)}
+    </span>
+  )
+}
+
 function TestPill() {
   return (
     <span className={cn(PILL, "text-warning")} title="Not a real lead">
@@ -47,4 +66,4 @@ function TestPill() {
   )
 }
 
-export { StatusPill, TestPill, resultLabel }
+export { ResultPill, StatusPill, TestPill, resultLabel }

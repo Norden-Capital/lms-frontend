@@ -22,6 +22,7 @@ export async function listApplications(
   if (query.search) params.set("search", query.search)
   if (query.brand) params.set("brand", query.brand)
   if (query.channel) params.set("channel", query.channel)
+  if (query.sort) params.set("sort", query.sort)
   // The URL counts pages from 1, as people do; the API from 0.
   params.set("page", String(Math.max(1, Number(query.page) || 1) - 1))
   params.set("size", String(applicationPageSize(query.size)))

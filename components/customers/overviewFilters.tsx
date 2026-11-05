@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { useTransition } from "react"
 import { ChevronDown } from "lucide-react"
 
+import { BrandLogo, SMALL_LOGO } from "@/components/ui/brandLogo"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -13,15 +14,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
-import { OVERVIEW_PERIODS, overviewDays, type BrandOption, type OverviewQuery } from "@/lib/applicationTypes"
+import {
+  OVERVIEW_PERIODS,
+  brandLabel,
+  overviewDays,
+  sharedSites,
+  type BrandOption,
+  type OverviewQuery,
+} from "@/lib/applicationTypes"
 
 /** One row above the numbers: period, brand, test data. All of it lives in the address. */
 function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: BrandOption[] }) {
+  const shared = sharedSites(brands)
   const router = useRouter()
   const pathname = usePathname()
   const [, startLoading] = useTransition()
   const days = overviewDays(query.days)
-  const brandName = brands.find((brand) => brand.id === query.brand)?.name
+  const picked = brands.find((brand) => brand.id === query.brand)
+  const brandName = picked ? brandLabel(picked, shared) : undefined
 
   function go(next: OverviewQuery) {
     const params = new URLSearchParams()
@@ -50,10 +60,11 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
 
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="outline" className="rounded-md bg-card font-normal" />}>
+          {picked ? <BrandLogo name={picked.name} logoUrl={picked.logoUrl} className={SMALL_LOGO} /> : null}
           {brandName ?? "All brands"}
           <ChevronDown data-icon="inline-end" className="opacity-60" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-40">
+        <DropdownMenuContent align="end" className="w-max max-w-72 min-w-(--anchor-width)">
           <DropdownMenuRadioGroup
             value={query.brand ?? ""}
             onValueChange={(value) => go({ ...query, brand: value || undefined })}
@@ -61,7 +72,9 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
             <DropdownMenuRadioItem value="">All brands</DropdownMenuRadioItem>
             {brands.map((brand) => (
               <DropdownMenuRadioItem key={brand.id} value={brand.id}>
-                {brand.name}
+                {/* The brand's logo beside its name. */}
+                <BrandLogo name={brand.name} logoUrl={brand.logoUrl} className={SMALL_LOGO} />
+                <span className="truncate">{brandLabel(brand, shared)}</span>
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>

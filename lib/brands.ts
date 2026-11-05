@@ -17,8 +17,8 @@ export type Brand = {
   /** Switched off: out of the inbox's filter and From list, but kept. */
   active: boolean
   createdAt: string
-  /** This year's replies sent from it, Q1 to Q4 — Reply and Reply all only. */
-  replies: number[]
+  /** This year's forms sent in full through it, Q1 to Q4 — real ones only. */
+  applies: number[]
   /** Its Google Analytics property, digits only — for the SEO Overview. */
   ga4PropertyId: string | null
 }

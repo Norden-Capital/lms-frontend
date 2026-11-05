@@ -10,7 +10,7 @@ import {
 
 /**
  * A small line of this year's four quarters, with the total beside it —
- * oneBase's chart, decided 2026-10-20 for the Replies column on Brands.
+ * oneBase's chart, decided 2026-10-20 for the Applies column on Brands.
  * Hovering a point shows its quarter and value.
  */
 

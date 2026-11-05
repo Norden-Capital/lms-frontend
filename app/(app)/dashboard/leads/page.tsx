@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { ShieldAlert } from "lucide-react"
 
+import { BrandCountsTable } from "@/components/customers/brandCountsTable"
 import { ChannelFunnel } from "@/components/customers/channelFunnel"
 import { LeadsChart } from "@/components/customers/leadsChart"
 import { OverviewFilters } from "@/components/customers/overviewFilters"
@@ -93,34 +94,7 @@ function Numbers({ overview }: { overview: ApplicationsOverview }) {
             By brand
           </h2>
           <div className="overflow-auto rounded-md border bg-card">
-            <table className="w-full text-sm tabular-nums">
-              <thead className="text-left text-xs text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Brand</th>
-                  <th className="px-4 py-2 text-right font-medium">Leads</th>
-                  <th className="px-4 py-2 text-right font-medium">Abandoned</th>
-                  <th className="px-4 py-2 text-right font-medium">Failed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overview.brands.length === 0 ? (
-                  <tr className="border-t">
-                    <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
-                      No brands yet.
-                    </td>
-                  </tr>
-                ) : (
-                  overview.brands.map((brand) => (
-                    <tr key={brand.id} className="border-t">
-                      <td className="px-4 py-2">{brand.name}</td>
-                      <td className="px-4 py-2 text-right">{brand.leads}</td>
-                      <td className="px-4 py-2 text-right">{brand.abandoned}</td>
-                      <td className="px-4 py-2 text-right">{brand.failed}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            <BrandCountsTable brands={overview.brands} />
           </div>
         </section>
 

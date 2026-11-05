@@ -23,8 +23,10 @@ import {
   AlertDialogContent,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog"
+import { BrandLogo } from "@/components/ui/brandLogo"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Switch } from "@/components/ui/switch"
 import {
   Tooltip,
@@ -48,8 +50,29 @@ const HEAD =
 const ROW_BUTTON =
   "rounded-sm p-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
 
+const SORT = {
+  name: (brand: Brand) => brand.name,
+  email: (brand: Brand) => brand.email,
+  domain: (brand: Brand) => brand.domain,
+  applies: (brand: Brand) => brand.applies.reduce((sum, quarter) => sum + quarter, 0),
+  ga4: (brand: Brand) => brand.ga4PropertyId,
+  createdAt: (brand: Brand) => brand.createdAt,
+  active: (brand: Brand) => (brand.active ? 0 : 1),
+}
+
+const COLUMNS: { key: keyof typeof SORT; label: string; className?: string }[] = [
+  { key: "name", label: "Brand", className: "pl-4" },
+  { key: "email", label: "Email address" },
+  { key: "domain", label: "Website" },
+  { key: "applies", label: "Applies" },
+  { key: "ga4", label: "Google Analytics" },
+  { key: "createdAt", label: "Added" },
+  { key: "active", label: "Active" },
+]
+
 function BrandsPanel({ brands }: { brands: Brand[] }) {
   const [removing, setRemoving] = useState<Brand | null>(null)
+  const { sorted, head } = useSort(brands, SORT)
 
   return (
     <Panel
@@ -71,18 +94,19 @@ function BrandsPanel({ brands }: { brands: Brand[] }) {
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b">
-              <th className={`${HEAD} pl-4`}>Brand</th>
-              <th className={HEAD}>Email address</th>
-              <th className={HEAD}>Website</th>
-              <th className={HEAD}>Replies</th>
-              <th className={HEAD}>Google Analytics</th>
-              <th className={HEAD}>Added</th>
-              <th className={HEAD}>Active</th>
+              {COLUMNS.map(({ key, label, className }) => {
+                const props = head(key)
+                return (
+                  <th key={key} className={cn(HEAD, className)} aria-sort={ariaSort(props.active, props.desc)}>
+                    <SortButton label={label} {...props} />
+                  </th>
+                )
+              })}
               <th className={`${HEAD} pr-4 text-right`}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {brands.map((brand) => (
+            {sorted.map((brand) => (
               <BrandRow key={brand.id} brand={brand} onRemove={() => setRemoving(brand)} />
             ))}
           </tbody>
@@ -148,31 +172,6 @@ function AddBrand() {
         <TooltipContent>{pending ? "Adding…" : "Add brand"}</TooltipContent>
       </Tooltip>
     </form>
-  )
-}
-
-/** The logo the site declared, or its initial when there is none or it fails to load. */
-function BrandLogo({ brand }: { brand: Brand }) {
-  const [broken, setBroken] = useState(false)
-
-  if (!brand.logoUrl || broken) {
-    return (
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium">
-        {brand.name.charAt(0).toUpperCase()}
-      </span>
-    )
-  }
-
-  return (
-    // A plain img: the logo lives on the brand's own site.
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={brand.logoUrl}
-      alt=""
-      referrerPolicy="no-referrer"
-      onError={() => setBroken(true)}
-      className="size-7 shrink-0 rounded-md border bg-white object-contain p-0.5"
-    />
   )
 }
 
@@ -319,7 +318,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
     <tr className={cn("border-b last:border-b-0", !active && "text-muted-foreground")}>
       <td className="py-2.5 pl-4">
         <span className={cn("flex items-center gap-2.5 font-medium", !active && "opacity-60")}>
-          <BrandLogo brand={brand} />
+          <BrandLogo name={brand.name} logoUrl={brand.logoUrl} />
           <EditableText
             value={brand.name}
             label="name"
@@ -349,7 +348,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
       <td className="py-2.5">
         {/* This year by quarter, and the total: one more each time an email is
             answered from this brand's address. */}
-        <QuarterSparkline values={brand.replies} unit={{ one: "reply", many: "replies" }} />
+        <QuarterSparkline values={brand.applies} unit={{ one: "apply", many: "applies" }} />
       </td>
       <td className="py-2.5 font-mono text-xs text-muted-foreground">
         {/* Its GA4 property number, for the SEO Overview. Empty clears it. */}

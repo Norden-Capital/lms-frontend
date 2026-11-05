@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { count, percent } from "@/lib/format"
 import { ATLAS_ID_BY_COUNTRY } from "@/lib/seoCountryCodes"
@@ -571,40 +572,7 @@ function SeoBody({ overview, note }: { overview: SeoOverview; note: string }) {
           {overview.landingPages.length === 0 ? (
             <p className="p-4 text-center text-xs text-muted-foreground">No visits yet.</p>
           ) : (
-            <div className="min-w-0 overflow-x-auto">
-              <table className="w-full min-w-[30rem] border-collapse text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th scope="col" className={cn(TH, "pl-4 text-left")}>
-                      Page
-                    </th>
-                    <th scope="col" className={cn(TH, "px-3 text-right")}>
-                      Visits
-                    </th>
-                    <th scope="col" className={cn(TH, "px-3 text-right")}>
-                      Engaged
-                    </th>
-                    <th scope="col" className={cn(TH, "pr-4 text-right")}>
-                      Key events
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overview.landingPages.map((page) => (
-                    <tr key={page.path} className="border-b last:border-b-0">
-                      <td className="max-w-0 truncate py-2.5 pl-4 font-mono text-xs" title={page.path}>
-                        {page.path || "/"}
-                      </td>
-                      <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums">{count(page.sessions)}</td>
-                      <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums">
-                        {percent(page.engagementRate, 1)}
-                      </td>
-                      <td className="py-2.5 pr-4 text-right font-mono text-xs tabular-nums">{count(page.keyEvents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <LandingPagesTable pages={overview.landingPages} />
           )}
         </Panel>
 
@@ -626,6 +594,60 @@ function SeoBody({ overview, note }: { overview: SeoOverview; note: string }) {
         From Google Analytics (property {overview.brand.propertyId}), updated every 10 minutes. Search words and
         rankings are not here — they need Search Console.
       </p>
+    </div>
+  )
+}
+
+type LandingPage = SeoOverview["landingPages"][number]
+
+const LANDING_SORT = {
+  path: (page: LandingPage) => page.path || "/",
+  sessions: (page: LandingPage) => page.sessions,
+  engagementRate: (page: LandingPage) => page.engagementRate,
+  keyEvents: (page: LandingPage) => page.keyEvents,
+}
+
+const LANDING_COLUMNS: { key: keyof typeof LANDING_SORT; label: string; className: string }[] = [
+  { key: "path", label: "Page", className: "pl-4 text-left" },
+  { key: "sessions", label: "Visits", className: "px-3 text-right" },
+  { key: "engagementRate", label: "Engaged", className: "px-3 text-right" },
+  { key: "keyEvents", label: "Key events", className: "pr-4 text-right" },
+]
+
+/** The landing pages, most visits first until a heading is clicked. */
+function LandingPagesTable({ pages }: { pages: LandingPage[] }) {
+  const { sorted, head } = useSort(pages, LANDING_SORT)
+
+  return (
+    <div className="min-w-0 overflow-x-auto">
+      <table className="w-full min-w-[30rem] border-collapse text-sm">
+        <thead>
+          <tr className="border-b">
+            {LANDING_COLUMNS.map(({ key, label, className }) => {
+              const props = head(key)
+              return (
+                <th key={key} scope="col" className={cn(TH, className)} aria-sort={ariaSort(props.active, props.desc)}>
+                  <SortButton label={label} {...props} />
+                </th>
+              )
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map((page) => (
+            <tr key={page.path} className="border-b last:border-b-0">
+              <td className="max-w-0 truncate py-2.5 pl-4 font-mono text-xs" title={page.path}>
+                {page.path || "/"}
+              </td>
+              <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums">{count(page.sessions)}</td>
+              <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums">
+                {percent(page.engagementRate, 1)}
+              </td>
+              <td className="py-2.5 pr-4 text-right font-mono text-xs tabular-nums">{count(page.keyEvents)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

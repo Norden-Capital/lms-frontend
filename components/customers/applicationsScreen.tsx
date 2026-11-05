@@ -48,6 +48,7 @@ async function ApplicationsScreen({
           heading={heading}
           empty={empty}
           showResult={showResult}
+          list={status}
         />
       ) : (
         <div className="flex flex-1 items-start justify-center">

@@ -1,5 +1,5 @@
 import { StatusPill, TestPill, resultLabel } from "@/components/customers/applicationPills"
-import { money, type ApplicationDetail, type ApplicationSend, type ClientDetail } from "@/lib/applicationTypes"
+import { INCOME_TYPES, money, type ApplicationDetail, type ApplicationSend, type ClientDetail } from "@/lib/applicationTypes"
 import { canadaStamp } from "@/lib/format"
 
 
@@ -63,14 +63,7 @@ const MONEY_FIELDS = new Set([
 ])
 
 const WORDS: Record<string, string> = {
-  full_time: "Full-time job",
-  part_time: "Part-time job",
-  self_employed: "Self-employed",
-  gig_worker: "Gig work",
-  retired: "Retired",
-  disability: "Disability",
-  social_security: "Government benefits",
-  unemployed: "Unemployed",
+  ...INCOME_TYPES,
   WEEKLY: "Every week",
   BIWEEKLY: "Every 2 weeks",
   TWICEMONTHLY: "Twice a month",

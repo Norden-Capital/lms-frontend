@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 
 import { AppNavbar } from "@/components/layout/appNavbar"
 import { AppSidebar } from "@/components/layout/appSidebar"
 import { SidebarTrigger } from "@/components/layout/sidebarTrigger"
+import { cn } from "@/lib/utils"
 
 /**
  * Shell for the whole signed-in app — every route under `(app)`, not just the
@@ -19,6 +20,20 @@ import { SidebarTrigger } from "@/components/layout/sidebarTrigger"
  */
 /** Where the sidebar's open or closed state is kept, in this browser only. */
 const SIDEBAR_KEY = "sidebar"
+
+/** Below Tailwind's `md`: the sidebar lies over the page instead of beside it. */
+const PHONE = "(max-width: 767px)"
+
+function subscribePhone(onChange: () => void) {
+  const query = window.matchMedia(PHONE)
+  query.addEventListener("change", onChange)
+  return () => query.removeEventListener("change", onChange)
+}
+
+/** False on the server, so the first paint matches; CSS does the layout either way. */
+function useIsPhone() {
+  return useSyncExternalStore(subscribePhone, () => window.matchMedia(PHONE).matches, () => false)
+}
 
 function AppShell({
   children,
@@ -55,8 +70,12 @@ function AppShell({
    */
   canOpenInbox?: boolean
 }) {
-  // Open or closed, remembered in this browser — decided 2026-10-26.
+  // Open or closed, remembered in this browser — decided 2026-10-26. This is the
+  // computer's choice; a phone has its own, which always starts closed.
   const [open, setOpenState] = useState(true)
+  const [phoneOpen, setPhoneOpen] = useState(false)
+  const isPhone = useIsPhone()
+  const shown = isPhone ? phoneOpen : open
 
   useEffect(() => {
     // Read after the first paint: the server cannot see this browser's storage.
@@ -86,12 +105,29 @@ function AppShell({
     // below. overflow-hidden is what enforces that rather than merely asking.
     <div className="flex h-svh overflow-hidden">
       <AppSidebar
-        open={open}
-        onToggle={() => setOpen(false)}
+        open={shown}
+        // Each screen size has its own width rule, so the first paint is right
+        // before the browser has said which one this is.
+        widthClassName={cn(
+          open ? "md:w-70 md:border-r md:border-[#E8E8E5]" : "md:w-0",
+          phoneOpen ? "max-md:w-70 max-md:border-r max-md:border-[#E8E8E5]" : "max-md:w-0"
+        )}
+        onToggle={() => (isPhone ? setPhoneOpen(false) : setOpen(false))}
+        onNavigate={() => setPhoneOpen(false)}
         identity={identity}
         isAdmin={isAdmin}
         isOwner={isOwner}
       />
+
+      {/* On a phone, behind the open sidebar: a tap outside it closes it. */}
+      {phoneOpen ? (
+        <button
+          type="button"
+          aria-label="Close sidebar"
+          onClick={() => setPhoneOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+        />
+      ) : null}
 
       {/* No background of its own — the page shows through, which is one less
           colour to keep in sync if the page background ever changes. */}
@@ -102,9 +138,14 @@ function AppShell({
           avatar={avatar}
           canOpenInbox={canOpenInbox}
           leading={
-            !open ? (
-              <SidebarTrigger open={false} onToggle={() => setOpen(true)} />
-            ) : null
+            // Always there on a phone, where the sidebar starts closed; on a
+            // computer only while it is closed.
+            <span className={cn(open && "md:hidden")}>
+              <SidebarTrigger
+                open={false}
+                onToggle={() => (isPhone ? setPhoneOpen(true) : setOpen(true))}
+              />
+            </span>
           }
         />
 
