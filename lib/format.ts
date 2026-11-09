@@ -121,3 +121,11 @@ export function canadaStamp(iso: string): string {
 export function count(value: number): string {
   return new Intl.NumberFormat("en-GB").format(Math.round(value))
 }
+
+/**
+ * "95.3%" of a whole, or "—" with nothing to divide by. Kept here, not in a
+ * "use client" file, so server pages can call it too.
+ */
+export function share(part: number, whole: number): string {
+  return whole === 0 ? "—" : `${((part / whole) * 100).toFixed(1)}%`
+}

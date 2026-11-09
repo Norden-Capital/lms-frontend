@@ -2,13 +2,8 @@
 
 import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { channelLabel, type ChannelCount, type Funnel, type FunnelSteps } from "@/lib/applicationTypes"
-import { count } from "@/lib/format"
+import { count, share } from "@/lib/format"
 import { cn } from "@/lib/utils"
-
-/** "95.3%" of step 1, or nothing to divide by. */
-function share(part: number, whole: number) {
-  return whole === 0 ? "—" : `${((part / whole) * 100).toFixed(1)}%`
-}
 
 /** One number with its share of step 1 under it. */
 function Cell({ value, of, strong }: { value: number; of?: number; strong?: boolean }) {
@@ -80,4 +75,4 @@ function ChannelFunnelTable({ funnel }: { funnel: Funnel }) {
   )
 }
 
-export { ChannelFunnelTable, share }
+export { ChannelFunnelTable }

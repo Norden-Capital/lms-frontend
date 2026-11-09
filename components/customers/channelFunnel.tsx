@@ -1,7 +1,7 @@
-import { ChannelFunnelTable, share } from "@/components/customers/channelFunnelTable"
+import { ChannelFunnelTable } from "@/components/customers/channelFunnelTable"
 import { StatCard } from "@/components/stats/statCard"
 import type { Funnel } from "@/lib/applicationTypes"
-import { count } from "@/lib/format"
+import { count, share } from "@/lib/format"
 
 const HEAD = "px-3 py-2 font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase"
 
