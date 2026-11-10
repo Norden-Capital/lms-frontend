@@ -5,6 +5,7 @@ import {
   IdentityCardSkeleton,
 } from "@/components/layout/identityCard"
 import { AppShell } from "@/components/layout/appShell"
+import { AppearanceSync } from "@/components/settings/appearanceSync"
 import { UserAvatar, UserAvatarSkeleton } from "@/components/layout/userAvatar"
 import { currentUser } from "@/lib/auth"
 import { OWNER, isPrivileged } from "@/lib/roles"
@@ -59,6 +60,9 @@ export default async function AppLayout({
         </Suspense>
       }
     >
+      {/* Settings → Theme: keeps the page look in step with the account. Skipped
+          when the backend sends none, so an older backend never resets it. */}
+      {user?.appearance && <AppearanceSync saved={user.appearance} />}
       {children}
     </AppShell>
   )

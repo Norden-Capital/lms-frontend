@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api"
 import type { ActionState } from "@/lib/actionState"
 
 /**
- * Your own name and phone, from My dashboard — added 2026-10-26. Anyone signed
+ * Your own name and phone, from My account — added 2026-10-26. Anyone signed
  * in may change their own; the email never changes.
  */
 export async function updateMyDetails(_prevState: ActionState, formData: FormData): Promise<ActionState> {

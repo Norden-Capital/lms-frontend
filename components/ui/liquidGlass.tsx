@@ -65,11 +65,11 @@ function LiquidGlassLayers() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-white/25"
+        className="pointer-events-none absolute inset-0 bg-white/25 dark:bg-white/5"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75),inset_0_0_5px_rgba(255,255,255,0.75)]"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_1px_1px_0_rgba(255,255,255,0.75),inset_0_0_5px_rgba(255,255,255,0.75)] dark:shadow-[inset_1px_1px_0_rgba(255,255,255,0.12),inset_0_0_5px_rgba(255,255,255,0.06)]"
       />
     </>
   )

@@ -44,15 +44,15 @@ function QuarterSparkline({
         <svg viewBox="0 0 72 24" className="absolute inset-0 size-full overflow-visible" aria-hidden>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--info)" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="var(--info)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--viz-seo)" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="var(--viz-seo)" stopOpacity="0" />
             </linearGradient>
           </defs>
           <polygon points={`${points} 70,22 2,22`} fill={`url(#${gradientId})`} />
           <polyline
             points={points}
             fill="none"
-            stroke="var(--info)"
+            stroke="var(--viz-seo)"
             strokeWidth="1.25"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -70,7 +70,7 @@ function QuarterSparkline({
                 />
               }
             >
-              <span className="size-1.5 rounded-full border border-white bg-info opacity-0 transition-opacity group-hover:opacity-100" />
+              <span className="size-1.5 rounded-full border border-card bg-viz-seo opacity-0 transition-opacity group-hover:opacity-100" />
             </TooltipTrigger>
             <TooltipContent>
               <span className="font-medium">Q{index + 1} {year}</span> {PERIODS[index]} · {value}{" "}

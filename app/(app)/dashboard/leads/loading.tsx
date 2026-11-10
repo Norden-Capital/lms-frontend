@@ -1,64 +1,50 @@
+import type { ReactNode } from "react"
+
 import { PageHeader } from "@/components/layout/pageHeader"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 /**
- * Leads Overview while it loads — added 2026-11-09. The same blocks in the same
- * order as the page: funnel cards, the channel table, the four counts, the
- * chart, then the brand table beside LeadScout's answers.
+ * Leads Overview while it loads — redone 2026-11-10 with the calm page: the
+ * same cards in the same places, with grey shapes where the charts will draw.
  */
 
 const HEAD = "px-3 py-2 font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase"
+const LABEL = "font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase"
 
-const FUNNEL = ["Form visitors", "Step 1", "Step 2", "Step 3 - Got the link"]
-const COUNTS = ["Leads", "Abandoned", "Failed", "Finish rate"]
-const ANSWERS = ["Sold", "CPF", "Not sold", "Already applied"]
-
-/** A row of four stat cards: label, figure, and the line under it. */
-function Cards({ labels, detail = false }: { labels: string[]; detail?: boolean }) {
+/** A titled card with a line under it, like the page's. */
+function Block({ title, className, children }: { title: string; className?: string; children: ReactNode }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {labels.map((label) => (
-        <div key={label} className="flex flex-col rounded-lg border bg-muted/40 p-0.5">
-          <div className="flex grow flex-col rounded-md border bg-card px-3 py-2.5 shadow-sm">
-            <p className="truncate font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
-              {label}
-            </p>
-            <div className="pt-1">
-              <Skeleton className="my-1 h-5 w-16" />
-              {detail ? <Skeleton className="mt-1.5 h-3 w-28" /> : null}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <section className={cn("flex min-w-0 flex-col card-shell rounded-lg border bg-muted/40 p-0.5", className)}>
+      <h2 className={HEAD}>{title}</h2>
+      <div className="flex flex-1 flex-col rounded-md border bg-card p-4">{children}</div>
+      <Skeleton className="mx-3 my-2 h-3 w-40" />
+    </section>
   )
 }
 
-/** A small table: its headings, then grey rows. */
-function TableBlock({ columns, rows }: { columns: string[]; rows: number }) {
+/** A count card: label, the figure, then its quiet line. */
+function TrendCard({ label }: { label: string }) {
   return (
-    <table className="w-full text-sm">
-      <thead className="text-left text-xs text-muted-foreground">
-        <tr>
-          {columns.map((label, index) => (
-            <th key={label} className={index === 0 ? "px-4 py-2 font-medium" : "px-4 py-2 text-right font-medium"}>
-              {label}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {Array.from({ length: rows }, (_, row) => (
-          <tr key={row} className="border-t">
-            {columns.map((label, index) => (
-              <td key={label} className="px-4 py-2">
-                <Skeleton className={index === 0 ? "h-4 w-24" : "ml-auto h-4 w-8"} />
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <section className="flex min-w-0 flex-col card-shell rounded-lg border bg-muted/40 p-0.5 xl:h-40">
+      <div className="flex flex-1 flex-col rounded-md border bg-card px-4 pt-3.5 pb-2">
+        <p className={LABEL}>{label}</p>
+        <Skeleton className="mt-2 h-8 w-16" />
+        <Skeleton className="mt-auto h-9 w-full" />
+      </div>
+      <Skeleton className="mx-3 my-2 ml-auto h-3 w-28" />
+    </section>
+  )
+}
+
+/** Grey table rows. */
+function Rows() {
+  return (
+    <div className="flex flex-col gap-3">
+      {Array.from({ length: 5 }, (_, index) => (
+        <Skeleton key={index} className="h-5 w-full" />
+      ))}
+    </div>
   )
 }
 
@@ -78,55 +64,42 @@ export default function LeadsOverviewLoading() {
       />
 
       <div className="contents" aria-hidden>
-        <Cards labels={FUNNEL} detail />
-
-        <section className="rounded-lg border bg-muted/40 p-0.5">
-          <h2 className={HEAD}>By channel</h2>
-          <div className="overflow-hidden rounded-md border bg-card">
-            <TableBlock columns={["Channel", "Visitors", "Step 1", "Step 2", "Step 3"]} rows={4} />
+        <div className="grid gap-3 xl:grid-cols-[6fr_4fr]">
+          <div className="flex min-w-0 flex-col gap-3 max-xl:contents">
+            <Block title="Form funnel" className="h-72 max-xl:order-2 xl:h-[calc(15rem+6px)]">
+              <Skeleton className="h-full w-full rounded-md" />
+            </Block>
+            <Block title="Applications per day" className="max-xl:order-3 xl:flex-1">
+              <div className="mb-4 flex items-center gap-5">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="min-h-48 w-full flex-1" />
+            </Block>
           </div>
-          <Skeleton className="mx-3 my-2 h-3 w-96 max-w-[80%]" />
-        </section>
-
-        <Cards labels={COUNTS} />
-
-        <section className="rounded-lg border bg-muted/40 p-0.5">
-          <h2 className={HEAD}>Leads per day</h2>
-          <div className="rounded-md border bg-card p-4 pt-6">
-            <Skeleton className="h-44 w-full" />
-            <div className="mt-1 flex justify-between">
-              <Skeleton className="h-3 w-12" />
-              <Skeleton className="h-3 w-12" />
-            </div>
-            <Skeleton className="mt-3 h-3 w-24" />
-          </div>
-        </section>
-
-        <div className="grid gap-3 lg:grid-cols-[2fr_1fr]">
-          <section className="rounded-lg border bg-muted/40 p-0.5">
-            <h2 className={HEAD}>By brand</h2>
-            <div className="overflow-hidden rounded-md border bg-card">
-              <TableBlock columns={["Brand", "Leads", "Abandoned", "Failed"]} rows={4} />
-            </div>
-          </section>
-
-          <section className="rounded-lg border bg-muted/40 p-0.5">
-            <h2 className={HEAD}>LeadScout answers</h2>
-            <dl className="flex flex-col rounded-md border bg-card text-sm">
-              {ANSWERS.map((label, index) => (
-                <div
-                  key={label}
-                  className={index === 0 ? "flex justify-between px-4 py-2" : "flex justify-between border-t px-4 py-2"}
-                >
-                  <dt className="text-muted-foreground">{label}</dt>
-                  <dd>
-                    <Skeleton className="h-4 w-8" />
-                  </dd>
-                </div>
+          <div className="flex min-w-0 flex-col gap-3 max-xl:contents">
+            <div className="grid grid-cols-2 gap-3 max-xl:order-1">
+              {["Leads", "Abandoned", "Failed", "Finish rate"].map((label) => (
+                <TrendCard key={label} label={label} />
               ))}
-            </dl>
-          </section>
+            </div>
+            <Block title="LeadScout answers" className="max-xl:order-4">
+              <div className="flex flex-col gap-4">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div key={index} className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-2 w-full rounded-[2px]" />
+                  </div>
+                ))}
+              </div>
+            </Block>
+          </div>
         </div>
+
+        <Block title="By channel" className="[&>div:first-of-type]:h-80">
+          <Rows />
+        </Block>
       </div>
     </div>
   )

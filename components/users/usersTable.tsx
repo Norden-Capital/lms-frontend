@@ -429,7 +429,7 @@ function UsersTable({
     // min-h-0 so this can be the thing that scrolls: a flex child defaults to
     // min-height:auto and would otherwise push the page taller instead of
     // scrolling inside itself.
-    <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-muted/40 p-0.5">
+    <div className="flex min-h-0 flex-1 flex-col card-shell rounded-md border bg-muted/40 p-0.5">
       {/* ── Toolbar ────────────────────────────────────────────────────────
           On the tinted shell, outside the white panel. It is chrome for the
           table rather than a row of it, and sitting on the outer surface says
@@ -461,7 +461,8 @@ function UsersTable({
           </Tooltip>
         </p>
 
-        <div className="relative">
+        {/* On a phone: search on its own row, the buttons share the next. */}
+        <div className="relative w-full sm:w-auto">
           <Search
             className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -475,11 +476,11 @@ function UsersTable({
             onChange={(event) => setTyped(event.target.value)}
             placeholder="Search users..."
             aria-label="Search users"
-            className="h-8 w-56 rounded-md bg-transparent pl-8"
+            className="h-8 w-full rounded-md bg-transparent pl-8 sm:w-56"
           />
         </div>
 
-        <Button className="rounded-md" render={<Link href="/users/new" />}>
+        <Button className="flex-1 rounded-md sm:flex-none" render={<Link href="/users/new" />}>
           <Plus data-icon="inline-start" />
           Invite user
         </Button>
@@ -492,7 +493,7 @@ function UsersTable({
             render={
               <Button
                 variant="outline"
-                className="rounded-md bg-transparent font-normal"
+                className="flex-1 rounded-md bg-transparent font-normal sm:flex-none"
                 aria-label={`Rows per page: ${pageSize}`}
               />
             }

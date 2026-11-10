@@ -60,7 +60,7 @@ const STEPS = [22, 40, 58, 78, 100] as const
 const NO_DATA = "color-mix(in oklch, var(--muted-foreground) 16%, var(--card))"
 
 function fillFor(step: number): string {
-  return `color-mix(in oklch, var(--info) ${step}%, var(--card))`
+  return `color-mix(in oklch, var(--viz-seo) ${step}%, var(--card))`
 }
 
 /** Which shade a country gets, against the busiest one. -1 is none. */

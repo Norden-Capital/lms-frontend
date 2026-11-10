@@ -24,11 +24,8 @@ export default async function BrandsPage() {
   if (!brands.ok && brands.error.status === 403) forbidden()
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6 pb-3">
-      <PageHeader
-        title="Brands"
-        description="Your brand emails. Mail comes in and replies go out from them."
-      />
+    <div className="flex h-full flex-col gap-6 overflow-hidden p-6 pb-3">
+      <PageHeader title="Brands" description="Your brand emails. Mail comes in and replies go out from them." />
 
       {brands.ok ? (
         <BrandsPanel brands={brands.data} />

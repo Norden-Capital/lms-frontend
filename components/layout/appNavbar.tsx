@@ -50,7 +50,7 @@ function AppNavbar({
   return (
     // bg-background is load-bearing now it is sticky: without a background the
     // content would scroll visibly through it.
-    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-[#ECECEC] bg-background px-4">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-3 border-b border-(--line-navbar) bg-background px-4">
       {leading}
 
       <Breadcrumb>

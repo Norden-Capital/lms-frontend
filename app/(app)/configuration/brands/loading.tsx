@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/layout/pageHeader"
 import { Panel } from "@/components/system/panel"
 import { Skeleton } from "@/components/ui/skeleton"
+import { WarningSkeleton } from "@/components/ui/warningBox"
 
 /**
  * Brands while they load — decided 2026-10-20. The same header, panel and
@@ -8,20 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton"
  * the brands arrive.
  */
 
-const HEAD =
-  "py-2 text-left font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase"
+const HEAD = "py-2 text-left font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase"
 
 export default function BrandsLoading() {
   return (
-    <div
-      className="flex h-full flex-col gap-6 overflow-y-auto p-6 pb-3"
-      role="status"
-      aria-label="Loading"
-    >
-      <PageHeader
-        title="Brands"
-        description="Your brand emails. Mail comes in and replies go out from them."
-      />
+    <div className="flex h-full flex-col gap-6 overflow-hidden p-6 pb-3" role="status" aria-label="Loading">
+      <PageHeader title="Brands" description="Your brand emails. Mail comes in and replies go out from them." />
 
       <Panel
         title="Brands"
@@ -32,6 +25,7 @@ export default function BrandsLoading() {
             <Skeleton className="size-7" />
           </div>
         }
+        className="flex-1"
         bodyClassName="p-0"
       >
         <table className="w-full border-collapse text-sm" aria-hidden>
@@ -82,8 +76,8 @@ export default function BrandsLoading() {
         </table>
       </Panel>
 
-      {/* The warning box under the table, at its real height. */}
-      <Skeleton className="mt-auto h-36 shrink-0 rounded-md" aria-hidden />
+      {/* The warning box under the table, at its real height, or the bubble if it was closed. */}
+      <WarningSkeleton storageKey="brand-warning" className="h-36" />
     </div>
   )
 }

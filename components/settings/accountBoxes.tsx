@@ -4,7 +4,7 @@ import { useActionState, useState } from "react"
 import { Lock, Mail, Phone, Save, SquarePen, UserRound } from "lucide-react"
 import { toast } from "sonner"
 
-import { updateMyDetails } from "@/app/(app)/settings/dashboard/actions"
+import { updateMyDetails } from "@/app/(app)/settings/my-account/actions"
 import { Panel } from "@/components/system/panel"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
@@ -17,7 +17,7 @@ import { STATUS_TEXT } from "@/lib/userStatusText"
 import { canadaDate, canadaStamp } from "@/lib/format"
 
 /**
- * The two boxes under the sign-in year on My dashboard — decided 2026-10-26.
+ * The two boxes under the sign-in year on My account — decided 2026-10-26.
  * The bigger one holds what you can change; the smaller one what you cannot.
  */
 

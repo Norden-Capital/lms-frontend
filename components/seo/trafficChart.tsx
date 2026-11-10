@@ -176,8 +176,8 @@ function TrafficChart({
                 rx={Math.min(3, barWidth / 2)}
                 className={
                   hovered === null || hovered === index
-                    ? "pointer-events-none fill-info"
-                    : "pointer-events-none fill-info/40"
+                    ? "pointer-events-none fill-viz-seo"
+                    : "pointer-events-none fill-viz-seo/40"
                 }
               />
               {index % every === 0 && (
@@ -203,14 +203,14 @@ function TrafficChart({
           <p className="font-medium">{labels[hovered].full}</p>
           <p className="mt-1 flex items-center justify-between gap-3">
             <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span aria-hidden className="size-2 rounded-[2px] bg-info" />
+              <span aria-hidden className="size-2 rounded-[2px] bg-viz-seo" />
               Visits
             </span>
             <span className="font-mono tabular-nums">{count(shown.sessions)}</span>
           </p>
           <p className="mt-0.5 flex items-center justify-between gap-3">
             <span className="flex items-center gap-1.5 text-muted-foreground">
-              <span aria-hidden className="size-2 rounded-[2px] bg-info/40" />
+              <span aria-hidden className="size-2 rounded-[2px] bg-viz-seo/40" />
               Visitors
             </span>
             <span className="font-mono tabular-nums">{count(shown.users)}</span>

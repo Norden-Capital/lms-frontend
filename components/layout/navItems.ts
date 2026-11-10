@@ -138,7 +138,8 @@ export const settingsSection: NavSection = {
       href: "/settings",
       icon: Settings,
       items: [
-        { title: "Dashboard", href: "/settings/dashboard" },
+        { title: "My account", href: "/settings/my-account" },
+        { title: "Theme", href: "/settings/theme" },
         { title: "Security", href: "/settings/security" },
         { title: "Notifications", href: "/settings/notifications" },
       ],

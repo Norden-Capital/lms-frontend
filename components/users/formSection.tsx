@@ -29,7 +29,7 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <section className="flex flex-col rounded-md border bg-muted/40 p-0.5">
+    <section className="flex flex-col card-shell rounded-md border bg-muted/40 p-0.5">
       {/* The page header's treatment, one level down: same sizes, same weight,
           same gap. The old pairing had a tiny mono label over a text-sm sentence,
           so the description outweighed the thing it described. */}

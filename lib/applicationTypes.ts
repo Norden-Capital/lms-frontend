@@ -52,6 +52,9 @@ export type ApplicationSend = {
 export type ApplicationDetail = {
   id: string
   brand: string
+  brandLogo: string | null
+  brandDomain: string
+  channel: string
   status: string
   leadscoutStatus: string | null
   redirectUrl: string | null
@@ -169,6 +172,9 @@ export type ApplicationsQuery = {
 /** What Leads Overview's URL can carry. */
 export type OverviewQuery = {
   days?: string
+  /** Your own dates, yyyy-MM-dd, both counted. Used instead of days when both are there. */
+  from?: string
+  to?: string
   brand?: string
   test?: string
 }

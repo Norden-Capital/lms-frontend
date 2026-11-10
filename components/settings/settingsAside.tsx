@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Bell, ChevronDown, LayoutDashboard, LayoutGrid, Mail, Phone, ShieldCheck } from "lucide-react"
+import { Bell, ChevronDown, CircleUser, LayoutGrid, Mail, Palette, Phone, ShieldCheck } from "lucide-react"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Fact, Unknown } from "@/components/users/userDetail"
@@ -17,14 +17,15 @@ import { cn } from "@/lib/utils"
  * Your own account down the left of Settings — decided 2026-10-26, the user
  * details page's column: who you are and how to reach you, then the menu.
  * The page you are on has a blue bar. Everything else about your account is
- * on My dashboard.
+ * on My account.
  */
 
 // Order decided 2026-10-26: the page you land on, then you, then how you
 // sign in, then what you hear about. No Help Center here — the main sidebar
 // already has it.
 const PAGES = [
-  { title: "My dashboard", href: "/settings/dashboard", icon: LayoutDashboard },
+  { title: "My account", href: "/settings/my-account", icon: CircleUser },
+  { title: "Theme", href: "/settings/theme", icon: Palette },
   { title: "Security", href: "/settings/security", icon: ShieldCheck },
   // Not built yet, and says so in the menu.
   { title: "Notifications", href: "/settings/notifications", icon: Bell, soon: true },
@@ -97,7 +98,7 @@ function SettingsAside({ user }: { user: SessionUser }) {
         </div>
       </div>
 
-      {/* Profile merged into My dashboard — decided 2026-10-26. The cards
+      {/* Profile merged into My account — decided 2026-10-26. The cards
           there hold the rest; email and phone sit here, under your name. */}
       <div className="flex flex-col gap-1.5">
         <Fact icon={Mail} label="Email">

@@ -139,7 +139,7 @@ function PermissionPickerSkeleton() {
       </div>
 
       {grantableGroups(groups, false).map((group) => (
-        <section key={group.key} className="flex flex-col rounded-md border bg-muted/40 p-0.5">
+        <section key={group.key} className="flex flex-col card-shell rounded-md border bg-muted/40 p-0.5">
           <div className="flex items-center justify-between gap-3 px-3 py-2">
             <h3 className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
               {group.label}

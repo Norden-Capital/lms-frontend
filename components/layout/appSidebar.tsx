@@ -52,7 +52,8 @@ const ROW =
 // The icon stays an outline when active — decided 2026-10-19. The white pill,
 // the weight and the colour already mark the current page; a filled icon on
 // top of that was one signal too many.
-const ROW_ACTIVE = "bg-white font-medium text-foreground shadow-sm"
+// The icon takes the palette's sidebar colour on the other palettes (--row-active-icon).
+const ROW_ACTIVE = "bg-(--row-active) font-medium text-foreground shadow-sm [&_svg]:text-(--row-active-icon)"
 const ROW_IDLE = "text-muted-foreground hover:text-foreground"
 
 function AppSidebar({
@@ -161,7 +162,7 @@ function AppSidebar({
               return (
                 <li
                   key={sub.href}
-                  className="relative before:absolute before:top-0 before:left-0 before:h-full before:w-px before:bg-[#E2E1DE] last:before:h-1/2"
+                  className="relative before:absolute before:top-0 before:left-0 before:h-full before:w-px before:bg-(--line-tree) last:before:h-1/2"
                 >
                   <Link
                     href={sub.href}
@@ -169,7 +170,7 @@ function AppSidebar({
                     className={cn(
                       "relative flex items-center py-1.5 pl-5 text-sm transition-colors",
                       // the tick joining this row to the spine
-                      "before:absolute before:top-1/2 before:left-0 before:h-px before:w-3 before:bg-[#E2E1DE]",
+                      "before:absolute before:top-1/2 before:left-0 before:h-px before:w-3 before:bg-(--line-tree)",
                       subActive
                         ? "font-medium text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -235,7 +236,7 @@ function AppSidebar({
                 // pulled out with a negative margin, so it stops well short of
                 // the sidebar edges. At px-6 that is 24px in each side, and the
                 // footer dividers match via mx-6.
-                index > 0 && "border-t border-[#E8E8E5] pt-3"
+                index > 0 && "border-t border-(--line-sidebar) pt-3"
               )}
             >
               <p className="px-2.5 pb-1 text-xs font-medium text-foreground">
@@ -255,7 +256,7 @@ function AppSidebar({
         {/* Outside the nav, so it stays pinned to the bottom however long the
             menu above grows. The border sits on this element rather than an
             inner one so it reaches both edges without the -mx-3 trick. */}
-        <div className="mx-6 border-t border-[#E8E8E5] py-4">
+        <div className="mx-6 border-t border-(--line-sidebar) py-4">
           <p className="px-2.5 pb-1 text-xs font-medium text-foreground">
             {settingsSection.title}
           </p>
@@ -268,7 +269,7 @@ function AppSidebar({
         {/* Log out sits in its own block, divided off from Settings — it ends
             the session rather than navigating, so it does not belong in a list
             of links. */}
-        <div className="mx-6 border-t border-[#E8E8E5] py-3">
+        <div className="mx-6 border-t border-(--line-sidebar) py-3">
           <div className="pl-2">
             <AlertDialog>
               {/* Not ROW_IDLE: this one goes destructive on hover rather than

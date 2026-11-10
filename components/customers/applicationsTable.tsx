@@ -292,12 +292,13 @@ function ApplicationsTable({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-muted/40 p-0.5">
+    <div className="flex min-h-0 flex-1 flex-col card-shell rounded-md border bg-muted/40 p-0.5">
       <div className="flex shrink-0 flex-wrap items-center gap-2 px-3 py-2">
         <p className={cn(HEAD, "mr-auto pl-2")}>{selected.size > 0 ? `${selected.size} selected` : heading}</p>
 
+        {/* On a phone: search on its own row, then the filters share the width. */}
         <form
-          className="relative"
+          className="relative w-full sm:w-auto"
           onSubmit={(event) => {
             event.preventDefault()
             go({ ...query, search: typed.trim() || undefined, page: undefined })
@@ -313,13 +314,13 @@ function ApplicationsTable({
             onChange={(event) => setTyped(event.target.value)}
             placeholder="Search by email..."
             aria-label="Search by email"
-            className="h-8 w-56 rounded-md bg-transparent pl-8"
+            className="h-8 w-full rounded-md bg-transparent pl-8 sm:w-56"
           />
         </form>
 
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="outline" className="rounded-md bg-transparent font-normal" />}
+            render={<Button variant="outline" className="flex-1 rounded-md bg-transparent font-normal sm:flex-none" />}
           >
             {picked ? <BrandLogo name={picked.name} logoUrl={picked.logoUrl} className={SMALL_LOGO} /> : null}
             {brandName ?? "All brands"}
@@ -343,7 +344,7 @@ function ApplicationsTable({
 
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="outline" className="rounded-md bg-transparent font-normal" />}
+            render={<Button variant="outline" className="flex-1 rounded-md bg-transparent font-normal sm:flex-none" />}
           >
             {query.channel ? channelLabel(query.channel) : "All channels"}
             <ChevronDown data-icon="inline-end" className="opacity-60" />
@@ -368,7 +369,7 @@ function ApplicationsTable({
             render={
               <Button
                 variant="outline"
-                className="rounded-md bg-transparent font-normal"
+                className="flex-1 rounded-md bg-transparent font-normal sm:flex-none"
                 aria-label={`Rows per page: ${pageSize}`}
               />
             }

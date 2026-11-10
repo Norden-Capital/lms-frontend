@@ -32,6 +32,11 @@ function StatusPill({ status }: { status: string }) {
   )
 }
 
+/** The status in plain words, as the pill says it. */
+function statusLabel(status: string): string {
+  return (STATUS[status] ?? STATUS.SENDING).label
+}
+
 /** LeadScout's answer in plain words. Nothing back from LeadScout reads "No answer". */
 function resultLabel(status: string | null): string {
   if (!status) return "No answer"
@@ -66,4 +71,4 @@ function TestPill() {
   )
 }
 
-export { ResultPill, StatusPill, TestPill, resultLabel }
+export { ResultPill, StatusPill, TestPill, resultLabel, statusLabel }

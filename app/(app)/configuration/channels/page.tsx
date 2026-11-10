@@ -2,11 +2,12 @@ import type { Metadata } from "next"
 import { forbidden } from "next/navigation"
 import { ShieldAlert } from "lucide-react"
 
+import { ChannelWarning } from "@/components/configuration/channelWarning"
 import { ChannelsPanel } from "@/components/configuration/channelsPanel"
 import { PageHeader } from "@/components/layout/pageHeader"
 import { requireUser } from "@/lib/auth"
 import { listBrands } from "@/lib/brands"
-import { listChannels } from "@/lib/channels"
+import { listChannelApplies, listChannels } from "@/lib/channels"
 
 export const metadata: Metadata = {
   title: "Channels",
@@ -20,11 +21,11 @@ export const metadata: Metadata = {
 export default async function ChannelsPage() {
   await requireUser()
 
-  const [channels, brands] = await Promise.all([listChannels(), listBrands()])
+  const [channels, brands, applies] = await Promise.all([listChannels(), listBrands(), listChannelApplies()])
   if (!channels.ok && channels.error.status === 403) forbidden()
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6 pb-3">
+    <div className="flex h-full flex-col gap-6 overflow-hidden p-6 pb-3">
       <PageHeader
         title="Channels"
         description="Where your leads come from. Use these links so each lead gets its channel."
@@ -34,6 +35,7 @@ export default async function ChannelsPage() {
         <ChannelsPanel
           channels={channels.data}
           brands={brands.ok ? brands.data.filter((brand) => brand.active) : []}
+          applies={applies.ok ? applies.data : {}}
         />
       ) : (
         <div className="flex max-w-md flex-col items-center gap-2 self-center rounded-md border bg-card p-8 text-center">
@@ -42,6 +44,9 @@ export default async function ChannelsPage() {
           <p className="text-xs text-muted-foreground">{channels.error.message}</p>
         </div>
       )}
+
+      {/* Under the channels: a link without its tag counts as SEO. */}
+      <ChannelWarning />
     </div>
   )
 }

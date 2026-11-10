@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./themes.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,7 +10,7 @@
   --color-foreground: var(--foreground);
   /* Fallbacks matter: global-error.tsx bypasses the root layout, so the
      next/font variables set on <html> are absent when it renders. */
-  --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+  --font-sans: var(--app-font, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif));
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -32,6 +33,8 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
+  --color-viz-ink: var(--viz-ink);
+  --color-viz-seo: var(--viz-seo);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -154,6 +157,132 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Colours that follow Settings → Theme. On the Norden palette they are the
+   colours the app always had; themes.css points them at each other palette's
+   own colours. --viz-*: the charts. --line-*: the fixed greys of the app frame. */
+:root {
+  --viz-ink: var(--foreground);
+  --viz-soft: var(--chart-2);
+  --viz-seo: var(--info);
+  --line-sidebar: #e8e8e5;
+  --line-tree: #e2e1de;
+  --line-navbar: #ececec;
+  --row-active: #fff;
+  --row-active-icon: currentColor;
+}
+.dark {
+  --line-sidebar: var(--sidebar-border);
+  --line-tree: var(--sidebar-border);
+  --line-navbar: var(--border);
+  --row-active: var(--sidebar-accent);
+}
+
+/* Settings → Theme. Each choice is an attribute on <html>, set by the root
+   layout from the user's saved look. Medium radius and Geist are the defaults
+   above, so they need no rule. */
+:root[data-radius="none"] {
+  --radius: 0rem;
+}
+:root[data-radius="small"] {
+  --radius: 0.375rem;
+}
+:root[data-radius="large"] {
+  --radius: 0.875rem;
+}
+:root[data-radius="full"] {
+  --radius: 1.25rem;
+}
+:root[data-font="inter"] {
+  --app-font: var(--font-inter);
+}
+:root[data-font="dm-sans"] {
+  --app-font: var(--font-dm-sans);
+}
+:root[data-font="ibm-plex-sans"] {
+  --app-font: var(--font-ibm-plex-sans);
+}
+:root[data-font="roboto"] {
+  --app-font: var(--font-roboto);
+}
+:root[data-font="open-sans"] {
+  --app-font: var(--font-open-sans);
+}
+:root[data-font="poppins"] {
+  --app-font: var(--font-poppins);
+}
+:root[data-font="montserrat"] {
+  --app-font: var(--font-montserrat);
+}
+:root[data-font="nunito"] {
+  --app-font: var(--font-nunito);
+}
+:root[data-font="outfit"] {
+  --app-font: var(--font-outfit);
+}
+:root[data-font="figtree"] {
+  --app-font: var(--font-figtree);
+}
+:root[data-font="manrope"] {
+  --app-font: var(--font-manrope);
+}
+:root[data-font="plus-jakarta-sans"] {
+  --app-font: var(--font-plus-jakarta-sans);
+}
+:root[data-font="space-grotesk"] {
+  --app-font: var(--font-space-grotesk);
+}
+/* "Outer card" off: the grey frame around each card goes away and the white
+   card sits on the page by itself. Unlayered, so it beats the utility classes. */
+:root[data-cards="plain"] .card-shell {
+  border-width: 0;
+  background: transparent;
+  padding: 0;
+}
+
+/* Bklit charts (Leads Overview, 2026-11-09). Tied to this app's own tokens, so
+   the charts wear the same ink, grid and popover as the rest of the LMS. The
+   accent is --info; the calendar's scale is --success, because it counts leads. */
+:root {
+  --chart-line-primary: var(--viz-seo);
+  --chart-line-secondary: var(--muted-foreground);
+  --chart-background: var(--card);
+  --chart-foreground: var(--foreground);
+  --chart-foreground-muted: var(--muted-foreground);
+  --chart-label: var(--muted-foreground);
+  --chart-grid: var(--border);
+  --chart-crosshair: var(--muted-foreground);
+  --chart-brush-border: var(--border);
+  --chart-tooltip-background: color-mix(in oklab, var(--muted) 40%, var(--card));
+  --chart-tooltip-foreground: var(--popover-foreground);
+  --chart-tooltip-muted: var(--muted-foreground);
+  --chart-marker-background: var(--muted);
+  --chart-marker-border: var(--border);
+  --chart-marker-foreground: var(--foreground);
+  --chart-marker-badge-background: var(--foreground);
+  --chart-marker-badge-foreground: var(--background);
+  --chart-indicator-color: var(--foreground);
+  --chart-indicator-secondary-color: var(--muted);
+  --chart-segment-background: oklch(0.756 0 0 / 0.06);
+  --chart-segment-line: oklch(0.5 0 0 / 0.25);
+  --chart-scale-mix: var(--card);
+  --chart-scale-01: var(--muted);
+  --chart-scale-02: color-mix(in oklab, var(--success) 30%, var(--chart-scale-mix));
+  --chart-scale-03: color-mix(in oklab, var(--success) 55%, var(--chart-scale-mix));
+  --chart-scale-04: color-mix(in oklab, var(--success) 78%, var(--chart-scale-mix));
+  --chart-scale-05: var(--success);
+  --chart-scale-pattern-color: var(--card);
+  --legend: var(--card);
+  --legend-foreground: var(--foreground);
+  --legend-muted: var(--muted);
+  --legend-muted-foreground: var(--muted-foreground);
+  --legend-track: var(--muted);
+}
+
+.dark {
+  --chart-segment-background: oklch(0.41 0.0127 248.14 / 0.25);
+  --chart-segment-line: oklch(1 0 0 / 0.25);
+}
+
 /* The loading indicator. Declared here rather than inline because Tailwind's
    arbitrary animation syntax can reference a named keyframe but cannot declare
    one, and a @keyframes block inside a component would be duplicated per render
@@ -239,6 +368,11 @@
     border-left: 1px solid var(--border);
   }
 
+  /* The sideways bar gets the same hairline, on top (2026-11-11). */
+  *::-webkit-scrollbar-track:horizontal {
+    border-top: 1px solid var(--border);
+  }
+
   *::-webkit-scrollbar-thumb {
     border: 0;
     border-radius: 0 !important;
@@ -267,4 +401,13 @@
     scrollbar-color: var(--border) transparent;
     scrollbar-width: thin;
   }
+}
+/* Every table's scroll bar is always shown, even when there is nothing to
+   scroll yet (decided 2026-11-09), so tables look the same on every page and
+   the bar never pops in when rows arrive. Covers the shared Table's wrapper and
+   any scroll area that holds a table directly. Outside the layers on purpose,
+   so it wins over the overflow utilities. */
+[data-slot="table-container"],
+:where(.overflow-auto, .overflow-y-auto, .overflow-x-auto):has(> table) {
+  overflow-y: scroll;
 }

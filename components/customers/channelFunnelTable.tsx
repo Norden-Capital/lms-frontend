@@ -17,7 +17,15 @@ function Cell({ value, of, strong }: { value: number; of?: number; strong?: bool
 
 function Line({ name, steps, total }: { name: string; steps: FunnelSteps; total?: boolean }) {
   return (
-    <tr className={total ? "border-t bg-muted/50" : "border-t"}>
+    // Total stays stuck to the bottom while the channels scroll.
+    <tr
+      className={
+        total
+          ? "[&>td]:sticky [&>td]:bottom-0 [&>td]:bg-[color-mix(in_oklab,var(--muted)_50%,var(--card))] [&>td]:shadow-[inset_0_1px_0_var(--border)]"
+          : // No top line on the first row: the titles above already draw one.
+            "border-t first:border-t-0"
+      }
+    >
       <td className={total ? "px-4 py-2 font-semibold" : "px-4 py-2"}>{name}</td>
       <Cell value={steps.visitors} strong={total} />
       <Cell value={steps.step1} of={steps.step1} strong={total} />
@@ -43,12 +51,15 @@ const COLUMNS: { key: keyof typeof SORT; label: string; right?: boolean }[] = [
   { key: "step3", label: "Step 3", right: true },
 ]
 
-/** The funnel per channel, sortable. Total stays last whatever the order. */
+/**
+ * The funnel per channel, sortable. Total stays last whatever the order, and at
+ * the bottom: when the table is given more room, an empty row above it takes it.
+ */
 function ChannelFunnelTable({ funnel }: { funnel: Funnel }) {
   const { sorted, head } = useSort(funnel.channels, SORT)
 
   return (
-    <table className="w-full text-sm tabular-nums">
+    <table className="h-full w-full text-sm tabular-nums">
       <thead className="text-left text-xs text-muted-foreground">
         <tr>
           {COLUMNS.map(({ key, label, right }) => {
@@ -69,6 +80,9 @@ function ChannelFunnelTable({ funnel }: { funnel: Funnel }) {
         {sorted.map((line) => (
           <Line key={line.channel} name={channelLabel(line.channel)} steps={line} />
         ))}
+        <tr className="h-full" aria-hidden>
+          <td colSpan={COLUMNS.length} className="p-0" />
+        </tr>
         <Line name="Total" steps={funnel} total />
       </tbody>
     </table>

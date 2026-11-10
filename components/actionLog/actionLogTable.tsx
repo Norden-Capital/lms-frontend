@@ -148,7 +148,7 @@ function ActionLogTable({ page, query }: { page: Page<ActionLogEntry>; query: Ac
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-muted/40 p-0.5">
+    <div className="flex min-h-0 flex-1 flex-col card-shell rounded-md border bg-muted/40 p-0.5">
       {/* ── Toolbar, on the tinted frame ──────────────────────────────────── */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 px-3 py-2">
         <p className={cn(HEAD, "mr-auto flex items-center gap-1.5 pl-2")}>

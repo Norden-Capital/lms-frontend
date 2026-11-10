@@ -161,7 +161,7 @@ function PermissionPicker({
           // than three unrelated panels that happen to be adjacent.
           <section
             key={group.key}
-            className="flex flex-col rounded-md border bg-muted/40 p-0.5"
+            className="flex flex-col card-shell rounded-md border bg-muted/40 p-0.5"
           >
             {/* The heading lives on the grey, which is the whole point of the
                 outer layer. px-3 puts its text on the same left edge as the

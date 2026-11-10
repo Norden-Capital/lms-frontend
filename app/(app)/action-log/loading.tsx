@@ -40,7 +40,7 @@ export default function ActionLogLoading() {
         description="Who did what, and when. Only you can see this."
       />
 
-      <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-muted/40 p-0.5" aria-hidden>
+      <div className="flex min-h-0 flex-1 flex-col card-shell rounded-md border bg-muted/40 p-0.5" aria-hidden>
         <div className="flex shrink-0 flex-wrap items-center gap-2 px-3 py-2">
           <p className={cn(HEAD, "mr-auto pl-2")}>All activity</p>
           <Skeleton className="h-8 w-56" />

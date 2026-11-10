@@ -109,8 +109,8 @@ function AppShell({
         // Each screen size has its own width rule, so the first paint is right
         // before the browser has said which one this is.
         widthClassName={cn(
-          open ? "md:w-70 md:border-r md:border-[#E8E8E5]" : "md:w-0",
-          phoneOpen ? "max-md:w-70 max-md:border-r max-md:border-[#E8E8E5]" : "max-md:w-0"
+          open ? "md:w-70 md:border-r md:border-(--line-sidebar)" : "md:w-0",
+          phoneOpen ? "max-md:w-70 max-md:border-r max-md:border-(--line-sidebar)" : "max-md:w-0"
         )}
         onToggle={() => (isPhone ? setPhoneOpen(false) : setOpen(false))}
         onNavigate={() => setPhoneOpen(false)}

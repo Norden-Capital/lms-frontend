@@ -43,11 +43,11 @@ function Panel({
       // only ever grows — and anything inside that wants to scroll never
       // receives a bounded height to scroll within.
       className={cn(
-        "flex min-h-0 flex-col rounded-md border bg-muted/40 p-0.5",
+        "flex min-h-0 flex-col card-shell rounded-md border bg-muted/40 p-0.5",
         className
       )}
     >
-      <div className="flex items-center justify-between gap-3 px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2">
         <h2 className="flex items-center gap-1.5 font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
           {title}
           {hint && <Hint>{hint}</Hint>}

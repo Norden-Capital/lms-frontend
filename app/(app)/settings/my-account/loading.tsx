@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { SignInYearSkeleton } from "@/components/users/signInYearSkeleton"
 
 /**
- * My dashboard while it loads. Your account column is the layout and stays;
+ * My account while it loads. Your account column is the layout and stays;
  * this is the sign-in year and the two boxes under it, in grey.
  */
 export default function SettingsLoading() {

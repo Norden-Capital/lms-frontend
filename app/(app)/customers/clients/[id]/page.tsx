@@ -4,7 +4,8 @@ import { ShieldAlert } from "lucide-react"
 
 import { ClientApplications } from "@/components/customers/clientDetail"
 import { PageHeader } from "@/components/layout/pageHeader"
-import { getClient } from "@/lib/applications"
+import { getClient, listApplicationBrands } from "@/lib/applications"
+import { sharedSites } from "@/lib/applicationTypes"
 import { requireUser } from "@/lib/auth"
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   await requireUser()
 
   const { id } = await params
-  const result = await getClient(id)
+  const [result, brands] = await Promise.all([getClient(id), listApplicationBrands()])
 
   if (!result.ok && result.error.status === 403) forbidden()
   if (!result.ok && result.error.status === 404) notFound()
@@ -37,19 +38,18 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
   }
 
   const client = result.data
-  const answers = client.applications[0]?.answers
-  const name = [answers?.firstName, answers?.lastName].filter(Boolean).join(" ")
   const count = client.applications.length
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    // Fills the screen on a wide one, so each card scrolls on its own.
+    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6 pb-3 lg:overflow-hidden">
       <PageHeader
-        title={name || client.email}
-        description={`${client.email} · ${count} ${count === 1 ? "application" : "applications"}`}
+        title="Lead details"
+        description={`${count} ${count === 1 ? "application" : "applications"}`}
         backHref="/customers/leads"
         backLabel="Back to leads"
       />
-      <ClientApplications client={client} />
+      <ClientApplications client={client} sharedSites={[...sharedSites(brands.ok ? brands.data : [])]} />
     </div>
   )
 }

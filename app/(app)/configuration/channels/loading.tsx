@@ -1,64 +1,71 @@
 import { PageHeader } from "@/components/layout/pageHeader"
 import { Panel } from "@/components/system/panel"
 import { Skeleton } from "@/components/ui/skeleton"
+import { WarningSkeleton } from "@/components/ui/warningBox"
 
 /**
- * Channels while they load — added 2026-11-09. The channel list on the left
- * and one channel's links on the right, as on the page.
+ * Channels while they load — redone 2026-11-09 with the page: one card, the
+ * channel tabs and the add box in its heading, then the links table.
  */
+
+const HEAD = "py-2 text-left font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase"
+
 export default function ChannelsLoading() {
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto p-6 pb-3" role="status" aria-label="Loading">
+    <div className="flex h-full flex-col gap-6 overflow-hidden p-6 pb-3" role="status" aria-label="Loading">
       <PageHeader
         title="Channels"
         description="Where your leads come from. Use these links so each lead gets its channel."
       />
 
-      <div className="grid min-h-0 gap-4 md:grid-cols-[17rem_minmax(0,1fr)]" aria-hidden>
-        <Panel title="Channels" bodyClassName="gap-3 p-3">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 flex-1" />
-            <Skeleton className="size-7" />
-          </div>
-          <div className="flex flex-col gap-0.5">
-            {Array.from({ length: 5 }, (_, index) => (
-              <div key={index} className="flex items-center gap-2.5 px-2.5 py-2">
-                <Skeleton className="size-7 shrink-0" />
-                <Skeleton className="h-3.5 flex-1" />
-                <Skeleton className="h-3 w-10" />
-              </div>
-            ))}
-          </div>
-        </Panel>
-
-        <Panel
-          title="Channel"
-          action={
-            <div className="flex items-center gap-1.5">
-              <Skeleton className="h-7 w-32" />
+      <Panel
+        title="Channels"
+        action={
+          <div className="flex min-w-0 flex-1 items-center justify-between gap-3" aria-hidden>
+            <Skeleton className="h-8 w-56 rounded-lg" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-64" />
               <Skeleton className="size-7" />
             </div>
-          }
-          bodyClassName="gap-4 p-4"
-        >
-          <Skeleton className="h-4 w-80 max-w-full" />
-          <div className="flex flex-col divide-y rounded-md border">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5 sm:flex-nowrap">
-                <div className="flex items-center gap-2.5 sm:w-52 sm:shrink-0">
-                  <Skeleton className="size-6 shrink-0" />
-                  <div className="flex flex-col gap-1">
-                    <Skeleton className="h-3.5 w-24" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
-                </div>
-                <Skeleton className="h-6 min-w-0 flex-1" />
-                <Skeleton className="h-7 w-20 shrink-0" />
-              </div>
-            ))}
           </div>
-        </Panel>
-      </div>
+        }
+        className="flex-1"
+        bodyClassName="p-0"
+      >
+        <table className="w-full border-collapse text-sm" aria-hidden>
+          <thead>
+            <tr className="border-b">
+              <th className={`${HEAD} w-64 pl-4`}>Brand</th>
+              <th className={HEAD}>Link</th>
+              <th className={`${HEAD} pr-4 text-right`}>Copy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 4 }, (_, index) => (
+              <tr key={index} className="border-b last:border-b-0">
+                <td className="py-2.5 pl-4">
+                  <span className="flex items-center gap-2.5">
+                    <Skeleton className="size-6 shrink-0" />
+                    <span className="flex flex-col gap-1">
+                      <Skeleton className="h-3.5 w-24" />
+                      <Skeleton className="h-3 w-20" />
+                    </span>
+                  </span>
+                </td>
+                <td className="py-2.5 pr-3">
+                  <Skeleton className="h-6 w-full" />
+                </td>
+                <td className="py-2.5 pr-4">
+                  <Skeleton className="ml-auto size-7" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Panel>
+
+      {/* The warning box under the channels, at its real height, or the bubble if it was closed. */}
+      <WarningSkeleton storageKey="channel-warning" className="h-24" />
     </div>
   )
 }

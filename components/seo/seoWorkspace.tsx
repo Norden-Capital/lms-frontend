@@ -24,13 +24,7 @@ import { TrafficChart } from "@/components/seo/trafficChart"
 import { StatCard, type Change } from "@/components/stats/statCard"
 import { Panel } from "@/components/system/panel"
 import { LoadingCover } from "@/components/ui/loadingCover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -92,19 +86,21 @@ function periodNote(overview: SeoOverview) {
  * decided 2026-10-26, so the card keeps one size whatever the period. Anything
  * Google Analytics calls something else is added up in "Other".
  */
-const CHANNELS = [
-  "Organic Search",
-  "Direct",
-  "Referral",
-  "Organic Social",
-  "AI Assistant",
-  "Email",
-  "Unassigned",
-]
+const CHANNELS = ["Organic Search", "Direct", "Referral", "Organic Social", "AI Assistant", "Email", "Unassigned"]
 
 // One colour and its shades — decided 2026-10-21 — darkest for the biggest.
-const CHANNEL_TONES = ["bg-info", "bg-info/85", "bg-info/70", "bg-info/58", "bg-info/46", "bg-info/36", "bg-info/27", "bg-info/18"]
-const REST_TONE = "bg-info/18"
+// One colour per channel on the other palettes (--viz-*), shades of one blue on Norden.
+const CHANNEL_TONES = [
+  "bg-[var(--viz-1,color-mix(in_oklab,var(--viz-seo)_100%,transparent))]",
+  "bg-[var(--viz-2,color-mix(in_oklab,var(--viz-seo)_85%,transparent))]",
+  "bg-[var(--viz-3,color-mix(in_oklab,var(--viz-seo)_70%,transparent))]",
+  "bg-[var(--viz-4,color-mix(in_oklab,var(--viz-seo)_58%,transparent))]",
+  "bg-[var(--viz-5,color-mix(in_oklab,var(--viz-seo)_46%,transparent))]",
+  "bg-[var(--viz-6,color-mix(in_oklab,var(--viz-seo)_36%,transparent))]",
+  "bg-[var(--viz-7,color-mix(in_oklab,var(--viz-seo)_27%,transparent))]",
+  "bg-[var(--viz-8,color-mix(in_oklab,var(--viz-seo)_18%,transparent))]",
+]
+const REST_TONE = "bg-viz-seo/18"
 
 /** Google Analytics' device names, and how they show here. */
 const DEVICES: Record<string, { icon: typeof Monitor; label: string }> = {
@@ -113,7 +109,11 @@ const DEVICES: Record<string, { icon: typeof Monitor; label: string }> = {
   tablet: { icon: Tablet, label: "Tablet" },
 }
 const DEVICE_ORDER = ["desktop", "mobile", "tablet"]
-const DEVICE_TONES = ["bg-info", "bg-info/60", "bg-info/30"]
+const DEVICE_TONES = [
+  "bg-[var(--viz-1,color-mix(in_oklab,var(--viz-seo)_100%,transparent))]",
+  "bg-[var(--viz-2,color-mix(in_oklab,var(--viz-seo)_60%,transparent))]",
+  "bg-[var(--viz-3,color-mix(in_oklab,var(--viz-seo)_30%,transparent))]",
+]
 
 /** The heading style the panels use, for a heading inside one. */
 const SUB_HEADING = "font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase"
@@ -198,7 +198,7 @@ function SeoFilters({
     // Brand on the left, the period on the right — where oneBase has them.
     <div className="flex flex-wrap items-center justify-between gap-3">
       <Select value={brandId} onValueChange={(value) => value && set({ brand: value })}>
-        <SelectTrigger className="h-8 w-48 bg-card" aria-label="Brand">
+        <SelectTrigger className="h-8 w-full bg-card sm:w-48" aria-label="Brand">
           <SelectValue>
             {(value: string | null) => {
               const brand = brands.find((entry) => entry.id === value)
@@ -271,7 +271,7 @@ function ShareList({
             </div>
             <div className="mt-1.5 flex items-center gap-2">
               <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                <span className="block h-full rounded-full bg-info" style={{ width: `${share}%` }} />
+                <span className="block h-full rounded-full bg-viz-seo" style={{ width: `${share}%` }} />
               </div>
               <span className="w-11 shrink-0 text-right font-mono text-[0.65rem] text-muted-foreground tabular-nums">
                 {percent(share, 1)}

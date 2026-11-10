@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
  */
 
 const BUTTON =
-  "inline-flex h-6 items-center rounded-md border border-transparent px-2.5 text-[0.7rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+  "inline-flex h-6 flex-1 justify-center whitespace-nowrap sm:flex-none items-center rounded-md border border-transparent px-2.5 text-[0.7rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
 const ON = "border-border bg-background text-foreground shadow-sm"
 const OFF = "text-muted-foreground hover:text-foreground"
 
@@ -52,7 +52,8 @@ function RangeFilter({
     <div
       role="group"
       aria-label="Period"
-      className="inline-flex shrink-0 flex-wrap rounded-lg border border-border/60 bg-muted p-0.5"
+      // Fills the width on a phone, the buttons sharing it over two rows.
+      className="flex w-full flex-wrap rounded-lg border border-border/60 bg-muted p-0.5 sm:inline-flex sm:w-auto sm:shrink-0"
     >
       {SEO_RANGES.filter((entry) => entry.id !== "custom").map((entry) => (
         <button

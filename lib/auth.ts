@@ -4,6 +4,7 @@ import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { apiFetch, type ApiResult } from "@/lib/api"
+import type { Appearance } from "@/lib/appearance"
 import { getSessionToken } from "@/lib/session"
 
 /**
@@ -38,6 +39,8 @@ export type SessionUser = {
   createdAt?: string
   /** ISO 8601, or null before the first sign-in. */
   lastLoginAt?: string | null
+  /** Settings → Theme. Missing from an older backend. */
+  appearance?: Appearance
 }
 
 /**

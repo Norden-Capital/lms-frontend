@@ -15,6 +15,7 @@ import {
 } from "@/app/(app)/configuration/brands/actions"
 import { QuarterSparkline } from "@/components/charts/quarterSparkline"
 import { Panel } from "@/components/system/panel"
+import { PageFooter, usePage } from "@/components/ui/pageFooter"
 import { DialogHead, Refusal } from "@/components/users/userActionDialogs"
 import {
   AlertDialog,
@@ -28,11 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Switch } from "@/components/ui/switch"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { Brand } from "@/lib/brands"
 import { canadaDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -44,11 +41,15 @@ import { cn } from "@/lib/utils"
  * answers from it. Switched off, a brand leaves the inbox but is kept.
  */
 
-const HEAD =
-  "py-2 text-left font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase"
+const HEAD = "py-2 text-left font-mono text-[0.65rem] font-medium tracking-wider text-muted-foreground uppercase"
 
-const ROW_BUTTON =
-  "rounded-sm p-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+/** Brands on one page of the table. */
+const PAGE_SIZE = 10
+
+/** The logo alone, at its row size: no white card around it. */
+const BARE_LOGO = "rounded-none border-0 bg-transparent p-0"
+
+const ROW_BUTTON = "rounded-sm p-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
 
 const SORT = {
   name: (brand: Brand) => brand.name,
@@ -73,23 +74,32 @@ const COLUMNS: { key: keyof typeof SORT; label: string; className?: string }[] =
 function BrandsPanel({ brands }: { brands: Brand[] }) {
   const [removing, setRemoving] = useState<Brand | null>(null)
   const { sorted, head } = useSort(brands, SORT)
+  const [wanted, setPage] = useState(1)
+  const { page, rows } = usePage(sorted, PAGE_SIZE, wanted)
 
   return (
     <Panel
       title="Brands"
       hint={
         <>
-          Add a brand by its website. We get its name and logo. Its email is
-          support@ plus the domain. Set up this email in Gmail to send replies.
+          Add a brand by its website. We get its name and logo. Its email is support@ plus the domain. Set up this email
+          in Gmail to send replies.
         </>
       }
       action={<AddBrand />}
-      bodyClassName="p-0"
+      // The page never scrolls: the warning stays at the bottom and the table
+      // scrolls inside this card when it is taller than the room left.
+      // Fills the page down to the warning, even with few brands, like Channels.
+      className="flex-1"
+      bodyClassName="p-0 overflow-auto"
+      footer={
+        brands.length > PAGE_SIZE ? (
+          <PageFooter page={page} pageSize={PAGE_SIZE} total={sorted.length} onPage={setPage} />
+        ) : null
+      }
     >
       {brands.length === 0 ? (
-        <p className="p-6 text-center text-sm text-muted-foreground">
-          No brands yet. Add one by its website above.
-        </p>
+        <p className="p-6 text-center text-sm text-muted-foreground">No brands yet. Add one by its website above.</p>
       ) : (
         <table className="w-full border-collapse text-sm">
           <thead>
@@ -106,7 +116,7 @@ function BrandsPanel({ brands }: { brands: Brand[] }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((brand) => (
+            {rows.map((brand) => (
               <BrandRow key={brand.id} brand={brand} onRemove={() => setRemoving(brand)} />
             ))}
           </tbody>
@@ -140,18 +150,16 @@ function AddBrand() {
   }
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2">
-      <div className="relative">
-        <Globe
-          className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
+    // Takes the whole row on a phone, under the title.
+    <form onSubmit={submit} className="flex w-full items-center gap-2 sm:w-auto">
+      <div className="relative min-w-0 flex-1 sm:flex-none">
+        <Globe className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           value={website}
           onChange={(event) => setWebsite(event.target.value)}
           placeholder="Brand website, e.g. ask4loan.ca"
           aria-label="Brand website"
-          className="h-8 w-64 bg-card pl-8"
+          className="h-8 w-full bg-card pl-8 sm:w-64"
           disabled={pending}
         />
       </div>
@@ -318,12 +326,8 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
     <tr className={cn("border-b last:border-b-0", !active && "text-muted-foreground")}>
       <td className="py-2.5 pl-4">
         <span className={cn("flex items-center gap-2.5 font-medium", !active && "opacity-60")}>
-          <BrandLogo name={brand.name} logoUrl={brand.logoUrl} />
-          <EditableText
-            value={brand.name}
-            label="name"
-            onSave={(name) => updateBrand(brand.id, name, brand.email)}
-          />
+          <BrandLogo name={brand.name} logoUrl={brand.logoUrl} className={BARE_LOGO} />
+          <EditableText value={brand.name} label="name" onSave={(name) => updateBrand(brand.id, name, brand.email)} />
         </span>
       </td>
       <td className="py-2.5 text-muted-foreground">
@@ -372,9 +376,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
               aria-label={active ? `Switch ${brand.name} off` : `Switch ${brand.name} on`}
             />
           </TooltipTrigger>
-          <TooltipContent>
-            {active ? "On: shown in the inbox" : "Off: hidden from the inbox"}
-          </TooltipContent>
+          <TooltipContent>{active ? "On: shown in the inbox" : "Off: hidden from the inbox"}</TooltipContent>
         </Tooltip>
       </td>
       <td className="py-2.5 pr-4">
@@ -398,12 +400,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
           <Tooltip>
             <TooltipTrigger
               render={
-                <button
-                  type="button"
-                  className={ROW_BUTTON}
-                  onClick={onRemove}
-                  aria-label={`Remove ${brand.name}`}
-                />
+                <button type="button" className={ROW_BUTTON} onClick={onRemove} aria-label={`Remove ${brand.name}`} />
               }
             >
               <Trash2 className="size-3.5" />
@@ -425,8 +422,7 @@ function RemoveDialog({ brand, onClose }: { brand: Brand; onClose: () => void })
     <AlertDialog open onOpenChange={(open) => !open && !pending && onClose()}>
       <AlertDialogContent size="sm">
         <DialogHead icon={Trash2} tone="bg-destructive/10 text-destructive" title="Remove brand?">
-          {brand.name} ({brand.email}) will be removed. Its emails stay in Gmail.
-          To just hide it, switch it off.
+          {brand.name} ({brand.email}) will be removed. Its emails stay in Gmail. To just hide it, switch it off.
         </DialogHead>
 
         <Refusal message={error} />

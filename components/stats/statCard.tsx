@@ -169,7 +169,7 @@ function StatCard({
       // floating over the page; these sit in a column beside a table and belong
       // to the same instrument panel. Still a step rounder than the table's own
       // cards, so the two surfaces stay distinguishable rather than merging.
-      className={cn("flex flex-col rounded-lg border bg-muted/40 p-0.5", className)}
+      className={cn("flex flex-col card-shell rounded-lg border bg-muted/40 p-0.5", className)}
     >
       {/* grow, not flex-1. Both fill a card that has been stretched — by a grid
           row telling it to, as the Backups column does — but flex-1 also sets

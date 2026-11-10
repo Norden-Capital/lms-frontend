@@ -4,7 +4,7 @@ import { apiFetch, type ApiResult } from "@/lib/api"
 import type { SignInDay } from "@/lib/actionLogTypes"
 
 /**
- * The signed-in person's own history, for My dashboard in Settings. Anyone
+ * The signed-in person's own history, for My account in Settings. Anyone
  * signed in may read these, and only ever about themselves.
  */
 
