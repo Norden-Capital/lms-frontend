@@ -49,7 +49,6 @@ export async function getClient(id: string): Promise<ApiResult<ClientDetail>> {
 export async function getApplicationsOverview(query: OverviewQuery): Promise<ApiResult<ApplicationsOverview>> {
   const params = new URLSearchParams({ days: String(overviewDays(query.days)) })
   if (query.brand) params.set("brand", query.brand)
-  if (query.test === "1") params.set("includeTest", "true")
   if (query.from && query.to) {
     params.set("from", query.from)
     params.set("to", query.to)

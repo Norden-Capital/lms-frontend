@@ -176,7 +176,6 @@ export type OverviewQuery = {
   from?: string
   to?: string
   brand?: string
-  test?: string
 }
 
 export const APPLICATION_PAGE_SIZES = [10, 25, 50] as const

@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   OVERVIEW_PERIODS,
@@ -29,7 +28,7 @@ import {
 } from "@/lib/applicationTypes"
 import { cn } from "@/lib/utils"
 
-/** One row above the numbers: period, brand, test data. All of it lives in the address. */
+/** One row above the numbers: period and brand. All of it lives in the address. Test data never shows. */
 function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: BrandOption[] }) {
   const shared = sharedSites(brands)
   const router = useRouter()
@@ -48,14 +47,13 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
       params.set("to", next.to)
     } else if (next.days && next.days !== "30") params.set("days", next.days)
     if (next.brand) params.set("brand", next.brand)
-    if (next.test === "1") params.set("test", "1")
     const qs = params.toString()
     startLoading(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }))
   }
 
   return (
-    // On a phone: the periods fill one row, then brand, test data and refresh
-    // share the next. From sm up they all sit in one row as before.
+    // On a phone: the periods fill one row, then brand and refresh share the
+    // next. From sm up they all sit in one row as before.
     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
       <div className="flex w-full rounded-md border bg-card p-0.5 sm:w-auto" role="group" aria-label="Period">
         {OVERVIEW_PERIODS.map((period) => (
@@ -101,14 +99,6 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <label className="ml-1 flex items-center gap-2 text-sm">
-        <Switch
-          checked={query.test === "1"}
-          onCheckedChange={(checked) => go({ ...query, test: checked ? "1" : undefined })}
-        />
-        Show test data
-      </label>
 
       {/* Gets the numbers again without leaving the page. Icon only. */}
       <Tooltip>
