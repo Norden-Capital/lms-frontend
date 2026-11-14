@@ -13,6 +13,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { CanadaClock } from "@/components/layout/canadaClock"
 import { InboxButton } from "@/components/layout/inboxButton"
 import { Button } from "@/components/ui/button"
 import { LiquidGlassLayers } from "@/components/ui/liquidGlass"
@@ -83,6 +84,8 @@ function AppNavbar({
       </Breadcrumb>
 
       <div className="ml-auto flex items-center gap-2">
+        <CanadaClock />
+
         {/* Switched off until notifications exist — decided 2026-10-26. Kept in
             place so the header does not shift when they arrive. The span holds
             the hint: a disabled button takes no pointer events of its own. */}
