@@ -39,8 +39,8 @@ export const metadata: Metadata = {
  * live database is a job for the server, done by hand. Each copy is read back
  * (`pg_restore --list`) before it counts as a success.
  *
- * <p>The Owner only, via middleware's `OWNER_ONLY`; the backend refuses anybody
- * else too.
+ * <p>Needs BACKUP:READ (the Owner, or an administrator given it); the
+ * backend checks it too.
  */
 export default async function BackupsPage({
   searchParams,

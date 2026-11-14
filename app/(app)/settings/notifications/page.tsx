@@ -21,7 +21,7 @@ import {
 import { FaqGroup, FaqItem } from "@/components/settings/faqItem"
 import { Switch } from "@/components/ui/switch"
 import { requireUser } from "@/lib/auth"
-import { isPrivileged, OWNER } from "@/lib/roles"
+import { isPrivileged } from "@/lib/roles"
 
 export const metadata: Metadata = {
   title: "Notifications",
@@ -62,7 +62,6 @@ function ComingSoonSwitch() {
 export default async function NotificationsPage() {
   const user = await requireUser()
   const can = (permission: string) => user.permissions.includes(permission)
-  const owner = user.role === OWNER
 
   const groups: Group[] = [
     {
@@ -101,7 +100,7 @@ export default async function NotificationsPage() {
     },
     {
       title: "Backups",
-      show: owner,
+      show: can("BACKUP:READ"),
       alerts: [
         { title: "Backup failed", description: "An email when the 03:00 backup fails or does not run.", icon: DatabaseBackup },
         { title: "Cloud almost full", description: "An email when backups pass 8 GB of the 10 GB free space.", icon: CloudAlert },
@@ -110,7 +109,7 @@ export default async function NotificationsPage() {
     },
     {
       title: "Server",
-      show: owner,
+      show: can("SYSTEM_HEALTH:READ"),
       alerts: [
         { title: "Disk almost full", description: "An email when the server's disk is more than 85% full.", icon: HardDrive },
         { title: "Server errors", description: "An email when the server starts failing requests.", icon: ServerCrash },

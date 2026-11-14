@@ -15,8 +15,9 @@ export const metadata: Metadata = {
 
 /**
  * Configuration → Channels — decided 2026-11-02. One link per channel and
- * brand, so every link is written the same way. The Owner only, via
- * middleware's `OWNER_ONLY`; the backend refuses anybody else too.
+ * brand, so every link is written the same way. Needs
+ * CHANNEL_SETUP:READ (the Owner, or an administrator given it); the backend
+ * checks it too.
  */
 export default async function ChannelsPage() {
   await requirePermission("CHANNEL_SETUP:READ")

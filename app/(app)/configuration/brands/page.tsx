@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 }
 
 /**
- * Configuration → Brands — decided 2026-10-20. The Owner only, via
- * middleware's `OWNER_ONLY`; the backend refuses anybody else too.
+ * Configuration → Brands — decided 2026-10-20. Needs BRAND:READ
+ * (the Owner, or an administrator given it); the backend checks it too.
  */
 export default async function BrandsPage() {
   await requirePermission("BRAND:READ")
