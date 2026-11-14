@@ -8,7 +8,7 @@ import { AppShell } from "@/components/layout/appShell"
 import { AppearanceSync } from "@/components/settings/appearanceSync"
 import { UserAvatar, UserAvatarSkeleton } from "@/components/layout/userAvatar"
 import { currentUser } from "@/lib/auth"
-import { OWNER, isPrivileged } from "@/lib/roles"
+import { isPrivileged } from "@/lib/roles"
 
 /**
  * Shell for signed-in pages. The markup and the sidebar's open/closed state
@@ -44,7 +44,7 @@ export default async function AppLayout({
   return (
     <AppShell
       isAdmin={isPrivileged(user?.role)}
-      isOwner={user?.role === OWNER}
+      permissions={user?.permissions ?? []}
       // Read from the token rather than from the role. An administrator holds
       // it because the migration grants ADMIN everything, not because of a check
       // for the word here — so if that ever changes, the button follows.

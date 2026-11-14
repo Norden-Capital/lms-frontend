@@ -5,7 +5,7 @@ import { ShieldAlert } from "lucide-react"
 import { ChannelWarning } from "@/components/configuration/channelWarning"
 import { ChannelsPanel } from "@/components/configuration/channelsPanel"
 import { PageHeader } from "@/components/layout/pageHeader"
-import { requireUser } from "@/lib/auth"
+import { requirePermission } from "@/lib/auth"
 import { listBrands } from "@/lib/brands"
 import { listChannelApplies, listChannels } from "@/lib/channels"
 
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
  * middleware's `OWNER_ONLY`; the backend refuses anybody else too.
  */
 export default async function ChannelsPage() {
-  await requireUser()
+  await requirePermission("CHANNEL_SETUP:READ")
 
   const [channels, brands, applies] = await Promise.all([listChannels(), listBrands(), listChannelApplies()])
   if (!channels.ok && channels.error.status === 403) forbidden()

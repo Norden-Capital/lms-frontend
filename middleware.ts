@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 
 import { MFA_COOKIE, SESSION_COOKIE } from "@/lib/cookieNames"
-import { OWNER, isPrivileged } from "@/lib/roles"
+import { isPrivileged } from "@/lib/roles"
 
 /**
  * Decides where someone belongs before a single byte of HTML is written.
@@ -76,9 +76,11 @@ const ENROL = "/two-factor"
 const ADMIN_ONLY = ["/users"]
 
 /**
- * The Owner's alone — decided 2026-10-19: the action log, System Health and
- * Backups. The backend refuses the same people; this only sends them to the
- * no-access screen before a page they cannot use starts loading.
+ * The owner pages: Configuration, the action log, System Health and Backups.
+ * Since 2026-11-14 the Owner can give some of them to an administrator, and
+ * the token does not carry permissions — so members are stopped here, and for
+ * an administrator each page checks its own permission (requirePermission).
+ * The backend refuses the same people either way.
  */
 const OWNER_ONLY = ["/configuration", "/action-log", "/system-health", "/backups"]
 
@@ -113,7 +115,6 @@ export function middleware(request: NextRequest) {
   const owesEnrolment = live && claims?.typ === "enrolment_pending"
   // The Owner opens Management too — it holds everything an administrator does.
   const isAdmin = isPrivileged(claims?.role)
-  const isOwner = claims?.role === OWNER
 
   /**
    * A session the backend has thrown out, which still looks alive from here.
@@ -172,7 +173,7 @@ export function middleware(request: NextRequest) {
   }
   if (
     signedIn &&
-    !isOwner &&
+    !isAdmin &&
     OWNER_ONLY.some((p) => pathname === p || pathname.startsWith(`${p}/`))
   ) {
     return NextResponse.rewrite(new URL("/no-access", request.url), {

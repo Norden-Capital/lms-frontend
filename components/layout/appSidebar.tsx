@@ -63,7 +63,7 @@ function AppSidebar({
   onNavigate,
   identity,
   isAdmin = false,
-  isOwner = false,
+  permissions = [],
 }: {
   /** Open on this screen: decides whether its contents can be reached. */
   open: boolean
@@ -76,8 +76,8 @@ function AppSidebar({
   identity?: React.ReactNode
   /** Decides whether the admin-only sections are drawn at all. */
   isAdmin?: boolean
-  /** Decides whether the Owner's Platform section is drawn. */
-  isOwner?: boolean
+  /** What the account holds: decides which owner pages are drawn. */
+  permissions?: string[]
 }) {
   const pathname = usePathname()
 
@@ -100,9 +100,23 @@ function AppSidebar({
   // Filtered rather than dimmed or disabled. A greyed-out menu item invites
   // somebody to work out how to earn it, and here there is nothing to earn:
   // Management comes with being an administrator or not at all.
-  const sections = navSections.filter(
-    (section) => (isAdmin || !section.adminOnly) && (isOwner || !section.ownerOnly)
-  )
+  const holds = (needed?: string) => !needed || permissions.includes(needed)
+  const sections = navSections
+    .filter((section) => isAdmin || !section.adminOnly)
+    // Owner pages: each item only for someone holding its permission, and a
+    // menu only while one of its pages is left (Configuration → Brands…).
+    .map((section) =>
+      section.ownerOnly
+        ? {
+            ...section,
+            items: section.items
+              .filter((item) => holds(item.permission))
+              .map((item) => (item.items ? { ...item, items: item.items.filter((sub) => holds(sub.permission)) } : item))
+              .filter((item) => !item.items || item.items.length > 0),
+          }
+        : section
+    )
+    .filter((section) => section.items.length > 0)
 
   // One menu entry: a plain link, or a group that opens to show its pages.
   // Used by the scrolling menu and by the pinned Settings block alike, so

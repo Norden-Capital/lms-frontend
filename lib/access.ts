@@ -60,7 +60,24 @@ export function roleGrantsEverything(
   roleKey: string,
   groups: PermissionGroup[]
 ): boolean {
-  return permissionsForRole(roles, roleKey).length === allPermissions(groups).length
+  // Owner pages left out (2026-11-14): an administrator does not hold them
+  // until the Owner gives them, and is still an "everything" role for the rest.
+  const normal = new Set(allPermissions(normalGroups(groups)))
+  return permissionsForRole(roles, roleKey).filter((p) => normal.has(p)).length === normal.size
+}
+
+/** Every group without its owner pages. */
+export function normalGroups(groups: PermissionGroup[]): PermissionGroup[] {
+  return groups
+    .map((group) => ({ ...group, modules: group.modules.filter((entry) => !entry.ownerOnly) }))
+    .filter((group) => group.modules.length > 0)
+}
+
+/** Only the owner pages, in their own group(s). */
+export function ownerGroups(groups: PermissionGroup[]): PermissionGroup[] {
+  return groups
+    .map((group) => ({ ...group, modules: group.modules.filter((entry) => entry.ownerOnly) }))
+    .filter((group) => group.modules.length > 0)
 }
 
 /**
@@ -99,10 +116,11 @@ export function grantableGroups(
 ): PermissionGroup[] {
   if (isAdmin) return groups
 
+  // Owner pages are never offered for a member either (2026-11-14).
   return groups
     .map((group) => ({
       ...group,
-      modules: group.modules.filter((entry) => !entry.adminOnly),
+      modules: group.modules.filter((entry) => !entry.adminOnly && !entry.ownerOnly),
     }))
     .filter((group) => group.modules.length > 0)
 }

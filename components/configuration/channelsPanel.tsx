@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Check, Copy, Globe, LoaderCircle, Megaphone, Plus } from "lucide-react"
 import { toast } from "sonner"
 
+import { useHolds } from "@/components/access/heldPermissions"
 import { addChannel } from "@/app/(app)/configuration/channels/actions"
 import { Panel } from "@/components/system/panel"
 import { BrandLogo } from "@/components/ui/brandLogo"
@@ -51,6 +52,7 @@ function ChannelsPanel({
   brands: Brand[]
   applies: ChannelApplies
 }) {
+  const canAdd = useHolds("CHANNEL_SETUP:CREATE")
   const sorted = [...channels].sort((a, b) => channelLabel(a).localeCompare(channelLabel(b)))
   const [picked, setPicked] = useState<string>(sorted[0] ?? SEO)
   // A channel removed or renamed elsewhere falls back to the first one.
@@ -92,7 +94,7 @@ function ChannelsPanel({
                 </TabsTrigger>
               </TabsList>
             </div>
-            <AddChannel onAdded={open} />
+            {canAdd && <AddChannel onAdded={open} />}
           </div>
         }
         // Fills the page down to the warning; the table scrolls inside.

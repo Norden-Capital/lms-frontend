@@ -6,7 +6,6 @@ import { ErrorState } from "@/components/error/errorState"
 import { SeoWorkspace } from "@/components/seo/seoWorkspace"
 import { Button } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth"
-import { OWNER } from "@/lib/roles"
 import { getSeoBrands, getSeoOverview } from "@/lib/seo"
 import type { SeoQuery } from "@/lib/seoTypes"
 
@@ -48,7 +47,7 @@ export default async function SeoOverviewPage({ searchParams }: { searchParams: 
         className="min-h-0 flex-1"
         size="sm"
       >
-        {user.role === OWNER && (
+        {user.permissions.includes("BRAND:UPDATE") && (
           <Button size="sm" variant="outline" render={<Link href="/configuration/brands" />}>
             Go to Brands
           </Button>

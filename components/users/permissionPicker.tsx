@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAccess } from "@/components/access/accessProvider"
 import { grantableGroups } from "@/lib/access"
-import type { PermissionModule } from "@/lib/userTypes"
+import type { PermissionGroup, PermissionModule } from "@/lib/userTypes"
 import { cn } from "@/lib/utils"
 
 /**
@@ -65,10 +65,19 @@ function PermissionPicker({
   role,
   value,
   onChange,
+  groups: shownGroups,
+  locked,
 }: {
   role: string
   value: Set<string>
   onChange: (next: Set<string>) => void
+  /** The sections to draw. Left out: everything this role may be given. */
+  groups?: PermissionGroup[]
+  /**
+   * Sections drawn ticked and fixed — an administrator's normal pages, which
+   * nobody can take away (2026-11-14). Their boxes cannot be changed.
+   */
+  locked?: (group: PermissionGroup) => boolean
 }) {
   const access = useAccess()
 
@@ -82,7 +91,7 @@ function PermissionPicker({
   //
   // Asked as "does this role already hold everything" rather than checking for
   // ADMIN, so it keeps working if the roles change shape.
-  const groups = grantableGroups(access.groups, access.roleGrantsEverything(role))
+  const groups = shownGroups ?? grantableGroups(access.groups, access.roleGrantsEverything(role))
 
   function toggle(resource: PermissionModule, action: string, checked: boolean) {
     const next = new Set(value)
@@ -141,6 +150,7 @@ function PermissionPicker({
       </div>
 
       {groups.map((group) => {
+        const fixed = locked?.(group) ?? false
         const total = group.modules.reduce(
           (sum, resource) => sum + resource.actions.length,
           0,
@@ -178,14 +188,18 @@ function PermissionPicker({
                 {/* One switch for the whole section. Granting a person the three
                     Overview dashboards is six ticks otherwise, and six ticks is
                     where people start missing one. */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => toggleGroup(group.modules, held < total)}
-                >
-                  {held < total ? "Select all" : "Clear"}
-                </Button>
+                {fixed ? (
+                  <span className="text-xs text-muted-foreground">Every admin has these</span>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => toggleGroup(group.modules, held < total)}
+                  >
+                    {held < total ? "Select all" : "Clear"}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -227,21 +241,23 @@ function PermissionPicker({
                         // it does. Marked so nobody has to hold the role's
                         // contents in their head to see what they changed.
                         const isException = checked !== fromRole
-                        const locked = action !== VIEW_ACTION && !unlocked
+                        const blocked = fixed || (action !== VIEW_ACTION && !unlocked)
 
                         return (
                           <label
                             key={permission}
                             className={cn(
                               "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors select-none",
-                              locked
-                                ? "cursor-not-allowed opacity-50"
-                                : "cursor-pointer hover:bg-muted/50",
+                              fixed
+                                ? "cursor-default"
+                                : blocked
+                                  ? "cursor-not-allowed opacity-50"
+                                  : "cursor-pointer hover:bg-muted/50",
                             )}
                           >
                             <Checkbox
                               checked={checked}
-                              disabled={locked}
+                              disabled={blocked}
                               onCheckedChange={(next) =>
                                 toggle(resource, action, next)
                               }
@@ -277,7 +293,7 @@ function PermissionPicker({
 
                     {/* Says why the other rows just went grey. Disabled controls
                         with no account of themselves read as a fault. */}
-                    {!unlocked && (
+                    {!unlocked && !fixed && (
                       <p className="px-2 text-xs text-muted-foreground">
                         Turn on <span className="font-medium">read</span> first.
                       </p>

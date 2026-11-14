@@ -13,6 +13,7 @@ import {
   setBrandGa4,
   updateBrand,
 } from "@/app/(app)/configuration/brands/actions"
+import { useHolds } from "@/components/access/heldPermissions"
 import { QuarterSparkline } from "@/components/charts/quarterSparkline"
 import { Panel } from "@/components/system/panel"
 import { PageFooter, usePage } from "@/components/ui/pageFooter"
@@ -72,6 +73,7 @@ const COLUMNS: { key: keyof typeof SORT; label: string; className?: string }[] =
 ]
 
 function BrandsPanel({ brands }: { brands: Brand[] }) {
+  const canAdd = useHolds("BRAND:CREATE")
   const [removing, setRemoving] = useState<Brand | null>(null)
   const { sorted, head } = useSort(brands, SORT)
   const [wanted, setPage] = useState(1)
@@ -86,7 +88,7 @@ function BrandsPanel({ brands }: { brands: Brand[] }) {
           in Gmail to send replies.
         </>
       }
-      action={<AddBrand />}
+      action={canAdd ? <AddBrand /> : undefined}
       // The page never scrolls: the warning stays at the bottom and the table
       // scrolls inside this card when it is taller than the room left.
       // Fills the page down to the warning, even with few brands, like Channels.
@@ -207,6 +209,7 @@ function EditableText({
   onSave: (next: string) => Promise<{ ok?: boolean; message?: string }>
 }) {
   const router = useRouter()
+  const canEdit = useHolds("BRAND:UPDATE")
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(value)
   const [pending, start] = useTransition()
@@ -234,6 +237,9 @@ function EditableText({
       router.refresh()
     })
   }
+
+  // Without BRAND:UPDATE (an administrator given only read): plain text.
+  if (!canEdit) return <span className="truncate">{value}</span>
 
   // The text always keeps its place; while editing it is only hidden, and the
   // input is laid over it. The cell keeps the text's size, so nothing in the
@@ -288,6 +294,8 @@ function EditableText({
 
 function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
   const router = useRouter()
+  const canEdit = useHolds("BRAND:UPDATE")
+  const canRemove = useHolds("BRAND:DELETE")
   const [active, setActive] = useState(brand.active)
   const [busy, setBusy] = useState<"refresh" | "active" | null>(null)
   const [, start] = useTransition()
@@ -371,7 +379,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
             <Switch
               size="sm"
               checked={active}
-              disabled={busy === "active"}
+              disabled={!canEdit || busy === "active"}
               onCheckedChange={toggle}
               aria-label={active ? `Switch ${brand.name} off` : `Switch ${brand.name} on`}
             />
@@ -381,6 +389,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
       </td>
       <td className="py-2.5 pr-4">
         <span className="flex items-center justify-end gap-1">
+          {canEdit && (
           <Tooltip>
             <TooltipTrigger
               render={
@@ -397,6 +406,8 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
             </TooltipTrigger>
             <TooltipContent>Get the name and logo again</TooltipContent>
           </Tooltip>
+          )}
+          {canRemove && (
           <Tooltip>
             <TooltipTrigger
               render={
@@ -407,6 +418,7 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
             </TooltipTrigger>
             <TooltipContent>Remove this brand</TooltipContent>
           </Tooltip>
+          )}
         </span>
       </td>
     </tr>

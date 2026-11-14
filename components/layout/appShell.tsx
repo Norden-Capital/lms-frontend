@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react"
 
 import { AppNavbar } from "@/components/layout/appNavbar"
+import { HeldPermissions } from "@/components/access/heldPermissions"
 import { AppSidebar } from "@/components/layout/appSidebar"
 import { SidebarTrigger } from "@/components/layout/sidebarTrigger"
 import { cn } from "@/lib/utils"
@@ -40,7 +41,7 @@ function AppShell({
   identity,
   avatar,
   isAdmin = false,
-  isOwner = false,
+  permissions = [],
   canOpenInbox = false,
 }: {
   children: React.ReactNode
@@ -55,8 +56,8 @@ function AppShell({
    * signed in, which is what lets it stay a Client Component.
    */
   isAdmin?: boolean
-  /** Whether to draw the Owner's Platform section. Same source as isAdmin. */
-  isOwner?: boolean
+  /** What the account holds: decides which owner pages the sidebar draws. */
+  permissions?: string[]
   /**
    * Whether to draw the inbox button in the navbar.
    *
@@ -103,6 +104,7 @@ function AppShell({
     // grows, so the page as a whole cannot scroll. Navbar, sidebar and footer
     // stay put, and whatever needs to scroll does it inside the content row
     // below. overflow-hidden is what enforces that rather than merely asking.
+    <HeldPermissions permissions={permissions}>
     <div className="flex h-svh overflow-hidden">
       <AppSidebar
         open={shown}
@@ -116,7 +118,7 @@ function AppShell({
         onNavigate={() => setPhoneOpen(false)}
         identity={identity}
         isAdmin={isAdmin}
-        isOwner={isOwner}
+        permissions={permissions}
       />
 
       {/* On a phone, behind the open sidebar: a tap outside it closes it. */}
@@ -172,6 +174,7 @@ function AppShell({
         </footer>
       </main>
     </div>
+    </HeldPermissions>
   )
 }
 

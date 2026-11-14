@@ -9,7 +9,7 @@ import { BackupLog } from "@/components/backups/backupLog"
 import { BackupSummary } from "@/components/backups/backupSummary"
 import { BackupYear } from "@/components/backups/backupYear"
 import { PageHeader } from "@/components/layout/pageHeader"
-import { requireUser } from "@/lib/auth"
+import { requirePermission } from "@/lib/auth"
 import { getBackupStatus } from "@/lib/backups"
 import type { BackupQuery } from "@/lib/backupTypes"
 
@@ -48,7 +48,7 @@ export default async function BackupsPage({
   /** The log's sort and the chart's year. Both write here and read from here. */
   searchParams: Promise<BackupQuery>
 }) {
-  await requireUser()
+  await requirePermission("BACKUP:READ")
 
   const query = await searchParams
 

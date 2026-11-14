@@ -6,6 +6,7 @@ import { DatabaseBackup, Download, LoaderCircle, RotateCw, Trash2 } from "lucide
 import { toast } from "sonner"
 
 import { backupDownloadLink, deleteBackup, startBackup } from "@/app/(app)/backups/actions"
+import { useHolds } from "@/components/access/heldPermissions"
 import { DialogHead, Refusal } from "@/components/users/userActionDialogs"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +30,9 @@ function BackUpNowButton({ running }: { running: boolean }) {
   const router = useRouter()
   const [pending, start] = useTransition()
   const busy = pending || running
+  const canCreate = useHolds("BACKUP:CREATE")
+
+  if (!canCreate) return null
 
   return (
     <Button
@@ -99,6 +103,8 @@ const ACTION_BUTTON =
  * misplaced click lands on the harmless one.
  */
 function RowActions({ run }: { run: BackupRun }) {
+  const canDownload = useHolds("BACKUP:DOWNLOAD")
+  const canDelete = useHolds("BACKUP:DELETE")
   const [downloading, startDownload] = useTransition()
   const [confirming, setConfirming] = useState(false)
 
@@ -119,6 +125,7 @@ function RowActions({ run }: { run: BackupRun }) {
 
   return (
     <span className="flex items-center justify-end gap-1">
+      {canDownload && (
       <button
         type="button"
         disabled={!run.downloadable || downloading}
@@ -133,6 +140,8 @@ function RowActions({ run }: { run: BackupRun }) {
           <Download className="size-3.5" />
         )}
       </button>
+      )}
+      {canDelete && (
       <button
         type="button"
         disabled={!run.downloadable}
@@ -143,6 +152,7 @@ function RowActions({ run }: { run: BackupRun }) {
       >
         <Trash2 className="size-3.5" />
       </button>
+      )}
 
       <DeleteBackupDialog run={run} open={confirming} onOpenChange={setConfirming} />
     </span>

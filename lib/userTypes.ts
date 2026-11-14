@@ -86,6 +86,11 @@ export type PermissionModule = {
    * them for a member — the API refuses to grant them individually.
    */
   adminOnly: boolean
+  /**
+   * An owner page (Brands, Backups…). Only the Owner may give these, and only
+   * to an administrator — never to a member. Since 2026-11-14.
+   */
+  ownerOnly: boolean
   /** Read first, then the rest. */
   actions: string[]
 }

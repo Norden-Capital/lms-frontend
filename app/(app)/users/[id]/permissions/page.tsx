@@ -8,6 +8,7 @@ import {
 } from "@/components/roles/userPermissionEditor"
 import { Button } from "@/components/ui/button"
 import { requireUser } from "@/lib/auth"
+import { ADMIN, OWNER } from "@/lib/roles"
 import { getUser } from "@/lib/users"
 
 export const metadata: Metadata = {
@@ -32,7 +33,7 @@ export default async function UserPermissionsPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await requireUser()
+  const me = await requireUser()
 
   const { id } = await params
   const result = await getUser(id)
@@ -43,6 +44,10 @@ export default async function UserPermissionsPage({
   }
 
   const user = result.data
+
+  // Nothing to save: the Owner's account, or an administrator's when the
+  // viewer is not the Owner — only the Owner gives owner pages (2026-11-14).
+  const readOnly = user.role === OWNER || (user.role === ADMIN && me.role !== OWNER)
 
   return (
     // min-h-0 alongside h-full: a flex child's minimum is its content by default,
@@ -60,7 +65,7 @@ export default async function UserPermissionsPage({
         backHref={`/users/${user.id}`}
         backLabel="Back to this account"
         actions={
-          <Button type="submit" form={PERMISSIONS_FORM_ID} className="rounded-md">
+          <Button type="submit" form={PERMISSIONS_FORM_ID} className="rounded-md" disabled={readOnly}>
             Save permissions
           </Button>
         }

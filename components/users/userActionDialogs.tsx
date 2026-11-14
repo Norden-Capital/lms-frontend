@@ -418,11 +418,12 @@ function canChangeRole(user: { role: string }, viewerIsOwner: boolean) {
 }
 
 /**
- * Per-person permission exceptions exist for members only: an administrator or
- * the Owner already holds everything.
+ * Per-person permission exceptions exist for members. For an administrator,
+ * only the Owner may open the screen, to give owner pages (2026-11-14). The
+ * Owner already holds everything.
  */
-function canChangePermissions(user: { role: string }) {
-  return !isPrivileged(user.role)
+function canChangePermissions(user: { role: string }, viewerIsOwner = false) {
+  return !isPrivileged(user.role) || (user.role === ADMIN && viewerIsOwner)
 }
 
 /**

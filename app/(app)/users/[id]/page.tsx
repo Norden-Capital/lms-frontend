@@ -4,7 +4,6 @@ import { notFound } from "next/navigation"
 import { UserDetail } from "@/components/users/userDetail"
 import { getSignIns, listActionLog } from "@/lib/actionLog"
 import { requireUser } from "@/lib/auth"
-import { OWNER } from "@/lib/roles"
 import { getUser } from "@/lib/users"
 
 export const metadata: Metadata = {
@@ -45,9 +44,10 @@ export default async function UserDetailPage({
     throw new Error(result.error.message)
   }
 
-  // Their activity, from the action log — which only the Owner may read.
-  const isOwner = me.role === OWNER
-  const [log, signInLog] = isOwner
+  // Their activity, from the action log — for whoever may read it: the Owner,
+  // or an administrator given Action Log (owner pages, 2026-11-14).
+  const canReadLog = me.permissions.includes("ACTION_LOG:READ")
+  const [log, signInLog] = canReadLog
     ? await Promise.all([listActionLog({ user: id, size: "50" }), getSignIns(id)])
     : [null, null]
   const activity = log?.ok ? log.data.content : undefined
@@ -64,7 +64,7 @@ export default async function UserDetailPage({
         activity={activity}
         signIns={signIns}
         thisYear={new Date().getFullYear()}
-        activityHidden={!isOwner}
+        activityHidden={!canReadLog}
       />
     </div>
   )

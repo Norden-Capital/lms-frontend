@@ -304,7 +304,7 @@ function UserDetail({
     tone: "text-muted-foreground",
   }
 
-  const canChangeTheirPermissions = !isSelf && canEdit && canChangePermissions(user)
+  const canChangeTheirPermissions = !isSelf && canEdit && canChangePermissions(user, access.viewerIsOwner)
 
   // Up in the header row, beside the title — decided 2026-10-19. While
   // editing, Cancel and Save take Edit details' place.

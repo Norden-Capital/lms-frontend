@@ -152,7 +152,7 @@ function UserRowActions({ user }: { user: UserRow }) {
   // An administrator looking at another administrator's row can only view it.
   const manage = canManage(user, viewerIsOwner)
   const role = canChangeRole(user, viewerIsOwner)
-  const permissions = manage && canChangePermissions(user)
+  const permissions = manage && canChangePermissions(user, viewerIsOwner)
 
   return (
     <>

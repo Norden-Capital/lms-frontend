@@ -5,7 +5,7 @@ import { ShieldAlert } from "lucide-react"
 import { BrandWarnings } from "@/components/configuration/brandWarnings"
 import { BrandsPanel } from "@/components/configuration/brandsPanel"
 import { PageHeader } from "@/components/layout/pageHeader"
-import { requireUser } from "@/lib/auth"
+import { requirePermission } from "@/lib/auth"
 import { listBrands } from "@/lib/brands"
 import { getSeoRobot } from "@/lib/seo"
 
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
  * middleware's `OWNER_ONLY`; the backend refuses anybody else too.
  */
 export default async function BrandsPage() {
-  await requireUser()
+  await requirePermission("BRAND:READ")
 
   const [brands, robotEmail] = await Promise.all([listBrands(), getSeoRobot()])
   if (!brands.ok && brands.error.status === 403) forbidden()

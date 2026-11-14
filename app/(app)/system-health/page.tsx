@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 
 import { PageHeader } from "@/components/layout/pageHeader"
 import { SystemOverview } from "@/components/system/systemOverview"
-import { requireUser } from "@/lib/auth"
+import { requirePermission } from "@/lib/auth"
 import { getSystemHealth } from "@/lib/system"
 
 export const metadata: Metadata = {
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
  * want history, because its slope matters more than its value.
  */
 export default async function SystemHealthPage() {
-  await requireUser()
+  await requirePermission("SYSTEM_HEALTH:READ")
 
   // Fetched once here so the first paint already has real figures rather than a
   // spinner that resolves a moment later. The polling that keeps it live takes

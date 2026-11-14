@@ -13,6 +13,8 @@ import {
 export type NavSubItem = {
   title: string
   href: string
+  /** Shown only to someone holding this — the owner pages, since 2026-11-14. */
+  permission?: string
 }
 
 export type NavItem = {
@@ -21,6 +23,8 @@ export type NavItem = {
   icon: React.ComponentType<{ className?: string }>
   /** Present on items that expand into a sub-list. */
   items?: NavSubItem[]
+  /** Shown only to someone holding this — the owner pages, since 2026-11-14. */
+  permission?: string
 }
 
 export type NavSection = {
@@ -38,7 +42,11 @@ export type NavSection = {
    * backend refuses the request; this only decides what to draw.
    */
   adminOnly?: boolean
-  /** Drawn for the Owner and nobody else — see the Platform section. */
+  /**
+   * The owner pages. Each item names the permission it needs: the Owner holds
+   * them all, and can give some to an administrator (2026-11-14). The section
+   * is drawn when at least one of its items is.
+   */
   ownerOnly?: boolean
 }
 
@@ -99,8 +107,8 @@ export const navSections: NavSection[] = [
     ],
   },
   {
-    // The Owner's alone — decided 2026-10-19. What happened on the platform
-    // and the machine it runs on are not things administrators see.
+    // The Owner's — decided 2026-10-19. Since 2026-11-14 the Owner can give an
+    // administrator some of these, page by page (see ownerOnly).
     title: "Platform",
     ownerOnly: true,
     items: [
@@ -110,13 +118,13 @@ export const navSections: NavSection[] = [
         href: "/configuration",
         icon: SlidersHorizontal,
         items: [
-          { title: "Brands", href: "/configuration/brands" },
-          { title: "Channels", href: "/configuration/channels" },
+          { title: "Brands", href: "/configuration/brands", permission: "BRAND:READ" },
+          { title: "Channels", href: "/configuration/channels", permission: "CHANNEL_SETUP:READ" },
         ],
       },
-      { title: "System Health", href: "/system-health", icon: HardDrive },
-      { title: "Backups", href: "/backups", icon: DatabaseBackup },
-      { title: "Action Log", href: "/action-log", icon: ScrollText },
+      { title: "System Health", href: "/system-health", icon: HardDrive, permission: "SYSTEM_HEALTH:READ" },
+      { title: "Backups", href: "/backups", icon: DatabaseBackup, permission: "BACKUP:READ" },
+      { title: "Action Log", href: "/action-log", icon: ScrollText, permission: "ACTION_LOG:READ" },
     ],
   },
 ]

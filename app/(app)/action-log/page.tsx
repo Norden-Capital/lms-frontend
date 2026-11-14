@@ -6,7 +6,7 @@ import { ActionLogTable } from "@/components/actionLog/actionLogTable"
 import { PageHeader } from "@/components/layout/pageHeader"
 import { listActionLog } from "@/lib/actionLog"
 import type { ActionLogQuery } from "@/lib/actionLogTypes"
-import { requireUser } from "@/lib/auth"
+import { requirePermission } from "@/lib/auth"
 
 export const metadata: Metadata = {
   title: "Action Log",
@@ -22,7 +22,7 @@ export default async function ActionLogPage({
 }: {
   searchParams: Promise<ActionLogQuery>
 }) {
-  await requireUser()
+  await requirePermission("ACTION_LOG:READ")
 
   const query = await searchParams
   const result = await listActionLog(query)

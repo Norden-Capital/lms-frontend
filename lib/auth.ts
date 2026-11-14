@@ -1,7 +1,7 @@
 import "server-only"
 
 import { cache } from "react"
-import { redirect } from "next/navigation"
+import { forbidden, redirect } from "next/navigation"
 
 import { apiFetch, type ApiResult } from "@/lib/api"
 import type { Appearance } from "@/lib/appearance"
@@ -105,6 +105,18 @@ export async function requireUser(): Promise<SessionUser> {
   }
 
   throw new Error(`Could not load the signed-in user: ${result.error.message}`)
+}
+
+/**
+ * Signed in and holding this permission, or the no-access screen. For the
+ * owner pages (Brands, Backups…), which the Owner can give to an administrator
+ * since 2026-11-14 — so the role alone no longer decides. The backend checks
+ * the same permission on every request.
+ */
+export async function requirePermission(permission: string): Promise<SessionUser> {
+  const user = await requireUser()
+  if (!user.permissions.includes(permission)) forbidden()
+  return user
 }
 
 /**

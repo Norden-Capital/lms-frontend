@@ -1,14 +1,16 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { CircleAlert, CircleCheck } from "lucide-react"
+import { CircleAlert, CircleCheck, Info } from "lucide-react"
 
 import { setUserPermissions } from "@/app/(app)/users/actions"
 import { useAccess } from "@/components/access/accessProvider"
 import { PermissionPicker } from "@/components/users/permissionPicker"
 import { TopBanner } from "@/components/ui/topBanner"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
-import type { UserDetail } from "@/lib/userTypes"
+import { normalGroups } from "@/lib/access"
+import { OWNER } from "@/lib/roles"
+import type { PermissionGroup, UserDetail } from "@/lib/userTypes"
 import { cn } from "@/lib/utils"
 
 /**
@@ -58,20 +60,25 @@ function UserPermissionEditor({ user }: { user: UserDetail }) {
     })
   }
 
-  // An administrator has everything by definition. A grid of ticked boxes is not
-  // a decision, and leaving it there invites somebody to untick one — which is a
-  // per-person hole in an administrator, and precisely the kind of thing nobody
-  // finds again.
-  if (access.roleGrantsEverything(user.role)) {
-    return (
-      <TopBanner message="Admins have every permission. Change the role to Member to give less." />
-    )
+  // The Owner has everything and is never edited here.
+  if (user.role === OWNER) {
+    return <TopBanner message="The Owner has every permission." />
   }
+
+  // An administrator (changed 2026-11-14): every normal page is shown ticked
+  // and fixed — nothing can be taken away from them. Below it, the owner pages,
+  // which only the Owner may give. Anybody else sees the fixed part only.
+  const isAdmin = access.roleGrantsEverything(user.role)
+  const canGiveOwnerPages = isAdmin && access.viewerIsOwner
+  const groups = isAdmin ? (canGiveOwnerPages ? access.groups : normalGroups(access.groups)) : undefined
+  const locked = isAdmin
+    ? (group: PermissionGroup) => !group.modules.some((entry) => entry.ownerOnly)
+    : undefined
 
   return (
     <form
       id={PERMISSIONS_FORM_ID}
-      onSubmit={save}
+      onSubmit={(event) => (isAdmin && !canGiveOwnerPages ? event.preventDefault() : save(event))}
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-2",
         THIN_SCROLLBAR
@@ -97,6 +104,15 @@ function UserPermissionEditor({ user }: { user: UserDetail }) {
         </p>
       )}
 
+      {isAdmin && (
+        <p className="flex shrink-0 items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <Info className="size-4 shrink-0" aria-hidden />
+          {canGiveOwnerPages
+            ? "Admins have every normal page. Pick what they can do on the owner pages."
+            : "Admins have every normal page. Only the owner can give owner pages."}
+        </p>
+      )}
+
       {/* Said here rather than only on the button, because the button is at the
           top of the page and this is where somebody is looking while deciding. */}
       {changed > 0 && !pending && (
@@ -113,6 +129,8 @@ function UserPermissionEditor({ user }: { user: UserDetail }) {
           role={user.role}
           value={permissions}
           onChange={setPermissions}
+          groups={groups}
+          locked={locked}
         />
       </fieldset>
     </form>
