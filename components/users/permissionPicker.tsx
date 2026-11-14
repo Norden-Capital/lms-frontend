@@ -1,6 +1,6 @@
 "use client"
 
-import { RotateCcw } from "lucide-react"
+import { Lock, RotateCcw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -177,7 +177,8 @@ function PermissionPicker({
                 outer layer. px-3 puts its text on the same left edge as the
                 text inside the white cards below. */}
             <div className="flex items-center justify-between gap-3 px-3 py-2">
-              <h3 className="font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
+              <h3 className="flex items-center gap-1.5 font-mono text-[0.7rem] font-medium tracking-wider text-muted-foreground uppercase">
+                {fixed && <Lock className="size-3 shrink-0" aria-hidden />}
                 {group.label}
               </h3>
 
@@ -189,7 +190,12 @@ function PermissionPicker({
                     Overview dashboards is six ticks otherwise, and six ticks is
                     where people start missing one. */}
                 {fixed ? (
-                  <span className="text-xs text-muted-foreground">Every admin has these</span>
+                  // Locked on purpose: nobody, the Owner included, can take
+                  // these from an administrator. The look says so (2026-11-14).
+                  <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                    <Lock className="size-3 shrink-0" aria-hidden />
+                    Locked · every admin has these
+                  </span>
                 ) : (
                   <Button
                     type="button"
@@ -213,10 +219,13 @@ function PermissionPicker({
                 return (
                   <div
                     key={resource.key}
-                    className="flex flex-col gap-2 rounded-sm border bg-card px-3 py-2.5"
+                    className={cn(
+                      "flex flex-col gap-2 rounded-sm border px-3 py-2.5",
+                      fixed ? "border-dashed bg-transparent" : "bg-card",
+                    )}
                   >
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">
+                      <span className={cn("text-sm font-medium", fixed && "text-muted-foreground")}>
                         {resource.label}
                       </span>
                       <span className="text-xs text-muted-foreground">
@@ -249,7 +258,7 @@ function PermissionPicker({
                             className={cn(
                               "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors select-none",
                               fixed
-                                ? "cursor-default"
+                                ? "cursor-not-allowed"
                                 : blocked
                                   ? "cursor-not-allowed opacity-50"
                                   : "cursor-pointer hover:bg-muted/50",
@@ -258,6 +267,10 @@ function PermissionPicker({
                             <Checkbox
                               checked={checked}
                               disabled={blocked}
+                              className={cn(
+                                fixed &&
+                                  "opacity-100 data-checked:border-muted-foreground/30 data-checked:bg-muted-foreground/30 dark:data-checked:bg-muted-foreground/30",
+                              )}
                               onCheckedChange={(next) =>
                                 toggle(resource, action, next)
                               }
@@ -266,7 +279,7 @@ function PermissionPicker({
                             <span
                               className={cn(
                                 "capitalize",
-                                !checked && "text-muted-foreground",
+                                (!checked || fixed) && "text-muted-foreground",
                               )}
                             >
                               {action.toLowerCase()}
