@@ -30,7 +30,7 @@ function BrandWarnings({ robotEmail: fromServer }: { robotEmail: string | null }
     <WarningBox storageKey="brand-warning" title="Before a brand works">
       <ul className="mt-1 flex list-disc flex-col gap-1.5 pl-4">
         <li>
-          <b>Google Analytics:</b> add this email as a <b>Viewer</b>{" "}in
+          <b>Google Analytics:</b>{" "}add this email as a <b>Viewer</b>{" "}in
           each brand&apos;s Google Analytics.
           If not, the SEO page shows nothing, even with the ID filled in.
           <button
@@ -44,12 +44,12 @@ function BrandWarnings({ robotEmail: fromServer }: { robotEmail: string | null }
           </button>
         </li>
         <li>
-          <b>Gmail:</b> add each brand&apos;s email in the inbox Gmail, under{" "}
+          <b>Gmail:</b>{" "}add each brand&apos;s email in the inbox Gmail, under{" "}
           <b>Settings → Accounts → Send mail as</b>. If not, replies are sent from the Gmail address
           instead.
         </li>
         <li>
-          <b>Unsubscribe:</b> each website needs its own brand with the exact address (.ca, .online, .xyz). If
+          <b>Unsubscribe:</b>{" "}each website needs its own brand with the exact address (.ca, .online, .xyz). If
           not, its /unsubscribe page doesn&apos;t work.
         </li>
       </ul>
