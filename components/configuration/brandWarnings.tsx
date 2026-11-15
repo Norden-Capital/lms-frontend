@@ -48,6 +48,10 @@ function BrandWarnings({ robotEmail: fromServer }: { robotEmail: string | null }
           <b>Settings → Accounts → Send mail as</b>. If not, replies are sent from the Gmail address
           instead.
         </li>
+        <li>
+          <b>Unsubscribe:</b> each website needs its own brand with the exact address (.ca, .online, .xyz). If
+          not, its /unsubscribe page doesn&apos;t work.
+        </li>
       </ul>
     </WarningBox>
   )
