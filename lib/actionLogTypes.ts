@@ -83,6 +83,7 @@ export const ACTION_TYPES: Record<string, { label: string; tone: "neutral" | "go
   CHANNEL_REMOVED: { label: "Channel removed", tone: "warn" },
   MAILBOX_CONNECTED: { label: "Mailbox connected", tone: "neutral" },
   MAILBOX_DISCONNECTED: { label: "Mailbox disconnected", tone: "warn" },
+  UNSUBSCRIBES_EXPORTED: { label: "Unsubscribes exported", tone: "warn" },
 }
 
 export function actionLabel(action: string) {

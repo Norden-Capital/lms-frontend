@@ -103,19 +103,16 @@ function AppSidebar({
   const holds = (needed?: string) => !needed || permissions.includes(needed)
   const sections = navSections
     .filter((section) => isAdmin || !section.adminOnly)
-    // Owner pages: each item only for someone holding its permission, and a
-    // menu only while one of its pages is left (Configuration → Brands…).
-    .map((section) =>
-      section.ownerOnly
-        ? {
-            ...section,
-            items: section.items
-              .filter((item) => holds(item.permission))
-              .map((item) => (item.items ? { ...item, items: item.items.filter((sub) => holds(sub.permission)) } : item))
-              .filter((item) => !item.items || item.items.length > 0),
-          }
-        : section
-    )
+    // Each item only for someone holding its permission, and a menu only
+    // while one of its pages is left (Configuration → Brands…). Every section
+    // since 2026-11-15, when Leads got Unsubscribes (UNSUBSCRIBE:READ).
+    .map((section) => ({
+      ...section,
+      items: section.items
+        .filter((item) => holds(item.permission))
+        .map((item) => (item.items ? { ...item, items: item.items.filter((sub) => holds(sub.permission)) } : item))
+        .filter((item) => !item.items || item.items.length > 0),
+    }))
     .filter((section) => section.items.length > 0)
 
   // One menu entry: a plain link, or a group that opens to show its pages.

@@ -1,3 +1,5 @@
+import type { ClientUnsubscribe } from "@/lib/unsubscribeTypes"
+
 /**
  * Clients and applications: the shapes and words, shared by the pages (server)
  * and their tables (client). Mirrors the backend's ApplicationDtos.
@@ -77,6 +79,8 @@ export type ClientDetail = {
   createdAt: string
   /** Newest first. */
   applications: ApplicationDetail[]
+  /** Brands this person asked to stop emailing them. Added 2026-11-15. */
+  unsubscribes?: ClientUnsubscribe[]
 }
 
 export type BrandOption = { id: string; name: string; domain: string; logoUrl: string | null }

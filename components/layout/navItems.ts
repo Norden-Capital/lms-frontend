@@ -3,6 +3,7 @@ import {
   HardDrive,
   LayoutDashboard,
   LifeBuoy,
+  MailX,
   ScrollText,
   Settings,
   SlidersHorizontal,
@@ -92,6 +93,8 @@ export const navSections: NavSection[] = [
           { title: "Failed", href: "/customers/failed" },
         ],
       },
+      // People who asked a brand site to stop emailing them — added 2026-11-15.
+      { title: "Unsubscribes", href: "/unsubscribes", icon: MailX, permission: "UNSUBSCRIBE:READ" },
     ],
   },
   {

@@ -44,34 +44,12 @@ export async function apiFetch<T>(
   const { authenticated, headers, ...rest } = init
   const requestHeaders = new Headers(headers)
   requestHeaders.set("Content-Type", "application/json")
-
-  // The visitor's own address, for the backend's rate limits and action log —
-  // decided 2026-10-19. Every call arrives from this server, so without it the
-  // backend would see the same few Vercel addresses for everybody. The shared
-  // secret is what makes the backend believe the header; without it the header
-  // is ignored, as it should be from anybody else.
-  const proxySecret = process.env.PROXY_SECRET
-  if (proxySecret) {
-    const visitor = await visitorAddress()
-    if (visitor) {
-      requestHeaders.set("X-Client-IP", visitor)
-      requestHeaders.set("X-Proxy-Secret", proxySecret)
+  const signedIn = await addBackendHeaders(requestHeaders, Boolean(authenticated))
+  if (!signedIn) {
+    return {
+      ok: false,
+      error: { status: 401, error: "Unauthorized", message: "Not signed in." },
     }
-    // The browser's description, so Settings can say "Chrome on Windows" for
-    // each session — added 2026-10-26. Believed under the same secret.
-    const agent = await visitorAgent()
-    if (agent) requestHeaders.set("X-Client-Agent", agent.slice(0, 400))
-  }
-
-  if (authenticated) {
-    const token = await getSessionToken()
-    if (!token) {
-      return {
-        ok: false,
-        error: { status: 401, error: "Unauthorized", message: "Not signed in." },
-      }
-    }
-    requestHeaders.set("Authorization", `Bearer ${token}`)
   }
 
   let response: Response
@@ -110,6 +88,50 @@ export async function apiFetch<T>(
   }
 
   return { ok: true, data: parsed as T }
+}
+
+/**
+ * A file the backend builds itself (the unsubscribes CSV), passed on as it is.
+ * Same headers as apiFetch, so the action log gets the visitor's address.
+ * Null when the backend cannot be reached or nobody is signed in.
+ */
+export async function apiDownload(path: string): Promise<Response | null> {
+  if (!BACKEND_URL) return null
+  const requestHeaders = new Headers()
+  if (!(await addBackendHeaders(requestHeaders, true))) return null
+  try {
+    return await fetch(`${BACKEND_URL}${path}`, { headers: requestHeaders, cache: "no-store" })
+  } catch {
+    return null
+  }
+}
+
+/** The visitor's address and browser, and the sign-in. False when a sign-in is needed and missing. */
+async function addBackendHeaders(requestHeaders: Headers, authenticated: boolean): Promise<boolean> {
+  // The visitor's own address, for the backend's rate limits and action log —
+  // decided 2026-10-19. Every call arrives from this server, so without it the
+  // backend would see the same few Vercel addresses for everybody. The shared
+  // secret is what makes the backend believe the header; without it the header
+  // is ignored, as it should be from anybody else.
+  const proxySecret = process.env.PROXY_SECRET
+  if (proxySecret) {
+    const visitor = await visitorAddress()
+    if (visitor) {
+      requestHeaders.set("X-Client-IP", visitor)
+      requestHeaders.set("X-Proxy-Secret", proxySecret)
+    }
+    // The browser's description, so Settings can say "Chrome on Windows" for
+    // each session — added 2026-10-26. Believed under the same secret.
+    const agent = await visitorAgent()
+    if (agent) requestHeaders.set("X-Client-Agent", agent.slice(0, 400))
+  }
+
+  if (authenticated) {
+    const token = await getSessionToken()
+    if (!token) return false
+    requestHeaders.set("Authorization", `Bearer ${token}`)
+  }
+  return true
 }
 
 function safeJson(text: string) {

@@ -71,4 +71,4 @@ function TestPill() {
   )
 }
 
-export { ResultPill, StatusPill, TestPill, resultLabel, statusLabel }
+export { PILL, ResultPill, StatusPill, TestPill, resultLabel, statusLabel }

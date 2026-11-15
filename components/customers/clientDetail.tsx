@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { ChevronDown, Mail, Phone } from "lucide-react"
+import { ChevronDown, Mail, MailX, Phone } from "lucide-react"
 
-import { ResultPill, StatusPill, TestPill, resultLabel, statusLabel } from "@/components/customers/applicationPills"
+import { PILL, ResultPill, StatusPill, TestPill, resultLabel, statusLabel } from "@/components/customers/applicationPills"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { BrandLogo, SMALL_LOGO } from "@/components/ui/brandLogo"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { TablePagination } from "@/components/ui/tablePagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   INCOME_TYPES,
   channelLabel,
@@ -29,9 +30,10 @@ import {
   type ApplicationSend,
   type ClientDetail,
 } from "@/lib/applicationTypes"
-import { canadaStamp } from "@/lib/format"
+import { canadaDate, canadaStamp } from "@/lib/format"
 import { initialsOf } from "@/lib/initials"
 import { THIN_SCROLLBAR } from "@/lib/scrollbar"
+import { reasonLabel, type ClientUnsubscribe } from "@/lib/unsubscribeTypes"
 import { cn } from "@/lib/utils"
 
 /**
@@ -144,6 +146,36 @@ function Before({ values }: { values: string[] }) {
   return <span className="block text-[0.7rem] font-normal text-muted-foreground">Before: {values.join(", ")}</span>
 }
 
+/** "Unsubscribed · LoanHero · 14/11/2026": one per brand. The time and reason on hover. */
+function Unsubscribed({ unsubscribe }: { unsubscribe: ClientUnsubscribe }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span
+            tabIndex={0}
+            // In a narrow window the parts go onto a 2nd line instead of being cut.
+            className={cn(
+              PILL,
+              "mt-0.5 w-fit max-w-full flex-wrap gap-y-0 rounded-[0.65rem] font-normal whitespace-normal text-muted-foreground"
+            )}
+          />
+        }
+      >
+        <span className="inline-flex items-center gap-1 whitespace-nowrap">
+          <MailX className="size-3 shrink-0 text-destructive" aria-hidden />
+          <span className="font-medium text-destructive">Unsubscribed</span>
+        </span>
+        <span className="whitespace-nowrap">· {unsubscribe.brand}</span>
+        <span className="whitespace-nowrap">· {canadaDate(unsubscribe.at)}</span>
+      </TooltipTrigger>
+      <TooltipContent>
+        {canadaStamp(unsubscribe.at)} · {reasonLabel(unsubscribe.reason)}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 /**
  * Step 1 at the top: who the person is and how to reach them, then the rest of
  * their step 1 answers.
@@ -191,6 +223,9 @@ function PersonCard({ client, hint }: { client: ClientDetail; hint: ReactNode })
                 {phone.before.length > 0 ? <span>· Before: {phone.before.join(", ")}</span> : null}
               </p>
             ) : null}
+            {client.unsubscribes?.map((unsubscribe) => (
+              <Unsubscribed key={unsubscribe.brandDomain} unsubscribe={unsubscribe} />
+            ))}
           </div>
         </div>
 
