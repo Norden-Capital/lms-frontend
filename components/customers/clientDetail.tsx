@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { ChevronDown, Mail, MailX, Phone } from "lucide-react"
+import { ChevronDown, Copy, Mail, MailX, Phone } from "lucide-react"
+import { toast } from "sonner"
 
 import { PILL, ResultPill, StatusPill, TestPill, resultLabel, statusLabel } from "@/components/customers/applicationPills"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -710,22 +711,86 @@ function SendLine({ send, number }: { send: ApplicationSend; number: number }) {
   ]
     .filter(Boolean)
     .join(" · ")
+  const [open, setOpen] = useState(false)
+  const hasJson = Boolean(send.request || send.response)
   // Always one row (2026-11-09): a problem is cut short, with the full text on hover.
+  // "JSON" opens what was sent to LeadScout and what it answered, under the row.
   return (
-    <li className="flex items-center gap-2 rounded-md border bg-card px-3 py-2.5 text-xs whitespace-nowrap">
-      <span className="shrink-0 font-mono text-muted-foreground">#{number}</span>
-      <span className="shrink-0">
-        <ResultPill status={send.leadscoutStatus} />
-      </span>
-      {send.problem ? (
-        <span className="min-w-0 truncate text-destructive" title={send.problem}>
-          {send.problem}
+    <li className="rounded-md border bg-card text-xs">
+      <div className="flex items-center gap-2 px-3 py-2.5 whitespace-nowrap">
+        <span className="shrink-0 font-mono text-muted-foreground">#{number}</span>
+        <span className="shrink-0">
+          <ResultPill status={send.leadscoutStatus} />
         </span>
+        {send.problem ? (
+          <span className="min-w-0 truncate text-destructive" title={send.problem}>
+            {send.problem}
+          </span>
+        ) : null}
+        <span className="ml-auto min-w-0 truncate text-muted-foreground tabular-nums" title={meta}>
+          {meta}
+        </span>
+        {hasJson ? (
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="flex shrink-0 items-center gap-0.5 rounded-sm px-1 font-mono text-[0.7rem] text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+          >
+            JSON
+            <ChevronDown className={cn("size-3 transition-transform", open && "rotate-180")} aria-hidden />
+          </button>
+        ) : null}
+      </div>
+      {open ? (
+        <div className="flex flex-col gap-2 border-t p-2">
+          <JsonBlock title="Sent" text={send.request} />
+          <JsonBlock title="Answer" text={send.response} />
+        </div>
       ) : null}
-      <span className="ml-auto min-w-0 truncate text-muted-foreground tabular-nums" title={meta}>
-        {meta}
-      </span>
     </li>
+  )
+}
+
+/** Raw JSON from LeadScout, spaced out to read. Shown as it came when it is not JSON. */
+function JsonBlock({ title, text }: { title: string; text: string | null }) {
+  let shown = text ?? ""
+  try {
+    shown = JSON.stringify(JSON.parse(shown), null, 2)
+  } catch {
+    // Not JSON: keep the text as it is.
+  }
+
+  function copy() {
+    navigator.clipboard
+      .writeText(shown)
+      .then(() => toast.success("JSON copied."))
+      .catch(() => toast.error("Could not copy. Select it instead."))
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-[0.7rem] text-muted-foreground uppercase">{title}</span>
+        {shown ? (
+          <button
+            type="button"
+            onClick={copy}
+            aria-label={`Copy the ${title.toLowerCase()} JSON`}
+            className="rounded-sm p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+          >
+            <Copy className="size-3" aria-hidden />
+          </button>
+        ) : null}
+      </div>
+      {shown ? (
+        <pre className={cn("max-h-72 overflow-auto rounded-sm bg-muted/60 p-2 font-mono text-[0.7rem] leading-relaxed", THIN_SCROLLBAR)}>
+          {shown}
+        </pre>
+      ) : (
+        <p className="text-muted-foreground">Nothing saved.</p>
+      )}
+    </div>
   )
 }
 
