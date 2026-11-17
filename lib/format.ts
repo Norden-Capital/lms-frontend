@@ -101,6 +101,12 @@ function canadaParts(iso: string) {
   }
 }
 
+/** Today as "2026-11-17", on Toronto's clock: the backend's business day. */
+export function canadaToday(): string {
+  const [day, month, year] = canadaParts(new Date().toISOString()).date.split("/")
+  return `${year}-${month}-${day}`
+}
+
 /** "29/08/2026", on Toronto's clock. */
 export function canadaDate(iso: string): string {
   return canadaParts(iso).date

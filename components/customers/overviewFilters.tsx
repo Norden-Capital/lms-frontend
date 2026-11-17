@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   OVERVIEW_PERIODS,
+  OVERVIEW_TODAY,
   brandLabel,
   overviewDays,
   sharedSites,
@@ -36,7 +37,8 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
   const [, startLoading] = useTransition()
   const [refreshing, startRefresh] = useTransition()
   const custom = Boolean(query.from && query.to)
-  const days = custom ? null : overviewDays(query.days)
+  const today = !custom && query.days === OVERVIEW_TODAY
+  const days = custom || today ? null : overviewDays(query.days)
   const picked = brands.find((brand) => brand.id === query.brand)
   const brandName = picked ? brandLabel(picked, shared) : undefined
 
@@ -56,6 +58,15 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
     // next. From sm up they all sit in one row as before.
     <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
       <div className="flex w-full rounded-md border bg-card p-0.5 sm:w-auto" role="group" aria-label="Period">
+        <Button
+          size="sm"
+          className="flex-1 sm:flex-none"
+          variant={today ? "secondary" : "ghost"}
+          aria-pressed={today}
+          onClick={() => go({ ...query, days: OVERVIEW_TODAY, from: undefined, to: undefined })}
+        >
+          Today
+        </Button>
         {OVERVIEW_PERIODS.map((period) => (
           <Button
             key={period}

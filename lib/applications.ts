@@ -1,8 +1,10 @@
 import "server-only"
 
 import { apiFetch, type ApiResult } from "@/lib/api"
+import { canadaToday } from "@/lib/format"
 import {
   applicationPageSize,
+  OVERVIEW_TODAY,
   overviewDays,
   type ApplicationRow,
   type ApplicationsOverview,
@@ -52,6 +54,10 @@ export async function getApplicationsOverview(query: OverviewQuery): Promise<Api
   if (query.from && query.to) {
     params.set("from", query.from)
     params.set("to", query.to)
+  } else if (query.days === OVERVIEW_TODAY) {
+    // Today is one day of your own dates; worked out here so the address stays "today".
+    params.set("from", canadaToday())
+    params.set("to", canadaToday())
   }
 
   return apiFetch<ApplicationsOverview>(`/api/applications/overview?${params}`, { authenticated: true })

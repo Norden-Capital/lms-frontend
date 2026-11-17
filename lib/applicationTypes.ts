@@ -192,6 +192,9 @@ export function applicationPageSize(size: string | undefined): number {
 
 export const OVERVIEW_PERIODS = [7, 30, 90] as const
 
+/** `days=today` in the address: only today, on Toronto's clock. */
+export const OVERVIEW_TODAY = "today"
+
 export function overviewDays(days: string | undefined): number {
   const wanted = Number(days)
   return (OVERVIEW_PERIODS as readonly number[]).includes(wanted) ? wanted : 30
