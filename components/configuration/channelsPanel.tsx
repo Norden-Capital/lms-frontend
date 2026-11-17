@@ -15,7 +15,7 @@ import { PageFooter, usePage } from "@/components/ui/pageFooter"
 import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { channelLabel } from "@/lib/applicationTypes"
+import { channelLabel, sharedSites, siteOf, tldOf } from "@/lib/applicationTypes"
 import type { Brand } from "@/lib/brands"
 import type { ChannelApplies } from "@/lib/channels"
 import { cn } from "@/lib/utils"
@@ -66,6 +66,8 @@ function ChannelsPanel({
   })
   const [wanted, setPage] = useState(1)
   const { page, rows: shown } = usePage(rows, PAGE_SIZE, wanted)
+  // The ending shows only when two brands share a site, as on the Leads list.
+  const shared = sharedSites(brands)
 
   function open(channel: string) {
     setPicked(channel)
@@ -107,7 +109,7 @@ function ChannelsPanel({
           ) : null
         }
       >
-        {current === SEO ? <SeoDetail /> : <ChannelLinks channel={current} rows={shown} applies={counts} head={head} />}
+        {current === SEO ? <SeoDetail /> : <ChannelLinks channel={current} rows={shown} shared={shared} applies={counts} head={head} />}
       </Panel>
     </Tabs>
   )
@@ -136,10 +138,13 @@ function SeoDetail() {
 function ChannelLinks({
   channel,
   rows,
+  shared,
   applies,
   head,
 }: {
   channel: string
+  /** Sites two brands share, so their rows show the ending. */
+  shared: Set<string>
   /** This page's brands, already sorted. */
   rows: Brand[]
   /** This channel's applies this year, by brand id. */
@@ -172,7 +177,13 @@ function ChannelLinks({
       </thead>
       <tbody>
         {rows.map((brand) => (
-          <LinkRow key={brand.id} brand={brand} link={linkFor(brand, channel)} applies={applies[brand.id] ?? 0} />
+          <LinkRow
+            key={brand.id}
+            brand={brand}
+            shared={shared}
+            link={linkFor(brand, channel)}
+            applies={applies[brand.id] ?? 0}
+          />
         ))}
       </tbody>
     </table>
@@ -180,7 +191,17 @@ function ChannelLinks({
 }
 
 /** One brand's link: who it is for, the address, and a copy button that shows it worked. */
-function LinkRow({ brand, link, applies }: { brand: Brand; link: string; applies: number }) {
+function LinkRow({
+  brand,
+  shared,
+  link,
+  applies,
+}: {
+  brand: Brand
+  shared: Set<string>
+  link: string
+  applies: number
+}) {
   const [copied, setCopied] = useState(false)
 
   function copy() {
@@ -203,7 +224,12 @@ function LinkRow({ brand, link, applies }: { brand: Brand; link: string; applies
             className="size-6 rounded-none border-0 bg-transparent p-0"
           />
           <span className="min-w-0">
-            <span className="block truncate font-medium">{brand.name}</span>
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-medium">{brand.name}</span>
+              {shared.has(siteOf(brand.domain)) ? (
+                <span className="rounded-sm border px-1 font-mono text-[0.65rem] font-normal text-muted-foreground">{tldOf(brand.domain)}</span>
+              ) : null}
+            </span>
             <span className="block truncate text-[0.7rem] text-muted-foreground">{brand.domain}</span>
           </span>
         </span>

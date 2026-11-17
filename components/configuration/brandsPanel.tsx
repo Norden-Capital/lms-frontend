@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input"
 import { SortButton, ariaSort, useSort } from "@/components/ui/sortButton"
 import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { sharedSites, siteOf, tldOf } from "@/lib/applicationTypes"
 import type { Brand } from "@/lib/brands"
 import { canadaDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -76,6 +77,8 @@ function BrandsPanel({ brands }: { brands: Brand[] }) {
   const canAdd = useHolds("BRAND:CREATE")
   const [removing, setRemoving] = useState<Brand | null>(null)
   const { sorted, head } = useSort(brands, SORT)
+  // The ending shows only when two brands share a site, as on the Leads list.
+  const shared = sharedSites(brands)
   const [wanted, setPage] = useState(1)
   const { page, rows } = usePage(sorted, PAGE_SIZE, wanted)
 
@@ -119,7 +122,7 @@ function BrandsPanel({ brands }: { brands: Brand[] }) {
           </thead>
           <tbody>
             {rows.map((brand) => (
-              <BrandRow key={brand.id} brand={brand} onRemove={() => setRemoving(brand)} />
+              <BrandRow key={brand.id} brand={brand} shared={shared} onRemove={() => setRemoving(brand)} />
             ))}
           </tbody>
         </table>
@@ -292,7 +295,7 @@ function EditableText({
   )
 }
 
-function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
+function BrandRow({ brand, shared, onRemove }: { brand: Brand; shared: Set<string>; onRemove: () => void }) {
   const router = useRouter()
   const canEdit = useHolds("BRAND:UPDATE")
   const canRemove = useHolds("BRAND:DELETE")
@@ -336,6 +339,9 @@ function BrandRow({ brand, onRemove }: { brand: Brand; onRemove: () => void }) {
         <span className={cn("flex items-center gap-2.5 font-medium", !active && "opacity-60")}>
           <BrandLogo name={brand.name} logoUrl={brand.logoUrl} className={BARE_LOGO} />
           <EditableText value={brand.name} label="name" onSave={(name) => updateBrand(brand.id, name, brand.email)} />
+          {shared.has(siteOf(brand.domain)) ? (
+            <span className="rounded-sm border px-1 font-mono text-[0.65rem] font-normal text-muted-foreground">{tldOf(brand.domain)}</span>
+          ) : null}
         </span>
       </td>
       <td className="py-2.5 text-muted-foreground">
