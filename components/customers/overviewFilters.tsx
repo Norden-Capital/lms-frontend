@@ -49,6 +49,7 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
       params.set("to", next.to)
     } else if (next.days && next.days !== "30") params.set("days", next.days)
     if (next.brand) params.set("brand", next.brand)
+    if (next.view) params.set("view", next.view)
     const qs = params.toString()
     startLoading(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }))
   }

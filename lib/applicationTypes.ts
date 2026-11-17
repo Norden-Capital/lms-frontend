@@ -137,7 +137,13 @@ export type FunnelSteps = { visitors: number; step1: number; step2: number; step
 
 export type ChannelCount = FunnelSteps & { channel: string }
 
-export type Funnel = FunnelSteps & { channels: ChannelCount[] }
+export type Funnel = FunnelSteps & {
+  channels: ChannelCount[]
+  /** "people" (each person once per step) or "tries" (every try). */
+  view?: "people" | "tries"
+  /** Tries only: when every try started to be saved. Days before it are close numbers. */
+  exactFrom?: string | null
+}
 
 /** The form's income answers, in words. */
 export const INCOME_TYPES: Record<string, string> = {
@@ -180,6 +186,8 @@ export type OverviewQuery = {
   from?: string
   to?: string
   brand?: string
+  /** "tries": the funnel counts every try, not each person once. */
+  view?: string
 }
 
 export const APPLICATION_PAGE_SIZES = [10, 25, 50] as const
@@ -191,6 +199,9 @@ export function applicationPageSize(size: string | undefined): number {
 }
 
 export const OVERVIEW_PERIODS = [7, 30, 90] as const
+
+/** `view=tries` in the address: the funnel counts every try. */
+export const FUNNEL_TRIES = "tries"
 
 /** `days=today` in the address: only today, on Toronto's clock. */
 export const OVERVIEW_TODAY = "today"

@@ -3,14 +3,15 @@ import type { ReactNode } from "react"
 import { ShieldAlert } from "lucide-react"
 
 import { FormFunnel } from "@/components/customers/formFunnel"
+import { FunnelSwitch } from "@/components/customers/funnelSwitch"
 import { DailyBars, TrendCard } from "@/components/customers/overviewCharts"
 import { OverviewBreakdown } from "@/components/customers/overviewBreakdown"
 import { OverviewFilters } from "@/components/customers/overviewFilters"
 import { PageHeader } from "@/components/layout/pageHeader"
 import { getApplicationsOverview, listApplicationBrands } from "@/lib/applications"
-import type { ApplicationsOverview, BrandOption, OverviewQuery } from "@/lib/applicationTypes"
+import { FUNNEL_TRIES, type ApplicationsOverview, type BrandOption, type OverviewQuery } from "@/lib/applicationTypes"
 import { requireUser } from "@/lib/auth"
-import { count, share } from "@/lib/format"
+import { canadaDate, count, share } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
@@ -39,7 +40,11 @@ export default async function LeadsOverviewPage({ searchParams }: { searchParams
       />
 
       {result.ok ? (
-        <Numbers overview={result.data} brands={brands.ok ? brands.data : []} />
+        <Numbers
+          overview={result.data}
+          brands={brands.ok ? brands.data : []}
+          tries={query.view === FUNNEL_TRIES}
+        />
       ) : (
         <div className="flex justify-center">
           <div className="flex max-w-md flex-col items-center gap-2 rounded-md border bg-card p-8 text-center">
@@ -68,12 +73,15 @@ function Card({
   id,
   title,
   note,
+  noteEnd,
   className,
   children,
 }: {
   id: string
   title: string
   note?: ReactNode
+  /** Something at the right end of the note line, like the funnel's switch. */
+  noteEnd?: ReactNode
   className?: string
   children: ReactNode
 }) {
@@ -86,9 +94,27 @@ function Card({
         {title}
       </h2>
       <div className="flex flex-1 flex-col overflow-hidden rounded-md border bg-card">{children}</div>
-      {note ? <div className="px-3 py-1.5 text-[0.7rem] text-muted-foreground">{note}</div> : null}
+      {note ? (
+        <div className="flex items-center justify-between gap-3 px-3 py-1.5 text-[0.7rem] text-muted-foreground">
+          <span className="min-w-0">{note}</span>
+          {noteEnd}
+        </div>
+      ) : null}
     </section>
   )
+}
+
+/**
+ * The funnel's note when it counts every try. Tries are only saved since
+ * exactFrom; when the dates start before it, say the numbers are close.
+ */
+function triesNote(overview: ApplicationsOverview): string {
+  const note = "Every try counts. Shares are of the form’s page opens."
+  const exactFrom = overview.funnel.exactFrom
+  const firstDay = overview.daily[0]?.date
+  if (!exactFrom || !firstDay) return note
+  const [day, month, year] = canadaDate(exactFrom).split("/")
+  return firstDay < `${year}-${month}-${day}` ? `${note} Exact from ${day}/${month}/${year}. Before that: close numbers.` : note
 }
 
 /** The funnel's diagonal stripes, for the LeadScout bars. */
@@ -108,7 +134,16 @@ const ANSWERS: [string, string][] = [
  * The page, redone 2026-11-10 calm and minimal: the funnel beside the four
  * counts, the days beside every LeadScout answer, then the two tables.
  */
-function Numbers({ overview, brands }: { overview: ApplicationsOverview; brands: BrandOption[] }) {
+function Numbers({
+  overview,
+  brands,
+  tries,
+}: {
+  overview: ApplicationsOverview
+  brands: BrandOption[]
+  /** The funnel counts every try instead of each person once. */
+  tries: boolean
+}) {
   const started = overview.leads + overview.abandoned + overview.failed
   const answered = ANSWERS.reduce((sum, [key]) => sum + (overview.leadscout[key] ?? 0), 0)
 
@@ -125,7 +160,8 @@ function Numbers({ overview, brands }: { overview: ApplicationsOverview; brands:
           <Card
             id="form-funnel"
             title="Form funnel"
-            note="Each person counts once per step. Shares are of the form's visitors."
+            note={tries ? triesNote(overview) : "Each person counts once per step. Shares are of the form’s visitors."}
+            noteEnd={<FunnelSwitch tries={tries} />}
             className="h-72 max-xl:order-2 xl:h-[calc(15rem+6px)]"
           >
             <div className="relative h-full">

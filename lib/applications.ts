@@ -4,6 +4,7 @@ import { apiFetch, type ApiResult } from "@/lib/api"
 import { canadaToday } from "@/lib/format"
 import {
   applicationPageSize,
+  FUNNEL_TRIES,
   OVERVIEW_TODAY,
   overviewDays,
   type ApplicationRow,
@@ -51,6 +52,7 @@ export async function getClient(id: string): Promise<ApiResult<ClientDetail>> {
 export async function getApplicationsOverview(query: OverviewQuery): Promise<ApiResult<ApplicationsOverview>> {
   const params = new URLSearchParams({ days: String(overviewDays(query.days)) })
   if (query.brand) params.set("brand", query.brand)
+  if (query.view === FUNNEL_TRIES) params.set("view", FUNNEL_TRIES)
   if (query.from && query.to) {
     params.set("from", query.from)
     params.set("to", query.to)
