@@ -80,6 +80,7 @@ export const ACTION_TYPES: Record<string, { label: string; tone: "neutral" | "go
   BRAND_UPDATED: { label: "Brand changed", tone: "neutral" },
   BRAND_REMOVED: { label: "Brand removed", tone: "warn" },
   CHANNEL_ADDED: { label: "Channel added", tone: "neutral" },
+  CHANNEL_UPDATED: { label: "Channel changed", tone: "neutral" },
   CHANNEL_REMOVED: { label: "Channel removed", tone: "warn" },
   MAILBOX_CONNECTED: { label: "Mailbox connected", tone: "neutral" },
   MAILBOX_DISCONNECTED: { label: "Mailbox disconnected", tone: "warn" },

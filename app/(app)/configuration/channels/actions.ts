@@ -29,7 +29,16 @@ export async function addChannel(name: string): Promise<ActionState> {
   return done("/api/channels", { method: "POST", body: JSON.stringify({ name }) })
 }
 
-/** Removes a channel's link. Its leads keep their channel. */
-export async function removeChannel(name: string): Promise<ActionState> {
-  return done(`/api/channels/${encodeURIComponent(name)}`, { method: "DELETE" })
+/**
+ * Changes a channel's name shown in the LMS, or switches it on or off. Sends
+ * only what changed. The tag never changes. SEO can't be switched off.
+ */
+export async function updateChannel(
+  name: string,
+  changes: { label?: string | null; active?: boolean },
+): Promise<ActionState> {
+  return done(`/api/channels/${encodeURIComponent(name)}`, {
+    method: "PATCH",
+    body: JSON.stringify(changes),
+  })
 }
