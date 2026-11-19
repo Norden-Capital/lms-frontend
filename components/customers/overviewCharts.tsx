@@ -11,7 +11,7 @@ import { PatternLines } from "@/components/charts/patterns"
 import { AreaSparkline } from "@/components/charts/sparkline"
 import { ChartTooltip } from "@/components/charts/tooltip"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import type { OverviewDay } from "@/lib/applicationTypes"
+import type { OverviewBucket, OverviewDay } from "@/lib/applicationTypes"
 import { count } from "@/lib/format"
 
 /**
@@ -38,6 +38,23 @@ const GAP = 2
 
 const DAY = new Intl.DateTimeFormat("en-CA", { day: "numeric", month: "short", timeZone: "UTC" })
 const dayLabel = (date: string) => DAY.format(new Date(`${date}T00:00:00Z`))
+
+const MONTH = new Intl.DateTimeFormat("en-CA", { month: "short", year: "numeric", timeZone: "UTC" })
+
+/**
+ * A bar's name: "13:00" for an hour ("2026-11-19T13"), "Apr 2026" for a month
+ * ("2026-04" or its first day), else "19 Nov" for a day or the week starting then.
+ */
+function barLabel(key: string, bucket: OverviewBucket | undefined): string {
+  const [date, hour] = key.split("T")
+  if (hour !== undefined) return `${hour.padStart(2, "0")}:00`
+  if (bucket === "month" || /^\d{4}-\d{2}$/.test(date))
+    return MONTH.format(new Date(`${date.slice(0, 7)}-01T00:00:00Z`))
+  return dayLabel(date)
+}
+
+/** The thinnest a bar's slot may get. Below it the chart scrolls sideways instead. */
+const MIN_SLOT = 18
 
 /** A count and its days as a quiet grey line under it. */
 function TrendCard({
@@ -93,9 +110,9 @@ function TrendCard({
   )
 }
 
-/** The one big chart: each day as a bar, leads at the bottom in dark ink. */
-function DailyBars({ days }: { days: OverviewDay[] }) {
-  const data = days.map((day) => ({ ...day, day: dayLabel(day.date) }))
+/** The one big chart: each hour, day or week as a bar, leads at the bottom in dark ink. */
+function DailyBars({ days, bucket }: { days: OverviewDay[]; bucket?: OverviewBucket }) {
+  const data = days.map((day) => ({ ...day, day: barLabel(day.date, bucket) }))
   const totals = Object.fromEntries(ORDER.map((key) => [key, days.reduce((sum, day) => sum + day[key], 0)]))
   const empty = ORDER.every((key) => totals[key] === 0)
   // The funnel's diagonal stripes on every bar part. useId keeps two charts' patterns apart.
@@ -117,51 +134,54 @@ function DailyBars({ days }: { days: OverviewDay[] }) {
           No applications in this period.
         </p>
       ) : (
-        // Fills the card's height, so it ends level with the cards beside it.
-        <div className="relative min-h-48 flex-1">
-          <BarChart
-            data={data}
-            xDataKey="day"
-            stacked
-            stackGap={GAP}
-            aspectRatio="auto"
-            className="absolute inset-0 h-full"
-            barGap={0.35}
-          >
-            <Grid horizontal />
-            {ORDER.map((key) => (
-              <PatternLines
-                key={`pattern-${key}`}
-                id={`${patternId}-${key}`}
-                width={6}
-                height={6}
-                stroke={STRIPE}
-                strokeWidth={1}
-                background={SERIES[key].color}
-                orientation={["diagonal"]}
+        // Fills the card's height, so it ends level with the cards beside it. Never
+        // so narrow that a bar becomes a line: then it scrolls sideways.
+        <div className="relative min-h-48 flex-1 overflow-x-auto overflow-y-hidden">
+          <div className="absolute inset-y-0 left-0 w-full" style={{ minWidth: data.length * MIN_SLOT }}>
+            <BarChart
+              data={data}
+              xDataKey="day"
+              stacked
+              stackGap={GAP}
+              aspectRatio="auto"
+              className="absolute inset-0 h-full"
+              barGap={0.35}
+            >
+              <Grid horizontal />
+              {ORDER.map((key) => (
+                <PatternLines
+                  key={`pattern-${key}`}
+                  id={`${patternId}-${key}`}
+                  width={6}
+                  height={6}
+                  stroke={STRIPE}
+                  strokeWidth={1}
+                  background={SERIES[key].color}
+                  orientation={["diagonal"]}
+                />
+              ))}
+              {ORDER.map((key) => (
+                <Bar
+                  key={key}
+                  dataKey={key}
+                  fill={`url(#${patternId}-${key})`}
+                  stroke={SERIES[key].color}
+                  lineCap={2}
+                  stackGap={GAP}
+                />
+              ))}
+              <BarXAxis maxLabels={8} />
+              <ChartTooltip
+                rows={(point) =>
+                  ORDER.map((key) => ({
+                    color: SERIES[key].color,
+                    label: SERIES[key].label,
+                    value: Number(point[key] ?? 0),
+                  }))
+                }
               />
-            ))}
-            {ORDER.map((key) => (
-              <Bar
-                key={key}
-                dataKey={key}
-                fill={`url(#${patternId}-${key})`}
-                stroke={SERIES[key].color}
-                lineCap={2}
-                stackGap={GAP}
-              />
-            ))}
-            <BarXAxis maxLabels={8} />
-            <ChartTooltip
-              rows={(point) =>
-                ORDER.map((key) => ({
-                  color: SERIES[key].color,
-                  label: SERIES[key].label,
-                  value: Number(point[key] ?? 0),
-                }))
-              }
-            />
-          </BarChart>
+            </BarChart>
+          </div>
         </div>
       )}
     </div>

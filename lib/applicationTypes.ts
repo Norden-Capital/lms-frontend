@@ -117,7 +117,10 @@ export function siteOf(domain: string): string {
 
 export type OverviewDay = { date: string; leads: number; abandoned: number; failed: number }
 
-export type OverviewBrand = { id: string; name: string; leads: number; abandoned: number; failed: number }
+/** The cards' three counts: each person once, with their best result. */
+export type OutcomeCounts = { leads: number; abandoned: number; failed: number }
+
+export type OverviewBrand = FunnelSteps & OutcomeCounts & { id: string; name: string }
 
 export type ApplicationsOverview = {
   days: number
@@ -127,6 +130,8 @@ export type ApplicationsOverview = {
   failed: number
   /** Leads by LeadScout's answer. */
   leadscout: Record<string, number>
+  /** How the chart's bars are grouped. Missing from an older server: by day. */
+  bucket?: OverviewBucket
   daily: OverviewDay[]
   brands: OverviewBrand[]
   funnel: Funnel
@@ -135,7 +140,10 @@ export type ApplicationsOverview = {
 /** People at one step each — a refresh or a second try is still one person. */
 export type FunnelSteps = { visitors: number; step1: number; step2: number; step3: number }
 
-export type ChannelCount = FunnelSteps & { channel: string }
+export type ChannelCount = FunnelSteps & OutcomeCounts & { channel: string }
+
+/** A row of the "By channel" and "By brand" tables. */
+export type BreakdownCounts = FunnelSteps & OutcomeCounts
 
 export type Funnel = FunnelSteps & {
   channels: ChannelCount[]
@@ -209,6 +217,36 @@ export const OVERVIEW_TODAY = "today"
 export function overviewDays(days: string | undefined): number {
   const wanted = Number(days)
   return (OVERVIEW_PERIODS as readonly number[]).includes(wanted) ? wanted : 30
+}
+
+/**
+ * Today, the default since 2026-11-19 (owner): no dates and no 7/30/90 in the
+ * address means today.
+ */
+export function overviewIsToday(query: OverviewQuery): boolean {
+  return !(query.from && query.to) && !(OVERVIEW_PERIODS as readonly number[]).includes(Number(query.days))
+}
+
+/** The chart's bars: one per hour, day or week. */
+export type OverviewBucket = "hour" | "day" | "week" | "month"
+
+/** "Applications per hour", "… per day", "… per week", "… per month". */
+export function perBucketTitle(bucket: OverviewBucket | undefined): string {
+  return `Applications per ${bucket ?? "day"}`
+}
+
+/**
+ * Bars that fit the range (owner, 2026-11-19): today by hour, 7 and 30 days by
+ * day, 90 days by week. Your own dates: one day by hour, up to 31 days by day,
+ * up to 180 days by week, more by month.
+ */
+export function overviewBucket(query: OverviewQuery): OverviewBucket {
+  if (query.from && query.to) {
+    const days = Math.round((Date.parse(query.to) - Date.parse(query.from)) / 86_400_000) + 1
+    return days <= 1 ? "hour" : days <= 31 ? "day" : days <= 180 ? "week" : "month"
+  }
+  if (overviewIsToday(query)) return "hour"
+  return overviewDays(query.days) === 90 ? "week" : "day"
 }
 
 /** "1,500 $": the dollar sign after the number. */

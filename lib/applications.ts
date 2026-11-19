@@ -5,8 +5,9 @@ import { canadaToday } from "@/lib/format"
 import {
   applicationPageSize,
   FUNNEL_TRIES,
-  OVERVIEW_TODAY,
+  overviewBucket,
   overviewDays,
+  overviewIsToday,
   type ApplicationRow,
   type ApplicationsOverview,
   type ApplicationsQuery,
@@ -19,7 +20,7 @@ import type { Page } from "@/lib/userTypes"
 /** One page of the Leads, Abandoned or Failed list, newest first. */
 export async function listApplications(
   status: "LEAD" | "ABANDONED" | "FAILED",
-  query: ApplicationsQuery
+  query: ApplicationsQuery,
 ): Promise<ApiResult<Page<ApplicationRow>>> {
   const params = new URLSearchParams({ status })
   if (query.search) params.set("search", query.search)
@@ -50,14 +51,14 @@ export async function getClient(id: string): Promise<ApiResult<ClientDetail>> {
 
 /** The numbers for Leads Overview. */
 export async function getApplicationsOverview(query: OverviewQuery): Promise<ApiResult<ApplicationsOverview>> {
-  const params = new URLSearchParams({ days: String(overviewDays(query.days)) })
+  const params = new URLSearchParams({ days: String(overviewDays(query.days)), bucket: overviewBucket(query) })
   if (query.brand) params.set("brand", query.brand)
   if (query.view === FUNNEL_TRIES) params.set("view", FUNNEL_TRIES)
   if (query.from && query.to) {
     params.set("from", query.from)
     params.set("to", query.to)
-  } else if (query.days === OVERVIEW_TODAY) {
-    // Today is one day of your own dates; worked out here so the address stays "today".
+  } else if (overviewIsToday(query)) {
+    // Today is one day of your own dates; worked out here so the address stays short.
     params.set("from", canadaToday())
     params.set("to", canadaToday())
   }

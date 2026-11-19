@@ -9,7 +9,13 @@ import { OverviewBreakdown } from "@/components/customers/overviewBreakdown"
 import { OverviewFilters } from "@/components/customers/overviewFilters"
 import { PageHeader } from "@/components/layout/pageHeader"
 import { getApplicationsOverview, listApplicationBrands } from "@/lib/applications"
-import { FUNNEL_TRIES, type ApplicationsOverview, type BrandOption, type OverviewQuery } from "@/lib/applicationTypes"
+import {
+  FUNNEL_TRIES,
+  perBucketTitle,
+  type ApplicationsOverview,
+  type BrandOption,
+  type OverviewQuery,
+} from "@/lib/applicationTypes"
 import { requireUser } from "@/lib/auth"
 import { canadaDate, count, share } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -40,11 +46,7 @@ export default async function LeadsOverviewPage({ searchParams }: { searchParams
       />
 
       {result.ok ? (
-        <Numbers
-          overview={result.data}
-          brands={brands.ok ? brands.data : []}
-          tries={query.view === FUNNEL_TRIES}
-        />
+        <Numbers overview={result.data} brands={brands.ok ? brands.data : []} tries={query.view === FUNNEL_TRIES} />
       ) : (
         <div className="flex justify-center">
           <div className="flex max-w-md flex-col items-center gap-2 rounded-md border bg-card p-8 text-center">
@@ -114,7 +116,9 @@ function triesNote(overview: ApplicationsOverview): string {
   const firstDay = overview.daily[0]?.date
   if (!exactFrom || !firstDay) return note
   const [day, month, year] = canadaDate(exactFrom).split("/")
-  return firstDay < `${year}-${month}-${day}` ? `${note} Exact from ${day}/${month}/${year}. Before that: close numbers.` : note
+  return firstDay < `${year}-${month}-${day}`
+    ? `${note} Exact from ${day}/${month}/${year}. Before that: close numbers.`
+    : note
 }
 
 /** The funnel's diagonal stripes, for the LeadScout bars. */
@@ -172,8 +176,8 @@ function Numbers({
           </Card>
 
           {/* Grows to end level with LeadScout answers on the right. */}
-          <Card id="per-day" title="Applications per day" className="max-xl:order-3 xl:flex-1">
-            <DailyBars days={overview.daily} />
+          <Card id="per-day" title={perBucketTitle(overview.bucket)} className="max-xl:order-3 xl:flex-1">
+            <DailyBars days={overview.daily} bucket={overview.bucket} />
           </Card>
         </div>
 
@@ -261,7 +265,12 @@ function Numbers({
         </div>
       </div>
 
-      <OverviewBreakdown funnel={overview.funnel} brands={overview.brands} logos={brands} />
+      <OverviewBreakdown
+        funnel={overview.funnel}
+        brands={overview.brands}
+        logos={brands}
+        outcomes={{ leads: overview.leads, abandoned: overview.abandoned, failed: overview.failed }}
+      />
     </>
   )
 }

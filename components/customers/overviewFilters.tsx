@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { CalendarDays, ChevronDown, RotateCw } from "lucide-react"
@@ -23,13 +23,47 @@ import {
   OVERVIEW_TODAY,
   brandLabel,
   overviewDays,
+  overviewIsToday,
   sharedSites,
   type BrandOption,
   type OverviewQuery,
 } from "@/lib/applicationTypes"
 import { cn } from "@/lib/utils"
 
-/** One row above the numbers: period and brand. All of it lives in the address. Test data never shows. */
+/** Where this browser keeps the last period picked (owner, 2026-11-19). */
+const PERIOD_KEY = "lms:overview-period"
+
+type SavedPeriod = { days?: string; from?: string; to?: string }
+
+/** The saved period, or null. Never throws: a blocked storage just means Today. */
+function readPeriod(): SavedPeriod | null {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PERIOD_KEY) ?? "null") as SavedPeriod | null
+    if (!saved || typeof saved !== "object") return null
+    if (saved.from && saved.to && /^\d{4}-\d{2}-\d{2}$/.test(saved.from) && /^\d{4}-\d{2}-\d{2}$/.test(saved.to)) {
+      return { from: saved.from, to: saved.to }
+    }
+    if (saved.days === OVERVIEW_TODAY || (OVERVIEW_PERIODS as readonly number[]).includes(Number(saved.days))) {
+      return { days: saved.days }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+function savePeriod(period: SavedPeriod) {
+  try {
+    window.localStorage.setItem(PERIOD_KEY, JSON.stringify(period))
+  } catch {
+    // Not saved: the page opens on Today next time.
+  }
+}
+
+/**
+ * One row above the numbers: period and brand. All of it lives in the address.
+ * Test data never shows. Opens on Today, or on the period this browser picked last.
+ */
 function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: BrandOption[] }) {
   const shared = sharedSites(brands)
   const router = useRouter()
@@ -37,21 +71,25 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
   const [, startLoading] = useTransition()
   const [refreshing, startRefresh] = useTransition()
   const custom = Boolean(query.from && query.to)
-  const today = !custom && query.days === OVERVIEW_TODAY
+  const today = overviewIsToday(query)
   const days = custom || today ? null : overviewDays(query.days)
+  // Nothing in the address: open on the period picked last, if it isn't Today.
+  const bare = !query.days && !query.from && !query.to
+
+  useEffect(() => {
+    if (!bare) return
+    const saved = readPeriod()
+    if (!saved || saved.days === OVERVIEW_TODAY) return
+    router.replace(addressOf(pathname, { ...query, ...saved }), { scroll: false })
+    // Only when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const picked = brands.find((brand) => brand.id === query.brand)
   const brandName = picked ? brandLabel(picked, shared) : undefined
 
   function go(next: OverviewQuery) {
-    const params = new URLSearchParams()
-    if (next.from && next.to) {
-      params.set("from", next.from)
-      params.set("to", next.to)
-    } else if (next.days && next.days !== "30") params.set("days", next.days)
-    if (next.brand) params.set("brand", next.brand)
-    if (next.view) params.set("view", next.view)
-    const qs = params.toString()
-    startLoading(() => router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false }))
+    savePeriod(next.from && next.to ? { from: next.from, to: next.to } : { days: next.days ?? OVERVIEW_TODAY })
+    startLoading(() => router.push(addressOf(pathname, next), { scroll: false }))
   }
 
   return (
@@ -134,6 +172,19 @@ function OverviewFilters({ query, brands }: { query: OverviewQuery; brands: Bran
   )
 }
 
+/** The page's address for a period, brand and view. Today needs nothing: it is the default. */
+function addressOf(pathname: string, next: OverviewQuery): string {
+  const params = new URLSearchParams()
+  if (next.from && next.to) {
+    params.set("from", next.from)
+    params.set("to", next.to)
+  } else if (next.days && next.days !== OVERVIEW_TODAY) params.set("days", next.days)
+  if (next.brand) params.set("brand", next.brand)
+  if (next.view) params.set("view", next.view)
+  const qs = params.toString()
+  return qs ? `${pathname}?${qs}` : pathname
+}
+
 /** "13 Oct – 19 Oct 2026", or one day. */
 function datesLabel(from: string, to: string) {
   const start = new Date(`${from}T00:00:00`)
@@ -146,7 +197,7 @@ function CustomDates({ from, to, onPick }: { from?: string; to?: string; onPick:
   const on = Boolean(from && to)
   const [open, setOpen] = useState(false)
   const [picked, setPicked] = useState<DateRange | undefined>(() =>
-    from && to ? { from: new Date(`${from}T00:00:00`), to: new Date(`${to}T00:00:00`) } : undefined
+    from && to ? { from: new Date(`${from}T00:00:00`), to: new Date(`${to}T00:00:00`) } : undefined,
   )
   const today = new Date()
 
