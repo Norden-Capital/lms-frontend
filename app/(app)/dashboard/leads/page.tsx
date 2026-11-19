@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
-import { ShieldAlert } from "lucide-react"
+import { Info, ShieldAlert } from "lucide-react"
 
 import { FormFunnel } from "@/components/customers/formFunnel"
 import { FunnelSwitch } from "@/components/customers/funnelSwitch"
@@ -8,6 +8,7 @@ import { DailyBars, TrendCard } from "@/components/customers/overviewCharts"
 import { OverviewBreakdown } from "@/components/customers/overviewBreakdown"
 import { OverviewFilters } from "@/components/customers/overviewFilters"
 import { PageHeader } from "@/components/layout/pageHeader"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { getApplicationsOverview, listApplicationBrands } from "@/lib/applications"
 import {
   FUNNEL_TRIES,
@@ -98,7 +99,8 @@ function Card({
       <div className="flex flex-1 flex-col overflow-hidden rounded-md border bg-card">{children}</div>
       {note ? (
         <div className="flex items-center justify-between gap-3 px-3 py-1.5 text-[0.7rem] text-muted-foreground">
-          <span className="min-w-0">{note}</span>
+          {/* Always one line, in both funnel modes. */}
+          <span className="flex min-w-0 items-center gap-1 truncate whitespace-nowrap">{note}</span>
           {noteEnd}
         </div>
       ) : null}
@@ -107,18 +109,33 @@ function Card({
 }
 
 /**
- * The funnel's note when it counts every try. Tries are only saved since
- * exactFrom; when the dates start before it, say the numbers are close.
+ * The funnel's note when it counts every try: one short line (owner,
+ * 2026-11-19). Tries are only saved since exactFrom; when the dates start
+ * before it, an (i) says the older numbers are close.
  */
-function triesNote(overview: ApplicationsOverview): string {
-  const note = "Every try counts. Shares are of the form’s page opens."
+function triesNote(overview: ApplicationsOverview): ReactNode {
+  const note = "Every try counts. Shares are of page opens."
   const exactFrom = overview.funnel.exactFrom
   const firstDay = overview.daily[0]?.date
   if (!exactFrom || !firstDay) return note
   const [day, month, year] = canadaDate(exactFrom).split("/")
-  return firstDay < `${year}-${month}-${day}`
-    ? `${note} Exact from ${day}/${month}/${year}. Before that: close numbers.`
-    : note
+  if (firstDay >= `${year}-${month}-${day}`) return note
+  return (
+    <>
+      {note}
+      <Tooltip>
+        <TooltipTrigger
+          render={<button type="button" className="shrink-0 hover:text-foreground" />}
+          aria-label="About older numbers"
+        >
+          <Info className="size-3" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-64">
+          Exact from {day}/{month}/{year}. Before that: close numbers.
+        </TooltipContent>
+      </Tooltip>
+    </>
+  )
 }
 
 /** The funnel's diagonal stripes, for the LeadScout bars. */
@@ -164,7 +181,7 @@ function Numbers({
           <Card
             id="form-funnel"
             title="Form funnel"
-            note={tries ? triesNote(overview) : "Each person counts once per step. Shares are of the form’s visitors."}
+            note={tries ? triesNote(overview) : "Each person counts once per step. Shares are of visitors."}
             noteEnd={<FunnelSwitch tries={tries} />}
             className="h-72 max-xl:order-2 xl:h-[calc(15rem+6px)]"
           >
